@@ -335,6 +335,19 @@ void user_ht_revoke_permission(UserHashTable* table, const char* username, const
     }
 }
 
+void user_ht_revoke_file_from_all(UserHashTable* table, const char* filename) {
+    // Iterate through all users in the hash table and remove the file from each
+    for (size_t i = 0; i < table->size; i++) {
+        UserNode* user_node = table->nodes[i];
+        if (user_node != NULL && user_node != &g_user_tombstone) {
+            FileHashTable* file_table = user_node->file_table;
+            if (file_table != NULL) {
+                file_ht_delete(file_table, filename);
+            }
+        }
+    }
+}
+
 int user_ht_save(UserHashTable* table, const char* db_path) {
     if (mkdir(db_path, 0755) != 0 && errno != EEXIST) {
         perror("Failed to create database directory");

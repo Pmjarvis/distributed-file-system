@@ -323,7 +323,26 @@ void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
     
     unlink(undopath); // Delete undo file, ignore error
     
-    // TODO: Delete all checkpoints
+    // Delete all checkpoints for this file
+    DIR* checkpoint_dir = opendir(SS_CHECKPOINT_DIR);
+    if (checkpoint_dir) {
+        struct dirent* entry;
+        // Build prefix: filename_
+        char prefix[MAX_FILENAME + 1];
+        snprintf(prefix, sizeof(prefix), "%s_", req->filename);
+        size_t prefix_len = strlen(prefix);
+        
+        while ((entry = readdir(checkpoint_dir)) != NULL) {
+            if (entry->d_type == DT_REG && strncmp(entry->d_name, prefix, prefix_len) == 0) {
+                char checkpoint_path[MAX_PATH];
+                snprintf(checkpoint_path, sizeof(checkpoint_path), "%s/%s", SS_CHECKPOINT_DIR, entry->d_name);
+                if (unlink(checkpoint_path) != 0) {
+                    ss_log("DELETE: Failed to delete checkpoint %s: %s", entry->d_name, strerror(errno));
+                }
+            }
+        }
+        closedir(checkpoint_dir);
+    }
     
     pthread_rwlock_unlock(&lock->file_lock);
     
@@ -383,14 +402,23 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
     
     Res_FileContent chunk;
     size_t nread;
+    bool sent_data = false;
+    
     while ((nread = fread(chunk.data, 1, MAX_PAYLOAD, f)) > 0) {
         chunk.is_final_chunk = (nread < MAX_PAYLOAD);
-        // We must send the whole struct, but nread tells us the valid data
-        // A better way is to calculate exact payload size
-        size_t payload_size = (char*)&(chunk.is_final_chunk) - (char*)&chunk + sizeof(chunk.is_final_chunk);
+        // Send only the actual data read plus the is_final_chunk flag
+        size_t payload_size = nread + sizeof(chunk.is_final_chunk);
         send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+        sent_data = true;
         
         if (chunk.is_final_chunk) break;
+    }
+    
+    // If file is empty, send an empty chunk with final flag
+    if (!sent_data) {
+        chunk.is_final_chunk = true;
+        size_t payload_size = sizeof(chunk.is_final_chunk);
+        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
     }
     
     fclose(f);
@@ -507,12 +535,104 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
         send_success_response_to_client(client_sock, "Revert successful");
     
     } else if (strcmp(req->command, "VIEWCHECKPOINT") == 0) {
-        // TODO: Implement read/stream logic for checkpoint file
-        send_error_response_to_client(client_sock, "VIEWCHECKPOINT not implemented");
+        pthread_rwlock_rdlock(&lock->file_lock);
+        
+        FILE* f = fopen(checkpath, "r");
+        if (!f) {
+            pthread_rwlock_unlock(&lock->file_lock);
+            ss_log("VIEWCHECKPOINT: Checkpoint not found %s", checkpath);
+            send_error_response_to_client(client_sock, "Checkpoint not found");
+            return;
+        }
+        
+        // Read and send checkpoint content like regular read
+        Res_FileContent chunk;
+        size_t nread;
+        bool sent_data = false;
+        
+        while ((nread = fread(chunk.data, 1, MAX_PAYLOAD, f)) > 0) {
+            chunk.is_final_chunk = (nread < MAX_PAYLOAD);
+            // Send only the actual data read plus the is_final_chunk flag
+            size_t payload_size = nread + sizeof(chunk.is_final_chunk);
+            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+            sent_data = true;
+            
+            if (chunk.is_final_chunk) break;
+        }
+        
+        // If checkpoint is empty, send an empty chunk with final flag
+        if (!sent_data) {
+            chunk.is_final_chunk = true;
+            size_t payload_size = sizeof(chunk.is_final_chunk);
+            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+        }
+        
+        fclose(f);
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("VIEWCHECKPOINT: Sent checkpoint %s", req->tag);
     
     } else if (strcmp(req->command, "LISTCHECKPOINTS") == 0) {
-        // TODO: Implement listing logic
-        send_error_response_to_client(client_sock, "LISTCHECKPOINTS not implemented");
+        pthread_rwlock_rdlock(&lock->file_lock);
+        
+        // List all checkpoints for this file
+        DIR* checkpoint_dir = opendir(SS_CHECKPOINT_DIR);
+        if (!checkpoint_dir) {
+            pthread_rwlock_unlock(&lock->file_lock);
+            ss_log("LISTCHECKPOINTS: Failed to open checkpoint directory");
+            send_error_response_to_client(client_sock, "Failed to access checkpoints");
+            return;
+        }
+        
+        // Build list of checkpoints
+        char checkpoint_list[MAX_PAYLOAD];
+        snprintf(checkpoint_list, sizeof(checkpoint_list), "Checkpoints for '%s':\n", req->filename);
+        
+        struct dirent* entry;
+        char prefix[MAX_FILENAME + 1];
+        snprintf(prefix, sizeof(prefix), "%s_", req->filename);
+        size_t prefix_len = strlen(prefix);
+        
+        bool found_any = false;
+        while ((entry = readdir(checkpoint_dir)) != NULL) {
+            if (entry->d_type == DT_REG && strncmp(entry->d_name, prefix, prefix_len) == 0) {
+                // Extract tag from filename (after prefix)
+                const char* tag = entry->d_name + prefix_len;
+                
+                // Get checkpoint file stats
+                char checkpoint_path[MAX_PATH];
+                snprintf(checkpoint_path, sizeof(checkpoint_path), "%s/%s", SS_CHECKPOINT_DIR, entry->d_name);
+                struct stat st;
+                if (stat(checkpoint_path, &st) == 0) {
+                    char time_str[64];
+                    struct tm local_tm;
+                    localtime_r(&st.st_mtime, &local_tm);
+                    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &local_tm);
+                    
+                    char line[256];
+                    snprintf(line, sizeof(line), "  - %s (created: %s, size: %lld bytes)\n", 
+                            tag, time_str, (long long)st.st_size);
+                    
+                    if (strlen(checkpoint_list) + strlen(line) < MAX_PAYLOAD - 1) {
+                        strcat(checkpoint_list, line);
+                        found_any = true;
+                    }
+                }
+            }
+        }
+        closedir(checkpoint_dir);
+        
+        if (!found_any) {
+            strcat(checkpoint_list, "  (no checkpoints found)\n");
+        }
+        
+        pthread_rwlock_unlock(&lock->file_lock);
+        
+        // Send as a view response
+        Res_View res;
+        strncpy(res.data, checkpoint_list, MAX_PAYLOAD - 1);
+        res.data[MAX_PAYLOAD - 1] = '\0';
+        send_response(client_sock, MSG_N2C_VIEW_RES, &res, sizeof(res));
+        ss_log("LISTCHECKPOINTS: Listed checkpoints for %s", req->filename);
     }
 }
 

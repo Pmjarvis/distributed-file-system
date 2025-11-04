@@ -245,8 +245,10 @@ static void handle_create(UserSession* session, MsgHeader* header) {
     
     // 3. Update NS's internal list of files
     FileMetadata meta;
-    strncpy(meta.filename, payload.filename, MAX_PATH);
-    strncpy(meta.owner, session->username, MAX_USERNAME);
+    strncpy(meta.filename, payload.filename, MAX_FILENAME - 1);
+    meta.filename[MAX_FILENAME - 1] = '\0';
+    strncpy(meta.owner, session->username, MAX_USERNAME - 1);
+    meta.owner[MAX_USERNAME - 1] = '\0';
     meta.size_bytes = 0;
     meta.word_count = 0;
     meta.char_count = 0;
@@ -297,10 +299,8 @@ static void handle_delete(UserSession* session, MsgHeader* header) {
     pthread_mutex_unlock(&g_cache_mutex);
     
     // 5. Remove from Access Control
-    // TODO: Need to iterate all users and remove permissions
     pthread_mutex_lock(&g_access_table_mutex);
-    user_ht_revoke_permission(g_access_table, session->username, payload.filename);
-    // --- FIX ---
+    user_ht_revoke_file_from_all(g_access_table, payload.filename);
     user_ht_save(g_access_table, DB_PATH);
     pthread_mutex_unlock(&g_access_table_mutex);
     
@@ -525,7 +525,8 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
     if (header->type == MSG_C2N_CHECKPOINT_REQ) {
         Req_Checkpoint chk_payload;
         recv_payload(session->client_sock, &chk_payload, header->payload_len);
-        strncpy(payload.filename, chk_payload.filename, MAX_PATH); // Copy filename for access check
+        strncpy(payload.filename, chk_payload.filename, MAX_FILENAME - 1); // Copy filename for access check
+        payload.filename[MAX_FILENAME - 1] = '\0';
     } else {
         recv_payload(session->client_sock, &payload, header->payload_len);
     }
@@ -570,8 +571,10 @@ static void handle_req_access(UserSession* session, MsgHeader* header) {
 
     pthread_mutex_lock(&g_access_req_mutex);
     AccessRequest* new_req = (AccessRequest*)malloc(sizeof(AccessRequest));
-    strncpy(new_req->requester, session->username, MAX_USERNAME);
-    strncpy(new_req->filename, payload.filename, MAX_PATH);
+    strncpy(new_req->requester, session->username, MAX_USERNAME - 1);
+    new_req->requester[MAX_USERNAME - 1] = '\0';
+    strncpy(new_req->filename, payload.filename, MAX_FILENAME - 1);
+    new_req->filename[MAX_FILENAME - 1] = '\0';
     new_req->next = g_access_requests_head;
     g_access_requests_head = new_req;
     pthread_mutex_unlock(&g_access_req_mutex);

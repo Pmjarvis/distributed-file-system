@@ -80,7 +80,39 @@ void cleanup_server_state() {
     lru_cache_free(g_file_cache, NULL);
     pthread_mutex_unlock(&g_cache_mutex);
     
-    // TODO: Free g_ss_list_head, g_access_requests_head
+    // Free storage server list
+    pthread_mutex_lock(&g_ss_list_mutex);
+    StorageServer* curr_ss = g_ss_list_head;
+    while (curr_ss) {
+        StorageServer* next_ss = curr_ss->next;
+        
+        // Free file list for this SS
+        SSFileNode* curr_file = curr_ss->file_list_head;
+        while (curr_file) {
+            SSFileNode* next_file = curr_file->next;
+            free(curr_file);
+            curr_file = next_file;
+        }
+        
+        if (curr_ss->sock_fd != -1) {
+            close(curr_ss->sock_fd);
+        }
+        free(curr_ss);
+        curr_ss = next_ss;
+    }
+    g_ss_list_head = NULL;
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    // Free access requests list
+    pthread_mutex_lock(&g_access_req_mutex);
+    AccessRequest* curr_req = g_access_requests_head;
+    while (curr_req) {
+        AccessRequest* next_req = curr_req->next;
+        free(curr_req);
+        curr_req = next_req;
+    }
+    g_access_requests_head = NULL;
+    pthread_mutex_unlock(&g_access_req_mutex);
 }
 
 int main() {

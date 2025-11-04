@@ -32,6 +32,7 @@ void user_ht_free_system(UserHashTable* table);
 void user_ht_add_permission(UserHashTable* table, const char* username, const char* filename, const char* perms);
 char* user_ht_get_permission(UserHashTable* table, const char* username, const char* filename);
 void user_ht_revoke_permission(UserHashTable* table, const char* username, const char* filename);
+void user_ht_revoke_file_from_all(UserHashTable* table, const char* filename);
 int user_ht_save(UserHashTable* table, const char* db_path);
 UserHashTable* user_ht_load(const char* db_path);
 

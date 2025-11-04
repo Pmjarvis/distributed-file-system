@@ -66,7 +66,8 @@ void do_create(char* args) {
     }
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(g_ns_sock, MSG_C2N_CREATE, &req, sizeof(req));
     handle_generic_response(g_ns_sock, NULL);
@@ -79,7 +80,8 @@ void do_delete(char* args) {
     }
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(g_ns_sock, MSG_C2N_DELETE, &req, sizeof(req));
     handle_generic_response(g_ns_sock, NULL);
@@ -92,7 +94,8 @@ void do_info(char* args) {
     }
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(g_ns_sock, MSG_C2N_INFO, &req, sizeof(req));
     
@@ -155,7 +158,8 @@ void do_access(char* args, MsgType type) {
         filename = flag;
     }
 
-    strncpy(req.filename, filename, MAX_PATH - 1);
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     strncpy(req.target_user, username, MAX_USERNAME - 1);
     
     send_request(g_ns_sock, type, &req, sizeof(req));
@@ -169,7 +173,8 @@ void do_exec(char* args) {
     }
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(g_ns_sock, MSG_C2N_EXEC_REQ, &req, sizeof(req));
     
@@ -251,7 +256,8 @@ void do_read(char* args) {
     
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(ss_sock, MSG_C2S_READ, &req, sizeof(req));
     
@@ -292,7 +298,8 @@ void do_stream(char* args) {
 
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(ss_sock, MSG_C2S_STREAM, &req, sizeof(req));
     
@@ -333,7 +340,8 @@ void do_write(char* args) {
     // 1. Send transaction start request
     Req_Write_Transaction req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, filename, MAX_PATH - 1);
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     req.sentence_num = atoi(sent_num_str);
     
     send_request(ss_sock, MSG_C2S_WRITE, &req, sizeof(req));
@@ -360,6 +368,7 @@ void do_write(char* args) {
     // 3. Enter write loop
     while(1) {
         printf("w> ");
+        fflush(stdout);
         if (!fgets(line_buf, sizeof(line_buf), stdin)) {
             break; // EOF
         }
@@ -402,7 +411,8 @@ void do_undo(char* args) {
     
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(ss_sock, MSG_C2S_UNDO, &req, sizeof(req));
     
@@ -428,7 +438,8 @@ void do_checkpoint_cmd(char* args, const char* command) {
          return;
     }
     
-    strncpy(req.filename, filename, MAX_PATH - 1);
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     if (tag) strncpy(req.tag, tag, MAX_TAG - 1);
     
     int ss_sock = get_ss_connection(filename, MSG_C2N_CHECKPOINT_REQ);
@@ -436,8 +447,47 @@ void do_checkpoint_cmd(char* args, const char* command) {
     
     send_request(ss_sock, MSG_C2S_CHECKPOINT_OP, &req, sizeof(req));
     
-    // TODO: LIST/VIEW commands will get a data response
-    handle_generic_response(ss_sock, NULL);
+    // Handle responses - LIST and VIEW commands return data
+    if (strcmp(command, "LISTCHECKPOINTS") == 0) {
+        MsgHeader header;
+        if (recv_header(ss_sock, &header) <= 0) {
+            fprintf(stderr, "Error: Failed to receive response from storage server.\n");
+        } else if (header.type == MSG_N2C_VIEW_RES) {
+            Res_View res;
+            memset(&res, 0, sizeof(res));
+            recv_payload(ss_sock, &res, header.payload_len);
+            printf("%s", res.data);
+        } else {
+            handle_generic_response(ss_sock, &header);
+        }
+    } else if (strcmp(command, "VIEWCHECKPOINT") == 0) {
+        // VIEWCHECKPOINT returns file content like READ
+        while(1) {
+            MsgHeader header;
+            if (recv_header(ss_sock, &header) <= 0) break;
+            
+            if (header.type == MSG_S2C_READ_CONTENT) {
+                Res_FileContent chunk;
+                memset(&chunk, 0, sizeof(chunk));
+                recv_payload(ss_sock, &chunk, header.payload_len);
+                
+                size_t data_len = header.payload_len - sizeof(chunk.is_final_chunk);
+                if (data_len > MAX_PAYLOAD) data_len = MAX_PAYLOAD;
+                
+                fwrite(chunk.data, 1, data_len, stdout);
+                
+                if (chunk.is_final_chunk) break;
+            } else {
+                handle_generic_response(ss_sock, &header);
+                break;
+            }
+        }
+        printf("\n");
+    } else {
+        // CHECKPOINT and REVERT return success/error
+        handle_generic_response(ss_sock, NULL);
+    }
+    
     close(ss_sock);
 }
 
@@ -450,7 +500,8 @@ void do_request_access(char* args) {
     }
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, args, MAX_PATH - 1);
+    strncpy(req.filename, args, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     
     send_request(g_ns_sock, MSG_C2N_REQ_ACCESS, &req, sizeof(req));
     handle_generic_response(g_ns_sock, NULL);
@@ -495,7 +546,8 @@ void do_grant_access(char* args) {
          return;
     }
 
-    strncpy(req.filename, filename, MAX_PATH - 1);
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     strncpy(req.target_user, username, MAX_USERNAME - 1);
     
     send_request(g_ns_sock, MSG_C2N_GRANT_REQ_ACCESS, &req, sizeof(req));

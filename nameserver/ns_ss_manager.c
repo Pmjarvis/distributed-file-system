@@ -91,7 +91,15 @@ void* ss_handler_thread(void* arg) {
         ss_node->is_online = true;
         ss_node->last_heartbeat = time(NULL);
         ss_node->sock_fd = ss_sock;
-        // TODO: Clear old file list
+        
+        // Clear old file list
+        SSFileNode* curr_file = ss_node->file_list_head;
+        while (curr_file) {
+            SSFileNode* next = curr_file->next;
+            free(curr_file);
+            curr_file = next;
+        }
+        ss_node->file_list_head = NULL;
     } else {
         // New SS
         new_ss_id = g_ss_id_counter++;

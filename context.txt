@@ -1,0 +1,536 @@
+The system is composed of the following core components:
+
+User Clients:Represent the users interacting with the system.
+Provide the interface for performing operations on files (create, view, read, write, delete, etc.).
+Multiple clients may run concurrently, and all must be able to interact with the system simultaneously.
+Name Server:Acts as the central coordinator of the system.
+Handles all communication between clients and storage servers.
+Maintains the mapping between file names and their storage locations.
+Ensures efficient and correct access to files across the system.
+Storage Servers:Responsible for storing and retrieving file data.
+Ensure durability, persistence, and efficient access to files.
+Support concurrent access by multiple clients, including both reads and writes.
+At
+ any point, there would be a single instance of the Name Server running,
+ to which multiple instances of Storage Servers and User Clients can 
+connect. The User Clients and Storage Servers can disconnect and 
+reconnect at any time, and the system should handle these events 
+gracefully.
+The event of Name Server failure is out of scope for 
+this project. That is, if the Name Server goes down, the entire system 
+is considered down and must be restarted.
+
+  The File
+Files
+ are the fundamental units of data in the system, each uniquely 
+identified by a name. Files are restricted to text data only. Every file
+ consists of multiple sentences, and each sentence is made up of words. A
+ sentence is defined as a sequence of words ending with a period (.), 
+exclamation mark (!), or question mark (?). Words within a sentence are 
+separated by spaces. This segmentation needs to be handled by the 
+system, the user should be able to access the file as a whole. For 
+completeness and in interest of no ambiguity, a word is defined as a 
+sequence of ASCII characters without spaces.
+There is no imposed 
+limit on file size or the total number of files, so the system must 
+efficiently handle both small and large documents (which can variably 
+grow after creation also).
+Files support concurrent access for 
+both reading and writing. However, when a user edits a sentence, that 
+sentence is locked for editing by others until the operation is 
+complete. This allows multiple users to view or edit the file 
+simultaneously, but prevents simultaneous edits to the same sentence.
+
+  [150] User Functionalities
+The users (clients) must be able to perform the following operations:
+
+[10] View files:
+ User can view all files they have access to. They can view all files on
+ the system, irrespective of the access using “-a” flag. “-l” flag 
+should list files along with details like word count, character count, 
+last access, owner, etc. Note, a combination of flags can be used lke 
+“-al”, which should list all the files with details.VIEW  # Lists all files user has access toVIEW -a # Lists all files on the systemVIEW -l # Lists all user-access files with detailsVIEW -al # Lists all system files with details
+[10] Read a File:
+ Users can retrieve the contents of files stored within the system. This
+ fundamental operation grants users access to the information they seek.READ <filename> # Prints the content of the complete file
+[10] Create a File: Users can create new files, allowing them to store and manage their data effectively.CREATE <filename> # Creates an empty file with name <filename>
+[30] Write to a File:
+ Users can update the content of the file at a word level. This 
+operation allows users to modify and append data to existing files.
+WRITE <filename> <sentence_number>  # Locks the sentence for other users (if no file write access, should return appropriate here)<word_index> <content> # Updates the sentence at <word_index> with <content>...<word_index> <content> # User can update the sentence multiple timesETIRW # Relieves the sentence lock, allowing other users to finally write
+Few important points to note here:
+
+After
+ each WRITE completion, the sentence index update. So, care must be 
+taken for ensuring concurrent WRITEs are handled correctly.
+The 
+content may contain characters like period (.), exclamation mark (!), or
+ question mark (?). The system should be able to recognise these 
+sentence delimiters and create seperate sentences accordingly. (Please 
+refer to examples given below, for more clarity).Yes, every 
+period (or question / exclamation mark) is a sentence delimiter, even if
+ it is in the middle of a word like “e.g.” or “Umm… ackchually!”
+Hint:
+ For resolving concurrent read-write issues, you may write to a 
+temporary swap file initially, and move the contents to the final file 
+once all updates are complete. You may also consider using locks, 
+semaphores, some algorithmic approach, etc.
+[15] Undo Change: Users can rever the last changes made to a file.UNDO <filename> # Reverts the last change made to the file
+Note: The undo-es are file 
+specific, and not user specific. So, if user A makes a change, and user B
+ wants to undo it, user B can also do it. The undo history is maintained
+ by the storage server.
+
+[10] Get Additional Information:
+ Users can access a wealth of supplementary information about specific 
+files. This includes details such as file size, access rights, 
+timestamps, and other metadata, providing users with comprehensive 
+insights into the files they interact with.INFO <filename> # Display details in any convenient format, just that all above-mentioned details should be there
+[10] Delete a File:
+ Owners should be able to remove files from the system when they are no 
+longer needed, contributing to efficient space management. All data like
+ user access should be accordingly updated to reflect this change.DELETE <filename> # Deletes the file <filename>
+[15] Stream Content:
+ The client establishes direct connection with the Storage Server and 
+fetches & displays the content word-by-word with a delay of 0.1 
+seconds between each word. This simulates a streaming effect, allowing 
+users to experience the content in a dynamic manner.STREAM <filename> # Streams the content of the file word by word with a delay of 0.1 seconds
+Note: If the storage server goes down mid-streaming, an appropriate error message should be displayed to the user.
+
+[10] List Users: Users can view a list of all users registered in the system.LIST # Lists all users in the system
+[15] Access: 
+The creator (owner) of the file can provide access to other users. The 
+owner can provide read or write access. The owner can also remove access
+ from other users. The owner always has both read and write access.ADDACCESS -R <filename> <username>  # Adds read access to the userADDACCESS -W <filename> <username>  # Adds write (and read) access to the userREMACCESS <filename> <username>  # Removes all access
+[15] Executable File:
+ Users (with read access) can “execute” the file. Execute, here, means 
+executing the file content as shell commands. The output of the command 
+should be displayed to the user.EXEC <filename> # Executes the file content as shell commands
+Note: The execution must happen on the name server; and the outputs as is should be piped to the client interface
+
+  [40] System Requirements
+The system must support the following requirements:
+
+[10] Data Persistence:
+ All files and their associated metadata (like access control lists) 
+must be stored persistently. This ensures that data remains intact and 
+accessible even after Storage Servers restart or fail.
+[5] Access Control:
+ The system must enforce access control policies, ensuring that only 
+authorized users can read or write to files based on the permissions set
+ by the file owner.
+[5] Logging: 
+Implement a logging mechanism where the NM and SS records every request,
+ acknowledgment and response. Additionally, the NM should display (print
+ in terminal) relevant messages indicating the status and outcome of 
+each operation. This bookkeeping ensures traceability and aids in 
+debugging and system monitoring. Each entry should include relevant 
+information such as timestamps, IP, port, usernames and other important 
+operation details crucial for diagnosing and troubleshooting issues.
+[5] Error Handling:
+ The system must provide clear and informative error messages for all 
+sorts of expected / unexpected failures, including interactions between 
+clients, Name Server (NM), and Storage Servers (SS). Define a 
+comprehensive set of error codes to cover scenarios such as unauthorized
+ access, file not found, resource contention (e.g., file locked for 
+writing) and system failures. These error codes should be universal 
+throughout the system.
+[15] Efficient Search:
+ The Name Server should implement efficient search algorithms to quickly
+ locate files based on their names or other metadata, minimizing latency
+ in file access operations. Furthermore, caching should be implemented 
+for recent searches to expedite subsequent requests for the same data.
+Note:
+ An approach faster than O(N) time complexity is expected here. 
+Efficient data structures like Tries, Hashmaps, etc. can be used.
+  [10] Specifications
+  1. Initialisation
+Name Server (NM):
+ The first step is to initialize the Naming Server, which serves as the 
+central coordination point in the NFS. It is responsible for managing 
+the essential information about file locations and content.
+Note:
+ The IP address and port of the Naming Server can be assumed to be known
+ publicly so that it can be provided to Clients and Storage servers 
+while registering.
+Storage Server (SS):
+ Each Storage Server is responsible for physically storing the files and
+ interacting with the Naming Server.Upon initialization, the SS sends 
+vital details about its existence to the Naming Server. This information
+ includes: IP address, port for NM connection, port for client 
+connection and a list of files on it.
+Client:
+ Clients on initialisation should ask the user for their username (for 
+file accesses) and pass this information along with its IP, NM port and 
+SS port to the Name Server.
+  2. Name Server
+Storing Storage Server data:
+ One of the fundamental functions of the NM is to serve as the central 
+repository for critical information provided by Storage Servers (SS) 
+upon connection. This information is maintained by NM, to later direct 
+data requests to appropriate storage server. As mentioned in 
+specification 2, these lookups need to be efficient.
+Client task feedback:
+ Upon completion of tasks initiated by clients, the NM plays a pivotal 
+role in providing timely and relevant feedback to the requesting 
+clients. This is really important in real-systems where client response 
+latency is pivotal.
+  3. Storage Servers
+The Storage Servers are equipped with the following functionalities:
+
+Adding new storage servers:
+ New Storage Servers (i.e., which begin running after the initial 
+initialisation phase) have the capability to dynamically add their 
+entries to the NM at any point during execution. This flexibility 
+ensures that the system can adapt to changes and scaling requirements 
+seamlessly. The initialisation process at the storage server side 
+follows the same protocol as described in Specification 1.
+Commands Issued by NM:
+ The Name Server can issue specific commands to the Storage Servers, 
+such as creating, editing or deleting files. The Storage Servers are 
+responsible for executing these commands as directed by the NM.
+Client Interactions:
+ Some operations require the client to establish direct connection with 
+the storage server. The storage server is expected to facilitate these 
+interactions as needed.
+  4. Client
+Whenever
+ a client boots up, it asks the user for their username. This username 
+is then used for all file access control operations. The system should 
+ensure that users can only perform actions on files they have 
+permissions for, based on their username. This username is relayed to 
+the NM, which stores it along with the client information until the 
+client disconnects.
+Clients initiate communication with the NM to interact with the system. Here’s how this interaction unfolds:
+
+Any
+ file access request from the client is first sent to the NM, which 
+locates the corresponding Storage Server hosting that file (one of 
+many), using its locally stored information.
+Depending on the 
+type of operation requested by the client, the NM may either handle the 
+request as a middleman or facilitate direct communication between the 
+client and the appropriate Storage Server. The operations can be broadly
+ categorized as follows:Reading, Writing, Streaming
+ : The NM identifies the correct Storage Server and returns the precise 
+IP address and client port for that SS to the client. Subsequently, the 
+client directly communicates with the designated SS. This direct 
+communication is established, and the client continuously receives 
+information packets from the SS until a predefined “STOP” packet is sent
+ or a specified condition for task completion is met. The “STOP” packet 
+serves as a signal to conclude the operation.
+Listing files, Basic Info and Access Control
+ : The NM handles these requests directly. It processes the client’s 
+request and retrieves the necessary information from its local storage. 
+Once the information is gathered, the NM sends it back to the client, 
+providing the requested details without involving any Storage Server.
+Creating and Deleting Files
+ : The NM determines the appropriate SS and forwards the request to the 
+appropriate SS for execution. The SS processes the request and performs 
+the specified action, such as creating / deleting the file. After 
+successful execution, the SS sends an acknowledgment (ACK) to the NM to 
+confirm task completion. The NM, in turn, conveys this information back 
+to the client, providing feedback on the task’s status.
+Execute
+ : The NM requests for information from SS, but the main processing and 
+communication is handled by the NM directly. The NM executes the 
+commands contained within the file and captures the output. This output 
+is then relayed back to the client, providing them with the results of 
+the executed commands.
+  [50] Bonus Functionalities (Optional)
+[10] Hierarchical Folder Structure:
+ Allow users to create folders and subfolders to organize files. Users 
+should be able to navigate through this hierarchy when performing file 
+operations. Some associated commands that are expected to be implemented
+ are:
+CREATEFOLDER <foldername> # Creates a new folderMOVE <filename> <foldername> # Moves the file to the specified folderVIEWFOLDER <foldername> # Lists all files in the specified folder
+[15] Checkpoints:
+ Implement a checkpointing mechanism that allows users to save the state
+ of a file at specific points in time. Users should be able to revert to
+ these checkpoints if needed. The following commands are expected to be 
+implemented:
+CHECKPOINT <filename> <checkpoint_tag> # Creates a checkpoint with the given tagVIEWCHECKPOINT <filename> <checkpoint_tag> # Views the content of the specified checkpointREVERT <filename> <checkpoint_tag> # Reverts the file to the specified checkpointLISTCHECKPOINTS <filename> # Lists all checkpoints for the specified file
+[5] Requesting Access:
+ Users can request access to files they do not own. The owner of the 
+file can then approve or deny these requests. There is no need of a 
+push-notification mechanism, a simple storing of requests and an 
+owner-side feature to view and approve/reject requests is sufficient.
+[15] Fault Tolerance:
+ To ensure the robustness and reliability of the system, the following 
+fault tolerance and data replication strategies need to be implemented:Replication
+ : Implement a replication strategy for data stored within the system. 
+This strategy involves duplicating every file and folder in an SS in 
+another SS. In the event of an SS failure, the NM should be able to 
+retrieve the requested data from one of the replicated stores. Every 
+write command should be duplicated asynchronously across all replicated 
+stores. The NM does not wait for acknowledgment but ensures that data is
+ redundantly stored for fault tolerance.
+Failure Detection
+ : The NM should be equipped to detect SS failures. This ensures that 
+the system can respond promptly to any disruptions in SS availability.
+SS Recovery
+ : When an SS comes back online (reconnects to the NM), the duplicated 
+stores should be matched back to the original SS. This ensures that the 
+SS is synchronized with the current state of the system and can resume 
+its role in data storage and retrieval seamlessly.
+  Examples
+Note:
+ There is no specification on the exact format of the commands. The 
+commands mentioned in the examples are indicative. You may choose to 
+implement them in any format you like, as long as the functionality 
+remains the same.
+  Example 1: View File
+Client: VIEW  # Lists files accessible to the user--> wowee.txt--> nuh_uh.txtClient: VIEW -a  # Lists all files on the system--> wowee.txt--> nuh_uh.txt--> grades.txtClient: VIEW -l  # Lists files accessible to the user with details---------------------------------------------------------|  Filename  | Words | Chars | Last Access Time | Owner ||------------|-------|-------|------------------|-------|| wowee.txt  |   69  |  420  | 2025-10-10 14:32 | user1 || nuh_uh.txt |   37  |  123  | 2025-10-10 14:32 | user1 |---------------------------------------------------------Client: VIEW -al---------------------------------------------------------|  Filename  | Words | Chars | Last Access Time | Owner ||------------|-------|-------|------------------|-------|| wowee.txt  |   69  |  420  | 2025-10-10 14:32 | user1 || nuh_uh.txt |   37  |  123  | 2025-10-10 14:32 | user1 || grades.txt |   51  |  273  | 2025-10-10 14:32 | kaevi |---------------------------------------------------------
+  Example 2: Read File
+Client: READ wowee.txt  # Displays the content of the fileOSN assignments are so fun!I love doing them.          Wish we had more of them.
+  Example 3: Create File
+Client: CREATE mouse.txt  # Creates an empty file named mouse.txtFile Created Successfully!Client: VIEW--> wowee.txt--> nuh_uh.txt--> mouse.txt
+Note: NS 
+dynamically adds the new file to the list of available files and updates
+ backup SSs. If the file already exists, NS responds with an appropriate
+ error.
+  Example 4: Write to a File
+Client: WRITE mouse.txt 0 # Adding to the start of fileClient: 1 Im just a mouse.Client: ETIRWWrite Successful!Client: READ mouse.txtIm just a mouse.Client: WRITE mouse.txt 1  # In essence, appending to the fileClient: 1 I dont like PNSClient: ETIRWWrite Successful!Client: READ mouse.txtIm just a mouse. I dont like PNSClient WRITE mouse.txt 2  # Caveat, note the lack of delimiter after last sentence. There are only 2 sentences.ERROR: Sentence index out of range.  # Similarly for word indexes (negative or > number of words + 1, should results in errors)Client: WRITE mouse.txt 1  # Inserting into the second sentenceClient: 3 T-TClient: ETIRWWrite Successful!Client: READ mouse.txtIm just a mouse. I dont like T-T PNSClient: WRITE mouse.txt 0  # Inserting multiple times into a sentenceClient: 4 deeply mistaken hollow lil gei-fwen # New sentence : Im just a deeply mistaken hollow lil gei-fwen pocket-sized mouse.Client: 6 pocket-sized  # New sentence : Im just a deeply mistaken hollow pocket-sized lil gei-fwen mouse.Client: ETIRWWrite Successful!Client: READ mouse.txtIm just a deeply mistaken hollow pocket-sized lil gei-fwen mouse. I dont like T-T PNSClient: WRITE mouse.txt 1  # Inserting a sentence delimiterClient: 5 and AAD. aaaah # New sentences : [I dont like T-T PNS and AAD.]* [aaaah]. Currently active status remains with the index at index 1Client: 0 But,  # New sentence : [But, I dont like T-T PNS and AAD.]* [aaaah].Client: ETIRWWrite Successful!Client: READ mouse.txtIm just a deeply mistaken hollow pocket-sized lil gei-fwen mouse. But, I dont like T-T PNS and AAD. aaaah.
+The multiples writes within a single WRITE 
+call, are all considered a single operation. Note this while 
+implementing features like UNDO
+Proper error handling should cover:
+
+Attempting to write without access
+Attempting to write a locked sentence
+Invalid indices
+Updates are applied in order received, so later updates operate on the already modified sentence.
+  Example 5: Undo Change
+Client: READ nuh uh.txtrm -rf /  # Oops!Client: WRITE nuh_uh.txt 0Client: 0 sudoClient: ETIRWWrite Successful!Client: READ nuh_uh.txtsudo rm -rf /Client: UNDO nuh_uh.txtUndo Successful!Client: READ nuh_uh.txtrm -rf /
+Note:
+
+Only one undo operation for a file needs to be supported. Multiple undos are beyond the scope of this project.
+Undo operates at the Storage Server level and only reverts the most recent change.
+If
+ the current user is user1 and the most recent modification to the file 
+was made by user2, then an UNDO command issued by user1 should revert 
+user2’s last change.
+  Example 6: Get Additional Information
+Client: INFO nuh_uh.txt--> File: feedback.txt--> Owner: user1--> Created: 2025-10-10 14:21--> Last Modified: 2025-10-10 14:32--> Size: 52 bytes--> Access: user1 (RW)--> Last Accessed: 2025-10-10 14:32 by user1
+  Example 7: Delete a File
+Client: VIEW--> wowee.txt--> nuh_uh.txt--> mouse.txtClient: DELETE mouse.txtFile 'mouse.txt' deleted successfully!Client: VIEW--> wowee.txt--> nuh_uh.txt
+  Example 8: Stream File
+Same
+ as READ, but the client receives the file content word-by-word (from 
+the storage server) with a delay of 0.1 seconds between each word.
+  Example 9: List Users
+Client: LIST--> user1--> user2--> kaevi
+  Example 10: Access Control
+Client: INFO nuh_uh.txt--> File: feedback.txt--> Owner: user1--> Created: 2025-10-10 14:21--> Last Modified: 2025-10-10 14:32--> Size: 52 bytes--> Access: user1 (RW)--> Last Accessed: 2025-10-10 14:32 by user1Client: ADDACCESS -R nuh_uh.txt user2Access granted successfully!Client: INFO nuh_uh.txt--> File: feedback.txt--> Owner: user1--> Created: 2025-10-10 14:21--> Last Modified: 2025-10-10 14:32--> Size: 52 bytes--> Access: user1 (RW), user2 (R)--> Last Accessed: 2025-10-10 14:32 by user1Client: ADDACCESS -W nuh_uh.txt user2Access granted successfully!--> File: feedback.txt--> Owner: user1--> Created: 2025-10-10 14:21--> Last Modified: 2025-10-10 14:32--> Size: 52 bytes--> Access: user1 (RW), user2 (RW)--> Last Accessed: 2025-10-10 14:32 by user1Client: REMACCESS nuh_uh.txt user2Access removed successfully!Client: INFO nuh_uh.txt--> File: feedback.txt--> Owner: user1--> Created: 2025-10-10 14:21--> Last Modified: 2025-10-10 14:32--> Size: 52 bytes--> Access: user1 (RW)--> Last Accessed: 2025-10-10 14:32 by user1
+  Example 11: Execute File
+Suppose the content of LMAAO.txt is as follows:
+
+echo "Running diagnostics..."
+ls
+echo "Done!"
+Client: EXEC LMAAO.txtRunning siagnostics...--> LMAAO.txt--> RotT.txt--> AUG.txtDone!
+
+The data structures that NS will contain:
+Access control data structure (refer entirely to nmACCESS_CONTROL.c). Some details about this data structure:
+- Using nested HASH TABLES (2 level)
+- Hash functions used: FNV-1a and djb2
+- FNV-1a is primary, djb2 is secondary (used for handling collisions i.e. open addressing w/ double )
+- Collisions handled using OPEN ADDRESSING W/ DOUBLE HASHING
+- hash function hashes the entire path string
+- for persistance, all data is stored in "permission_db", a separate file for each user containing one line
+for each file that user has some permissions for, and the corresponding permissions.
+- hash function hashes the entire path string
+- This persistence model is simple and human-readable, but it assumes that filenames and permissions do not contain the | character or newline characters. [because it uses '|' to separate filename and perms in each line of the file for a specific user]
+
+Folder hierarchy for each user (refer entirely to ssFOLDER_HIERARCHY.c)
+Each user will have their own folder structure. These structures will be stored in the NS, and they DO NOT have to be persistent.
+Being persistent for a data structure means that after the process shuts down and is started again, the data structure has not lost any data from the time the NS shut down.
+Some details about how I have implemented this folder hierarchy data structure:
+Used a tree
+each node can have any number of children
+have an array for children in each node, and a parent pointer in each node
+only a "folder" node has children
+leaf nodes represent files, having a "filename" (char*)
+root node of the entire tree is not a folder neither a file, just "root"
+this is the default directory of the user. any folder inside the root directory (i.e. a "folder" node that is a child of the root has no parent folder)
+the following operations have to be implemented as functions that search through/update/manipulate the tree data structure:
+
+
+1. CREATEFOLDER <foldername> # Creates a new folder
+2. VIEWFOLDER <foldername> # Lists all files in the specified folder
+3. VIEWFOLDER ROOT -> to view the root directory (also no folder can be named ROOT)
+4. MOVE <filename> <foldername> # Moves the file to the specified folder. This action only works when both <filename> and <foldername> are present in the same directory
+
+5. UPMOVE <filename>. # Moves the file into parent folder of current folder. Print error message if no parent folder (i.e. the file was present in root directory)
+
+6. OPEN -flags <foldername> # opens a folder in the current directory and switches
+FLAGS:
+-c # also creates the folder if folder is not already created
+
+7. OPENPARENT <foldername> # opens the parent folder. Print error message if no parent folder (i.e. current folder was in root directory)
+
+A LIST of all USERS, storing whether the user is “ACTIVE” or not.
+This list will be used for the “LIST” command and also to enforce the policy that “no user can be active on more than one client”. 
+
+CACHING STRUCTURE:
+This is also in the NS, caching should be implemented for recent searches to expedite subsequent requests for the same data. So the NS can find out the file, related to the current query, is on which SS quicker.
+Now the default mechanism for the NS to search which SS the file is on, is to use HASHING. HASHING will immediately map the file to a respective SS, and then NS will send a request to that SS, and then that SS will consult its local data structures to return the request. I will define these “local data structures” for the SS later in the prompt.
+So the CACHING structure has to speed up this default mechanism, perhaps by implementing a smaller hash table.
+
+The ACCESS CONTROL DATA STRUCTURE and the LIST OF ALL USERS should be persistent.
+Folder hierarchy and CACHING structure should not be persistent - you need not worry about saving them to secondary storage on NS shut down/loading from secondary storage when NS starts again.
+
+Now each client that will be connected to the NS will be a separate thread. So you need to implement locking mechanisms for the shared data structures across client threads: Access control data structure, List of all users, CACHING.
+Folder hierarchy is not a shared data structure across clients since each user can be active on only one client at any given time (this will be ensured when a client first tries to connect to the NS, there we will check the LIST whether the username that the client supplied while connecting is already active or not)
+
+Next, you have to appropriately manage network connections of the NS with many clients and many storage servers (SSs). We will be using TCP sockets. 
+
+Now I will define the user functionalities that will be coded in the client, and to perform these functions the client will query the NS/SS according to the respective query. 
+
+For connections related to all user commands, we will be using TCP sockets, be careful that NS has to listen to multiple clients, NS has to make connections to multiple clients and multiple SSs simultaneously. Implement flow control. Also use 3 way handshakes and 4 way handshakes to initiate and terminate connections respectively. 
+
+DETAILS ABOUT SS IMPLEMENTATION:
+Each SS stores filenames and metadata of all the files that SS stores. Metadata includes: word count, sentence count, character count, owner, last access timestamp, file size.
+Also each SS has a fixed backup SS. 
+Any file modification on the SS should be backed up on the respective backup SS. And say file 1 is mapped original to SS1. Backup SS of SS1 is SS2. We modify file 1 using a WRITE query. SS1 creates a backup of this modified file as file1.backup on SS2. Say SS1 shuts down. All next queries for file 1 must be redirected to the backup SS until the “main SS” for file 1 comes back up. When the “main SS” for file 1 comes back up, we have to update the storage of the “main SS” using the modified backups so the main SS is up to date.
+Fault Tolerance: To ensure the robustness and reliability of the system, the following fault tolerance and data replication strategies need to be implemented:
+
+Replication : Implement a replication strategy for data stored within the system. This strategy involves duplicating every file and folder in an SS in another SS. In the event of an SS failure, the NM should be able to retrieve the requested data from one of the replicated stores. Every write command should be duplicated asynchronously across all replicated stores. The NM does not wait for acknowledgment but ensures that data is redundantly stored for fault tolerance.
+Failure Detection : The NM should be equipped to detect SS failures. This ensures that the system can respond promptly to any disruptions in SS availability.
+SS Recovery : When an SS comes back online (reconnects to the NM), the duplicated stores should be matched back to the original SS. This ensures that the SS is synchronized with the current state of the system and can resume its role in data storage and retrieval seamlessly.
+Checkpoints: Implement a checkpointing mechanism that allows users to save the state of a file at specific points in time. Users should be able to revert to these checkpoints if needed. The following commands are expected to be implemented:
+CHECKPOINT <filename> <checkpoint_tag> # Creates a checkpoint with the given tag
+VIEWCHECKPOINT <filename> <checkpoint_tag> # Views the content of the specified checkpoint
+REVERT <filename> <checkpoint_tag> # Reverts the file to the specified checkpoint
+LISTCHECKPOINTS <filename> # Lists all checkpoints for the specified file
+Mainly not the functionalities required to be implemented by the NS and SS, the commands will be entered on the client.
+	Checkpoints are persistent.
+Only have checkpoints for a file in its “main SS”.
+
+Implement logging for each and every networking and processing event in both NS and SS. Upon completion of tasks initiated by clients, the NM plays a pivotal role in providing timely and relevant feedback to the requesting clients. Implement a logging mechanism where the NM and SS records every request, acknowledgment and response. Additionally, the NM should display (print in terminal) relevant messages indicating the status and outcome of each operation. This bookkeeping ensures traceability and aids in debugging and system monitoring. Each entry should include relevant information such as timestamps, IP, port, usernames and other important operation details crucial for diagnosing and troubleshooting issues.
+
+VIEW
+User can view all files they have access to. They can view all files on the system, irrespective of the access using “-a” flag. “-l” flag should list files along with details like word count, character count, last access, owner, etc. Note, a combination of flags can be used lke “-al”, which should list all the files with details.
+VIEW  # Lists all files user has access to
+VIEW -a # Lists all files on the system
+VIEW -l # Lists all user-access files with details
+VIEW -al # Lists all system files with details
+
+Example: 
+Client: VIEW  # Lists files accessible to the user
+--> wowee.txt
+--> nuh_uh.txt
+
+Client: VIEW -a  # Lists all files on the system
+--> wowee.txt
+--> nuh_uh.txt
+--> grades.txt
+
+Client: VIEW -l  # Lists files accessible to the user with details
+---------------------------------------------------------
+|  Filename  | Words | Chars | Last Access Time | Owner |
+|------------|-------|-------|------------------|-------|
+| wowee.txt  |   69  |  420  | 2025-10-10 14:32 | user1 |
+| nuh_uh.txt |   37  |  123  | 2025-10-10 14:32 | user1 |
+---------------------------------------------------------
+
+Client: VIEW -al
+---------------------------------------------------------
+|  Filename  | Words | Chars | Last Access Time | Owner |
+|------------|-------|-------|------------------|-------|
+| wowee.txt  |   69  |  420  | 2025-10-10 14:32 | user1 |
+| nuh_uh.txt |   37  |  123  | 2025-10-10 14:32 | user1 |
+| grades.txt |   51  |  273  | 2025-10-10 14:32 | kaevi |
+---------------------------------------------------------
+For the normal “VIEW” type command, the NS has to check the ACCESS CONTROL DATA STRUCTURE, and find all the files this specific user has access to, and send these filenames to the client and then the client will display.
+
+For “VIEW -a”: the NS will iterate through the “SS list: linked list of all the SSs” and get all the files present in each SS and return this data to NS which will then return it to client.
+
+For “VIEW -l”: the NS will check the ACCESS CONTROL DATA STRUCTURE, find all the files this specific user has access to, and for each of these files, it will check on which SS this file resides (using the hashing/caching) and ask that SS for the metadata of this file and then it will return all files and their metadata altogether at once to the user.
+
+For “VIEW -al”: the NS will iterate through the SS list and not only get all the filenames of all files present on each SS but also the metadata. So NS will query ALL SSs, each SS will return data to NS, and NS will combine all this data and return to client who will then display on terminal screen.
+
+READ <filename> # Prints the content of the complete file
+Users can retrieve the contents of files stored within the system. First the NS checks if this user has read access using ACCESS CONTROL DATA STRUCTURE, then locates correct SS, then sends details of this SS (like on which port does this SS listens for clients and SS IP) to client and then client makes direct connection with this SS, then SS sends file data to the client. All file data will be printed on client terminal screen.
+
+CREATE <filename> # Creates an empty file with name <filename>
+Normal CLIENT->NM->SS->NM->CLIENT connection type
+File gets created on some SS, according to which SS is chosen after hashing the filename
+	File added to ACCESS CONTROL DATA STRUCTURE
+File added to all necessary data structures: update caches, update folder hierarchy for each user, update files list on SS (i.e. which files the SS has, SS stores it in a list/hash table with all metadata/owner details etc.)
+
+Write to a File: Users can update the content of the file at a word level. This operation allows users to modify and append data to existing files.
+
+WRITE <filename> <sentence_number>  # Locks the sentence for other users (if no file write access, should return appropriate here)
+<word_index> <content> # Updates the sentence at <word_index> with <content>
+.
+.
+.
+<word_index> <content> # User can update the sentence multiple times
+ETIRW # Relieves the sentence lock, allowing other users to finally write
+
+Few important points to note here:
+After each WRITE completion, the sentence index update. So, care must be taken for ensuring concurrent WRITEs are handled correctly.
+The content may contain characters like period (.), exclamation mark (!), or question mark (?). The system should be able to recognise these sentence delimiters and create seperate sentences accordingly. (Please refer to examples given below, for more clarity).
+Yes, every period (or question / exclamation mark) is a sentence delimiter, even if it is in the middle of a word like “e.g.” or “Umm… ackchually!”
+Hint: For resolving concurrent read-write issues, you may write to a temporary swap file initially, and move the contents to the final file once all updates are complete. You may also consider using locks, semaphores, some algorithmic approach, etc.
+First we have to check WRITE access. NS will locate correct SS, it will send the write query to that SS, then SS will handle that write query for that file. Here being aware about concurrency is very crucial since there can be many concurrent readers and writers. Update metadata in the file list of the SS, update backup SS, update the previous version of file that we store for undo (do this on the backup SS also), update cache in NS, implement accurate logging.
+
+
+UNDO <filename> # Reverts the last change made to the file
+First check if this specific user has WRITE access, a user can do UNDO for a file only if they have write access for that file.
+The undo-es are file specific, and not user specific. So, if user A makes a change, and user B wants to undo it, user B can also do it. The undo history is maintained by the storage server. 
+The multiples writes within a single WRITE call, are all considered a single operation. Note this while implementing features like UNDO
+Only one undo operation for a file needs to be supported. Multiple undos are beyond the scope of this project.
+Undo operates at the Storage Server level and only reverts the most recent change.
+If the current user is user1 and the most recent modification to the file was made by user2, then an UNDO command issued by user1 should revert user2’s last change
+We will be implementing this by simply saving the previous file. The respective SS is responsible for storing the previous file of every file it stores. Everything has to be persistent. You also have to manage the stored previous file on the respective BACKUP SSs for each respective SSs.
+	
+
+INFO <filename> # Display details in any convenient format, just that all above-mentioned details should be there
+For a user to do INFO command on a filename, he should have “WRITE” access. So first check access, then query the correct SS for all metadata. SS returns metadata to NS, and NS returns to client who will display it in a tabular manner.
+
+DELETE <filename> # Deletes the file <filename>
+Remove file from all appropriate data structures: folder hierarchy for that respective user, caches in NS, ACCESS CONTROL DATA STRUCTURE (remove from each user’s file list), delete from SS and BACKUP SS. 
+STREAM <filename> # Streams the content of the file word by word with a delay of 0.1 seconds
+The client establishes direct connection with the Storage Server and fetches & displays the content word-by-word with a delay of 0.1 seconds between each word. This simulates a streaming effect, allowing users to experience the content in a dynamic manner. NS checks if user has READ access, then it forwards details of correct SS to client who then makes direct connection with SS.
+
+LIST # Lists all users in the system
+Users can view a list of all users registered in the system. This is done by the LIST OF ALL USERS data structure that the NS keeps. Display all users irrespective of whether the user is active or not. But display the active/inactive field.
+
+ADDACCESS -R <filename> <username>  # Adds read access to the user
+ADDACCESS -W <filename> <username>  # Adds write (and read) access to the user
+REMACCESS <filename> <username>  # Removes all access
+The creator (owner) of the file can provide access to other users. The owner can provide read or write access. The owner can also remove access from other users. The owner always has both read and write access. These commands just do changes to the ACCESS CONTROL DATA STRUCTURE. Remember it is a shared data structure between multiple threads (one thread for each connected client).
+
+EXEC <filename> # Executes the file content as shell commands
+Users (with read access) can “execute” the file. Execute, here, means executing the file content as shell commands. The output of the command should be displayed to the user.
+Make a VERY detailed report of your code: which specification is implemented where in which function.
+
+	
+Requesting Access: Users can request access to files they do not own. The owner of the file can then approve or deny these requests. There is no need of a push-notification mechanism, a simple storing of requests and an owner-side feature to view and approve/reject requests is sufficient. 
+
+The commands for the hierarchical folder structure manipulation will be entered by the client. They are:1. CREATEFOLDER <foldername> # Creates a new folder
+2. VIEWFOLDER <foldername> # Lists all files in the specified folder
+3. VIEWFOLDER ROOT -> to view the root directory (also no folder can be named ROOT)
+4. MOVE <filename> <foldername> # Moves the file to the specified folder. This action only works when both <filename> and <foldername> are present in the same directory
+
+5. UPMOVE <filename>. # Moves the file into parent folder of current folder. Print error message if no parent folder (i.e. the file was present in root directory)
+
+6. OPEN -flags <foldername> # opens a folder in the current directory and switches
+FLAGS:
+-c # also creates the folder if folder is not already created
+
+7. OPENPARENT <foldername> # opens the parent folder. Print error message if no parent folder (i.e. current folder was in root directory)
+Functionality is handled by NS. client merely needs to forward the query to NS.
+
+Also, checkpoint commands, mentioned earlier in the prompt.
+CHECKPOINT <filename> <checkpoint_tag> # Creates a checkpoint with the given tag
+VIEWCHECKPOINT <filename> <checkpoint_tag> # Views the content of the specified checkpoint
+REVERT <filename> <checkpoint_tag> # Reverts the file to the specified checkpoint
+LISTCHECKPOINTS <filename> # Lists all checkpoints for the specified file
+
+Give me the code for the client, ns, ss.
+You can modularize code for each component into multiple files.
+Use POSIX C libraries.
+

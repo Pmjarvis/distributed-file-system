@@ -99,11 +99,16 @@ int main(int argc, char* argv[]) {
     g_ss_client_port = atoi(argv[4]);
     g_backup_port = atoi(argv[5]); // This is *our* backup port
     
-    // TODO: The backup's IP/port for *sending* replicas is not provided.
-    // This is a flaw in the spec. We will assume the NS tells us,
-    // or we use a hardcoded value.
-    // For now, repl_worker will fail until this is set.
-    strncpy(g_backup_ip, "127.0.0.1", 16); // Placeholder
+    // NOTE: The backup's IP/port for *sending* replicas is not provided in argv.
+    // According to the design, the Name Server assigns backup relationships
+    // dynamically after registration (see Res_SSRegisterAck.backup_of_ss_id).
+    // In a complete implementation, the NS would also provide the backup SS's
+    // IP and replication port in the registration response.
+    // For now, we use a placeholder value. In production, this would be:
+    // 1. Received from NS in the registration ACK, OR
+    // 2. Obtained via a separate NS query using the backup_of_ss_id, OR
+    // 3. Configured via additional command-line arguments.
+    strncpy(g_backup_ip, "127.0.0.1", 16); // Placeholder - should be provided by NS
     
     log_init("ss.log");
     ss_log("MAIN: Starting Storage Server...");

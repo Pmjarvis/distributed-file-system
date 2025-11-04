@@ -131,7 +131,8 @@ int handle_generic_response(int sock, MsgHeader* in_header) {
 int get_ss_connection(const char* filename, MsgType req_type) {
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
-    strncpy(req.filename, filename, MAX_PATH - 1);
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
     // NS will get username from its session, but we send it for
     // stateless check (though our NS is stateful)
     strncpy(req.username, g_username, MAX_USERNAME - 1);

@@ -67,7 +67,7 @@ typedef struct {
 // --- Access Request List ---
 typedef struct AccessRequest {
     char requester[MAX_USERNAME];
-    char filename[MAX_PATH];
+    char filename[MAX_FILENAME];
     struct AccessRequest* next;
 } AccessRequest;
 
