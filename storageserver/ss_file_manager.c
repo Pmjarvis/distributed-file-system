@@ -386,11 +386,13 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
 // --- Client Request Handlers ---
 
 void ss_handle_read(int client_sock, Req_FileOp* req) {
+    ss_log("READ: Starting read for file %s", req->filename);
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_rwlock_rdlock(&lock->file_lock);
     
     char filepath[MAX_PATH];
     ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    ss_log("READ: Full path is %s", filepath);
 
     FILE* f = fopen(filepath, "r");
     if (!f) {
@@ -400,15 +402,20 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
         return;
     }
     
+    ss_log("READ: File opened successfully, starting to read chunks");
     Res_FileContent chunk;
     size_t nread;
     bool sent_data = false;
+    int chunk_count = 0;
     
     while ((nread = fread(chunk.data, 1, MAX_PAYLOAD, f)) > 0) {
+        chunk_count++;
+        chunk.data_len = nread;
         chunk.is_final_chunk = (nread < MAX_PAYLOAD);
-        // Send only the actual data read plus the is_final_chunk flag
-        size_t payload_size = nread + sizeof(chunk.is_final_chunk);
-        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+        ss_log("READ: Chunk %d - read %zu bytes, is_final=%d", chunk_count, nread, chunk.is_final_chunk);
+        // Send the full structure so is_final_chunk is at the correct offset
+        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, sizeof(chunk));
+        ss_log("READ: Chunk %d sent", chunk_count);
         sent_data = true;
         
         if (chunk.is_final_chunk) break;
@@ -416,13 +423,16 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
     
     // If file is empty, send an empty chunk with final flag
     if (!sent_data) {
+        ss_log("READ: File is empty, sending empty final chunk");
+        memset(&chunk, 0, sizeof(chunk));
+        chunk.data_len = 0;
         chunk.is_final_chunk = true;
-        size_t payload_size = sizeof(chunk.is_final_chunk);
-        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, sizeof(chunk));
     }
     
     fclose(f);
     pthread_rwlock_unlock(&lock->file_lock);
+    ss_log("READ: Read complete for %s, sent %d chunks", req->filename, chunk_count);
 }
 
 void ss_handle_stream(int client_sock, Req_FileOp* req) {
@@ -551,10 +561,10 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
         bool sent_data = false;
         
         while ((nread = fread(chunk.data, 1, MAX_PAYLOAD, f)) > 0) {
+            chunk.data_len = nread;
             chunk.is_final_chunk = (nread < MAX_PAYLOAD);
-            // Send only the actual data read plus the is_final_chunk flag
-            size_t payload_size = nread + sizeof(chunk.is_final_chunk);
-            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+            // Send the full structure so is_final_chunk is at the correct offset
+            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, sizeof(chunk));
             sent_data = true;
             
             if (chunk.is_final_chunk) break;
@@ -562,9 +572,10 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
         
         // If checkpoint is empty, send an empty chunk with final flag
         if (!sent_data) {
+            memset(&chunk, 0, sizeof(chunk));
+            chunk.data_len = 0;
             chunk.is_final_chunk = true;
-            size_t payload_size = sizeof(chunk.is_final_chunk);
-            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+            send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, sizeof(chunk));
         }
         
         fclose(f);

@@ -129,6 +129,7 @@ int handle_generic_response(int sock, MsgHeader* in_header) {
 }
 
 int get_ss_connection(const char* filename, MsgType req_type) {
+    fprintf(stderr, "[DEBUG] get_ss_connection: requesting SS for '%s', req_type=%d\n", filename, req_type);
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
     strncpy(req.filename, filename, MAX_FILENAME - 1);
@@ -137,13 +138,17 @@ int get_ss_connection(const char* filename, MsgType req_type) {
     // stateless check (though our NS is stateful)
     strncpy(req.username, g_username, MAX_USERNAME - 1);
 
+    fprintf(stderr, "[DEBUG] Sending request to NS on sock %d\n", g_ns_sock);
     if (send_request(g_ns_sock, req_type, &req, sizeof(req)) < 0) {
         fprintf(stderr, "Failed to send request to Name Server\n");
         return -1;
     }
 
+    fprintf(stderr, "[DEBUG] Waiting for NS response...\n");
     MsgHeader header;
-    if (recv_header(g_ns_sock, &header) <= 0) {
+    int recv_result = recv_header(g_ns_sock, &header);
+    fprintf(stderr, "[DEBUG] recv_header returned %d\n", recv_result);
+    if (recv_result <= 0) {
         fprintf(stderr, "Lost connection to Name Server\n");
         return -1;
     }

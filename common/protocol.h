@@ -171,6 +171,7 @@ typedef struct {
 
 // S2C: Read
 typedef struct {
+    size_t data_len;  // Actual number of bytes in data[]
     char data[MAX_PAYLOAD];
     bool is_final_chunk;
 } Res_FileContent;

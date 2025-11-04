@@ -521,6 +521,7 @@ static void handle_folder_cmd(UserSession* session, MsgHeader* header) {
 }
 
 static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
+    printf("DEBUG: handle_ss_redirect called, type=%d\n", header->type);
     Req_FileOp payload;
     if (header->type == MSG_C2N_CHECKPOINT_REQ) {
         Req_Checkpoint chk_payload;
@@ -528,41 +529,55 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
         strncpy(payload.filename, chk_payload.filename, MAX_FILENAME - 1); // Copy filename for access check
         payload.filename[MAX_FILENAME - 1] = '\0';
     } else {
+        printf("DEBUG: Receiving payload of size %u\n", header->payload_len);
         recv_payload(session->client_sock, &payload, header->payload_len);
+        printf("DEBUG: Got filename: '%s'\n", payload.filename);
     }
     
     // 1. Check Access Control
     bool has_access = false;
+    printf("DEBUG: About to lock g_access_table_mutex\n");
     pthread_mutex_lock(&g_access_table_mutex);
+    printf("DEBUG: Mutex locked, checking access for user '%s' on file '%s'\n", session->username, payload.filename);
+    printf("DEBUG: g_access_table = %p\n", (void*)g_access_table);
     char* perms = user_ht_get_permission(g_access_table, session->username, payload.filename);
+    printf("DEBUG: Got perms = %s\n", perms ? perms : "NULL");
     
     if (header->type == MSG_C2N_READ_REQ || header->type == MSG_C2N_STREAM_REQ) {
         if (perms && strstr(perms, "read")) has_access = true;
     } else if (header->type == MSG_C2N_WRITE_REQ || header->type == MSG_C2N_UNDO_REQ || header->type == MSG_C2N_CHECKPOINT_REQ) {
         if (perms && strstr(perms, "write")) has_access = true;
     }
-    if (is_owner(session->username, payload.filename)) {
+    // Check ownership inline to avoid deadlock (we already hold the mutex)
+    if (perms && strstr(perms, "owner")) {
         has_access = true; // Owner has all access
     }
     pthread_mutex_unlock(&g_access_table_mutex);
     
+    printf("DEBUG: has_access=%d\n", has_access);
     if (!has_access) {
+        printf("DEBUG: Access denied, sending error\n");
         send_error_response_to_client(session->client_sock, "Access Denied.");
         return;
     }
     
     // 2. Find Storage Server
+    printf("DEBUG: Finding SS for file '%s'\n", payload.filename);
     StorageServer* ss = find_ss_for_file(payload.filename);
     if (!ss) {
+        printf("DEBUG: SS not found, sending error\n");
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
         return;
     }
     
+    printf("DEBUG: Found SS at %s:%d\n", ss->ip, ss->client_port);
     // 3. Send SS location back to client
     Res_SSLocation loc;
     strncpy(loc.ip, ss->ip, 16);
     loc.port = ss->client_port;
+    printf("DEBUG: Sending SS location to client\n");
     send_response(session->client_sock, MSG_N2C_SS_LOC, &loc, sizeof(loc));
+    printf("DEBUG: SS location sent successfully\n");
 }
 
 static void handle_req_access(UserSession* session, MsgHeader* header) {

@@ -261,23 +261,31 @@ void do_read(char* args) {
     
     send_request(ss_sock, MSG_C2S_READ, &req, sizeof(req));
     
+    fprintf(stderr, "[DEBUG] Waiting for READ response...\n");
     while(1) {
         MsgHeader header;
-        if (recv_header(ss_sock, &header) <= 0) break;
+        fprintf(stderr, "[DEBUG] About to recv header...\n");
+        int recv_result = recv_header(ss_sock, &header);
+        fprintf(stderr, "[DEBUG] recv_header returned %d, type=%d\n", recv_result, header.type);
+        if (recv_result <= 0) break;
         
         if (header.type == MSG_S2C_READ_CONTENT) {
             Res_FileContent chunk;
             // Payload is *not* a string, it can be binary data
             memset(&chunk, 0, sizeof(chunk));
-            recv_payload(ss_sock, &chunk, header.payload_len); 
+            fprintf(stderr, "[DEBUG] Receiving payload of size %zu...\n", header.payload_len);
+            recv_payload(ss_sock, &chunk, header.payload_len);
+            fprintf(stderr, "[DEBUG] Got chunk: data_len=%zu, is_final=%d\n", chunk.data_len, chunk.is_final_chunk);
             
-            // Determine actual data length
-            size_t data_len = header.payload_len - sizeof(chunk.is_final_chunk);
-            if (data_len > MAX_PAYLOAD) data_len = MAX_PAYLOAD;
+            // Use the data_len field to know how much actual data to print
+            if (chunk.data_len > 0 && chunk.data_len <= MAX_PAYLOAD) {
+                fwrite(chunk.data, 1, chunk.data_len, stdout);
+            }
             
-            fwrite(chunk.data, 1, data_len, stdout);
-            
-            if (chunk.is_final_chunk) break;
+            if (chunk.is_final_chunk) {
+                fprintf(stderr, "[DEBUG] Final chunk received, breaking\n");
+                break;
+            }
         } else {
             handle_generic_response(ss_sock, &header);
             break;
