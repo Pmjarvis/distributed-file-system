@@ -38,4 +38,4 @@ the following operations have to be implemented as functions that search through
 FLAGS:
 -c # also creates the folder if folder is not already created
 
-8. OPENPARENT <foldername> # opens the parent folder. Print error message if no parent folder (i.e. current folder was in root directory) 
+7. OPENPARENT <foldername> # opens the parent folder. Print error message if no parent folder (i.e. current folder was in root directory) 

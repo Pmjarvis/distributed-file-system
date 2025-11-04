@@ -1,0 +1,107 @@
+#include "ss_handler.h"
+#include "ss_globals.h"
+#include "ss_logger.h"
+#include "ss_file_manager.h"
+#include "ss_replicator.h"
+#include "../common/net_utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+void* handle_connection(void* arg) {
+    ConnectionArg* conn_arg = (ConnectionArg*)arg;
+    int sock = conn_arg->sock_fd;
+    char ip[16];
+    strncpy(ip, conn_arg->ip_addr, 16);
+    ip[15] = '\0'; // Ensure null-termination
+    free(conn_arg);
+    
+    // The first message determines the type of connection
+    MsgHeader header;
+    if (recv_header(sock, &header) <= 0) {
+        ss_log("HANDLER: Connection from %s dropped before identifying", ip);
+        close(sock);
+        return NULL;
+    }
+    
+    // --- THIS IS A CLIENT ---
+    if (header.type >= MSG_C2S_READ && header.type <= MSG_C2S_CHECKPOINT_OP) {
+        ss_log("HANDLER: New CLIENT connection from %s (Req: %d)", ip, header.type);
+        
+        // This is a single-request connection. Process it.
+        if (header.type == MSG_C2S_READ) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_read(sock, &req);
+        } else if (header.type == MSG_C2S_STREAM) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_stream(sock, &req);
+        } else if (header.type == MSG_C2S_WRITE) {
+            Req_Write_Transaction req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_write_transaction(sock, &req);
+        } else if (header.type == MSG_C2S_UNDO) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_undo(sock, &req);
+        } else if (header.type == MSG_C2S_CHECKPOINT_OP) {
+            Req_Checkpoint req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_checkpoint(sock, &req);
+        }
+        // NOTE: C2S_WRITE_DATA and C2S_WRITE_ETIRW are handled *inside* ss_handle_write_transaction
+
+    // --- THIS IS THE NAME SERVER ---
+    } else if (header.type >= MSG_N2S_CREATE_FILE && header.type <= MSG_N2S_EXEC_GET_CONTENT) {
+        ss_log("HANDLER: New NAME SERVER connection from %s (Req: %d)", ip, header.type);
+        
+        // This is a single-request connection. Process it.
+        if (header.type == MSG_N2S_CREATE_FILE) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_create_file(sock, &req);
+        } else if (header.type == MSG_N2S_DELETE_FILE) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_delete_file(sock, &req);
+        } else if (header.type == MSG_N2S_GET_INFO) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_get_info(sock, &req);
+        } else if (header.type == MSG_N2S_EXEC_GET_CONTENT) {
+            Req_FileOp req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_get_content_for_exec(sock, &req);
+        }
+
+    // --- THIS IS A REPLICATION CONNECTION ---
+    } else if (header.type >= MSG_S2S_REPLICATE_FILE && header.type <= MSG_S2S_ACK) {
+        // This should NOT happen. The replication listener handles this.
+        ss_log("HANDLER: ERROR: Main listener got a replication request from %s. Closing.", ip);
+        
+    } else {
+        ss_log("HANDLER: Unknown connection type from %s (first msg %d)", ip, header.type);
+    }
+    
+    ss_log("HANDLER: Closing connection from %s", ip);
+    close(sock);
+    return NULL;
+}
+
+// This function loops for the *duration* of a client's session
+void handle_client_session(int client_sock, const char* client_ip) {
+    // This function is NOT used in the current design.
+    // The main_listener spawns a thread per *connection*,
+    // and clients connect *per request*.
+    // The original `handle_connection` is correct.
+    ss_log("HANDLER: Client session started for %s (DEPRECATED)", client_ip);
+    //close(client_sock);
+}
+
+// This function is NOT used, see above.
+void handle_ns_session(int ns_sock, const char* ns_ip) {
+    ss_log("HANDLER: NS session started for %s (DEPRECATED)", ns_ip);
+    //close(ns_sock);
+}

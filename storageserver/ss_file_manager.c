@@ -1,0 +1,668 @@
+#define _DEFAULT_SOURCE
+#include "ss_file_manager.h"
+#include "ss_globals.h"
+#include "ss_logger.h"
+#include "ss_replicator.h"
+#include "../common/net_utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <errno.h>
+#include <ctype.h>
+
+// --- Path Utilities ---
+
+void ss_get_path(const char* dir, const char* filename, char* out_path) {
+    snprintf(out_path, MAX_PATH, "%s/%s", dir, filename);
+}
+
+void ss_create_dirs() {
+    mkdir(SS_ROOT_DIR, 0755);
+    mkdir(SS_FILES_DIR, 0755);
+    mkdir(SS_UNDO_DIR, 0755);
+    mkdir(SS_CHECKPOINT_DIR, 0755);
+}
+
+static int _copy_file(const char* src_path, const char* dest_path) {
+    int src_fd, dest_fd;
+    char buf[4096];
+    ssize_t nread;
+    
+    src_fd = open(src_path, O_RDONLY);
+    if (src_fd < 0) return -1;
+    
+    dest_fd = open(dest_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dest_fd < 0) {
+        close(src_fd);
+        return -1;
+    }
+    
+    while ((nread = read(src_fd, buf, sizeof(buf))) > 0) {
+        if (write(dest_fd, buf, nread) != nread) {
+            close(src_fd);
+            close(dest_fd);
+            return -1;
+        }
+    }
+    
+    close(src_fd);
+    close(dest_fd);
+    return (nread == 0) ? 0 : -1;
+}
+
+
+// --- Metadata Utilities ---
+
+int ss_get_file_metadata(const char* filename, FileMetadata* meta) {
+    char filepath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, filename, filepath);
+    
+    struct stat st;
+    if (stat(filepath, &st) != 0) {
+        return -1;
+    }
+    
+    // --- FIX: Use MAX_FILENAME ---
+    strncpy(meta->filename, filename, MAX_FILENAME - 1);
+    meta->filename[MAX_FILENAME - 1] = '\0';
+
+    meta->size_bytes = st.st_size;
+    meta->last_access_time = st.st_atime;
+    meta->last_modified_time = st.st_mtime;
+    
+    // TODO: Get owner. This is complex on POSIX without storing it.
+    // We will rely on the NS to tell us the owner on CREATE.
+    // For now, hardcode.
+    strncpy(meta->owner, "unknown", MAX_USERNAME - 1);
+
+    // Count words/chars
+    FILE* f = fopen(filepath, "r");
+    if (!f) return -1;
+    
+    meta->char_count = 0;
+    meta->word_count = 0;
+    int c;
+    bool in_word = false;
+    
+    while ((c = fgetc(f)) != EOF) {
+        meta->char_count++;
+        if (isspace(c)) {
+            if (in_word) {
+                in_word = false;
+            }
+        } else {
+            if (!in_word) {
+                in_word = true;
+                meta->word_count++;
+            }
+        }
+    }
+    fclose(f);
+    return 0;
+}
+
+int ss_scan_files(FileMetadata** file_list) {
+    DIR* d = opendir(SS_FILES_DIR);
+    if (!d) {
+        ss_log("Failed to open files directory: %s", SS_FILES_DIR);
+        *file_list = NULL;
+        return 0;
+    }
+    
+    struct dirent* dir;
+    int count = 0;
+    int capacity = 16;
+    *file_list = (FileMetadata*)malloc(capacity * sizeof(FileMetadata));
+    
+    while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG) { // Regular file
+            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+            
+            if (count == capacity) {
+                capacity *= 2;
+                *file_list = (FileMetadata*)realloc(*file_list, capacity * sizeof(FileMetadata));
+            }
+            
+            if (ss_get_file_metadata(dir->d_name, &(*file_list)[count]) == 0) {
+                count++;
+            }
+        }
+    }
+    closedir(d);
+    return count;
+}
+
+
+// --- File Reading ---
+
+char* ss_read_file_to_memory(const char* filepath, long* file_size) {
+    FILE* f = fopen(filepath, "r");
+    if (!f) return NULL;
+    
+    fseek(f, 0, SEEK_END);
+    *file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    char* content = (char*)malloc(*file_size + 1);
+    if (!content) {
+        fclose(f);
+        return NULL;
+    }
+    
+    if (fread(content, 1, *file_size, f) != *file_size) {
+        fclose(f);
+        free(content);
+        return NULL;
+    }
+    
+    fclose(f);
+    content[*file_size] = '\0';
+    return content;
+}
+
+// --- Sentence/Word Parsing ---
+// (Simplified: any '.', '!', '?' is a delimiter)
+
+char** ss_split_sentences(const char* text, int* num_sentences) {
+    int capacity = 16;
+    char** sentences = (char**)malloc(capacity * sizeof(char*));
+    *num_sentences = 0;
+    
+    const char* start = text;
+    const char* ptr = text;
+    
+    while (*ptr) {
+        if (*ptr == '.' || *ptr == '!' || *ptr == '?') {
+            int len = (ptr - start) + 1;
+            sentences[*num_sentences] = (char*)malloc(len + 1);
+            strncpy(sentences[*num_sentences], start, len);
+            sentences[*num_sentences][len] = '\0';
+            
+            (*num_sentences)++;
+            if (*num_sentences == capacity) {
+                capacity *= 2;
+                sentences = (char**)realloc(sentences, capacity * sizeof(char*));
+            }
+            start = ptr + 1;
+        }
+        ptr++;
+    }
+    
+    // Add any trailing text without a delimiter
+    if (start < ptr && strlen(start) > 0) {
+        // Trim leading whitespace from this 'sentence'
+        while (*start && isspace(*start)) start++;
+        
+        if (strlen(start) > 0) {
+            sentences[*num_sentences] = strdup(start);
+            (*num_sentences)++;
+        }
+    }
+    
+    return sentences;
+}
+
+void ss_free_sentences(char** sentences, int num_sentences) {
+    if (!sentences) return;
+    for (int i = 0; i < num_sentences; i++) {
+        free(sentences[i]);
+    }
+    free(sentences);
+}
+
+char** ss_split_words(const char* sentence, int* num_words) {
+    int capacity = 16;
+    char** words = (char**)malloc(capacity * sizeof(char*));
+    *num_words = 0;
+    
+    char* copy = strdup(sentence);
+    char* saveptr;
+    char* token = strtok_r(copy, " \t\n", &saveptr);
+    
+    while (token) {
+        if (*num_words == capacity) {
+            capacity *= 2;
+            words = (char**)realloc(words, capacity * sizeof(char*));
+        }
+        words[*num_words] = strdup(token);
+        (*num_words)++;
+        token = strtok_r(NULL, " \t\n", &saveptr);
+    }
+    
+    free(copy);
+    return words;
+}
+
+void ss_free_words(char** words, int num_words) {
+    if (!words) return;
+    for (int i = 0; i < num_words; i++) {
+        free(words[i]);
+    }
+    free(words);
+}
+
+char* ss_join_words(char** words, int num_words) {
+    if (num_words == 0) return strdup("");
+    
+    long total_len = 0;
+    for (int i = 0; i < num_words; i++) {
+        total_len += strlen(words[i]);
+    }
+    total_len += (num_words - 1); // Spaces
+    
+    char* sentence = (char*)malloc(total_len + 1);
+    sentence[0] = '\0';
+    
+    for (int i = 0; i < num_words; i++) {
+        strcat(sentence, words[i]);
+        if (i < num_words - 1) {
+            strcat(sentence, " ");
+        }
+    }
+    return sentence;
+}
+
+char* ss_join_sentences(char** sentences, int num_sentences) {
+    long total_len = 0;
+    for (int i = 0; i < num_sentences; i++) {
+        total_len += strlen(sentences[i]);
+    }
+    
+    char* text = (char*)malloc(total_len + 1);
+    text[0] = '\0';
+    
+    for (int i = 0; i < num_sentences; i++) {
+        strcat(text, sentences[i]);
+    }
+    return text;
+}
+
+
+// --- NS Request Handlers ---
+
+void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
+    char filepath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    
+    FILE* f = fopen(filepath, "w");
+    if (!f) {
+        ss_log("CREATE: Failed to create file %s: %s", req->filename, strerror(errno));
+        send_error_response_to_ns(ns_sock, "Failed to create file");
+        return;
+    }
+    fclose(f);
+    
+    // TODO: Set file owner (e.g., using extended attributes)
+    // For now, we just create it.
+    
+    ss_log("CREATE: File %s created by %s", req->filename, req->username);
+    repl_schedule_update(req->filename); // Replicate empty file
+    send_success_response_to_ns(ns_sock, "File created");
+}
+
+void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    pthread_rwlock_wrlock(&lock->file_lock);
+    
+    char filepath[MAX_PATH];
+    char undopath[MAX_PATH];
+    
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    ss_get_path(SS_UNDO_DIR, req->filename, undopath);
+    
+    if (unlink(filepath) != 0) {
+        ss_log("DELETE: Failed to delete file %s: %s", req->filename, strerror(errno));
+        pthread_rwlock_unlock(&lock->file_lock);
+        send_error_response_to_ns(ns_sock, "Failed to delete file");
+        return;
+    }
+    
+    unlink(undopath); // Delete undo file, ignore error
+    
+    // TODO: Delete all checkpoints
+    
+    pthread_rwlock_unlock(&lock->file_lock);
+    
+    ss_log("DELETE: File %s deleted", req->filename);
+    repl_schedule_delete(req->filename);
+    send_success_response_to_ns(ns_sock, "File deleted");
+}
+
+void ss_handle_get_info(int ns_sock, Req_FileOp* req) {
+    FileMetadata meta;
+    if (ss_get_file_metadata(req->filename, &meta) != 0) {
+        ss_log("INFO: Failed to get metadata for %s", req->filename);
+        send_error_response_to_ns(ns_sock, "File not found");
+        return;
+    }
+    
+    send_response(ns_sock, MSG_S2N_FILE_INFO_RES, &meta, sizeof(meta));
+}
+
+void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
+    char filepath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    
+    long file_size;
+    char* content = ss_read_file_to_memory(filepath, &file_size);
+    if (!content) {
+        ss_log("EXEC: Failed to read file %s", req->filename);
+        send_error_response_to_ns(ns_sock, "File not found");
+        return;
+    }
+    
+    Res_Exec res;
+    strncpy(res.output, content, MAX_PAYLOAD - 1);
+    res.output[MAX_PAYLOAD - 1] = '\0';
+    
+    send_response(ns_sock, MSG_S2N_EXEC_CONTENT, &res, sizeof(res));
+    free(content);
+}
+
+
+// --- Client Request Handlers ---
+
+void ss_handle_read(int client_sock, Req_FileOp* req) {
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    pthread_rwlock_rdlock(&lock->file_lock);
+    
+    char filepath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+
+    FILE* f = fopen(filepath, "r");
+    if (!f) {
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("READ: File not found %s", req->filename);
+        send_error_response_to_client(client_sock, "File not found");
+        return;
+    }
+    
+    Res_FileContent chunk;
+    size_t nread;
+    while ((nread = fread(chunk.data, 1, MAX_PAYLOAD, f)) > 0) {
+        chunk.is_final_chunk = (nread < MAX_PAYLOAD);
+        // We must send the whole struct, but nread tells us the valid data
+        // A better way is to calculate exact payload size
+        size_t payload_size = (char*)&(chunk.is_final_chunk) - (char*)&chunk + sizeof(chunk.is_final_chunk);
+        send_response(client_sock, MSG_S2C_READ_CONTENT, &chunk, payload_size);
+        
+        if (chunk.is_final_chunk) break;
+    }
+    
+    fclose(f);
+    pthread_rwlock_unlock(&lock->file_lock);
+}
+
+void ss_handle_stream(int client_sock, Req_FileOp* req) {
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    pthread_rwlock_rdlock(&lock->file_lock);
+
+    char filepath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+
+    FILE* f = fopen(filepath, "r");
+    if (!f) {
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("STREAM: File not found %s", req->filename);
+        send_error_response_to_client(client_sock, "File not found");
+        return;
+    }
+    
+    Res_Stream word;
+    while (fscanf(f, "%255s", word.word) == 1) {
+        if (send_response(client_sock, MSG_S2C_STREAM_WORD, &word, sizeof(word)) < 0) {
+            break; // Client disconnected
+        }
+        usleep(100000); // 0.1 seconds
+    }
+    
+    send_response(client_sock, MSG_S2C_STREAM_END, NULL, 0);
+    fclose(f);
+    pthread_rwlock_unlock(&lock->file_lock);
+}
+
+void ss_handle_undo(int client_sock, Req_FileOp* req) {
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    pthread_rwlock_wrlock(&lock->file_lock);
+
+    char filepath[MAX_PATH], undopath[MAX_PATH], tmppath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    ss_get_path(SS_UNDO_DIR, req->filename, undopath);
+    snprintf(tmppath, sizeof(tmppath), "%s/%s.tmp", SS_FILES_DIR, req->filename);
+
+    // 1. Check if undo file exists
+    struct stat st;
+    if (stat(undopath, &st) != 0) {
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("UNDO: No undo history for %s", req->filename);
+        send_error_response_to_client(client_sock, "No undo history for this file");
+        return;
+    }
+
+    // 2. rename(file -> tmp)
+    if (rename(filepath, tmppath) != 0) {
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("UNDO: Failed to rename %s to %s", filepath, tmppath);
+        send_error_response_to_client(client_sock, "Undo failed (step 1)");
+        return;
+    }
+    
+    // 3. rename(undo -> file)
+    if (rename(undopath, filepath) != 0) {
+        rename(tmppath, filepath); // Rollback
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("UNDO: Failed to rename %s to %s", undopath, filepath);
+        send_error_response_to_client(client_sock, "Undo failed (step 2)");
+        return;
+    }
+    
+    // 4. rename(tmp -> undo)
+    rename(tmppath, undopath); // Old file is new undo. Ignore error.
+    
+    pthread_rwlock_unlock(&lock->file_lock);
+    
+    ss_log("UNDO: File %s reverted", req->filename);
+    repl_schedule_update(req->filename);
+    send_success_response_to_client(client_sock, "Undo successful");
+}
+
+void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
+    char undopath[MAX_PATH];
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    char filepath[MAX_PATH], checkpath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    snprintf(checkpath, sizeof(checkpath), "%s/%s_%s", SS_CHECKPOINT_DIR, req->filename, req->tag);
+
+    if (strcmp(req->command, "CHECKPOINT") == 0) {
+        pthread_rwlock_rdlock(&lock->file_lock);
+        if (_copy_file(filepath, checkpath) != 0) {
+            pthread_rwlock_unlock(&lock->file_lock);
+            ss_log("CHECKPOINT: Failed to copy %s to %s", filepath, checkpath);
+            send_error_response_to_client(client_sock, "Failed to create checkpoint");
+            return;
+        }
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("CHECKPOINT: Created checkpoint %s", checkpath);
+        send_success_response_to_client(client_sock, "Checkpoint created");
+    
+    } else if (strcmp(req->command, "REVERT") == 0) {
+        pthread_rwlock_wrlock(&lock->file_lock);
+        // Make undo backup before reverting
+        ss_get_path(SS_UNDO_DIR, req->filename, undopath);
+        _copy_file(filepath, undopath); // Ignore error
+        
+        if (_copy_file(checkpath, filepath) != 0) {
+            pthread_rwlock_unlock(&lock->file_lock);
+            ss_log("REVERT: Failed to copy %s to %s", checkpath, filepath);
+            send_error_response_to_client(client_sock, "Failed to revert checkpoint");
+            return;
+        }
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("REVERT: Reverted %s to checkpoint %s", filepath, req->tag);
+        repl_schedule_update(req->filename);
+        send_success_response_to_client(client_sock, "Revert successful");
+    
+    } else if (strcmp(req->command, "VIEWCHECKPOINT") == 0) {
+        // TODO: Implement read/stream logic for checkpoint file
+        send_error_response_to_client(client_sock, "VIEWCHECKPOINT not implemented");
+    
+    } else if (strcmp(req->command, "LISTCHECKPOINTS") == 0) {
+        // TODO: Implement listing logic
+        send_error_response_to_client(client_sock, "LISTCHECKPOINTS not implemented");
+    }
+}
+
+// --- Write Transaction Data Structure ---
+typedef struct {
+    int index;
+    char* content;
+} WriteChange;
+
+// Comparator for qsort
+static int compare_changes(const void* a, const void* b) {
+    WriteChange* changeA = (WriteChange*)a;
+    WriteChange* changeB = (WriteChange*)b;
+    // Sort in *descending* order of index
+    return (changeB->index - changeA->index);
+}
+
+// --- Complex Write Transaction ---
+void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
+    FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
+    pthread_mutex_t* sentence_lock = lock_map_get_sentence_lock(lock, req->sentence_num);
+
+    // 1. Try to lock the sentence. If busy, tell client.
+    if (pthread_mutex_trylock(sentence_lock) != 0) {
+        ss_log("WRITE: Sentence %d of %s is already locked", req->sentence_num, req->filename);
+        send_lock_error_to_client(client_sock, "Sentence is locked by another user");
+        return;
+    }
+
+    // 2. We have the sentence lock. Now get the file write lock.
+    pthread_rwlock_wrlock(&lock->file_lock);
+    
+    ss_log("WRITE: Locked file %s (sentence %d)", req->filename, req->sentence_num);
+
+    char filepath[MAX_PATH], undopath[MAX_PATH];
+    ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    ss_get_path(SS_UNDO_DIR, req->filename, undopath);
+
+    // 3. Make undo backup
+    if (_copy_file(filepath, undopath) != 0) {
+        ss_log("WRITE: Failed to create undo copy for %s", req->filename);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not create undo)");
+        return;
+    }
+
+    // 4. Read file and split into sentences
+    long file_size;
+    char* file_content = ss_read_file_to_memory(filepath, &file_size);
+    if (!file_content && file_size > 0) {
+        ss_log("WRITE: Failed to read file %s", req->filename);
+        // ... unlock and error ...
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not read file)");
+        return;
+    }
+    
+    int num_sentences;
+    char** sentences = ss_split_sentences(file_content ? file_content : "", &num_sentences);
+    if (file_content) free(file_content);
+
+    if (req->sentence_num >= num_sentences && num_sentences > 0) {
+        ss_log("WRITE: Sentence index %d out of range (max %d)", req->sentence_num, num_sentences - 1);
+        // ... free, unlock, error ...
+        send_error_response_to_client(client_sock, "Sentence index out of range");
+        ss_free_sentences(sentences, num_sentences);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        return;
+    }
+    
+    // We are OK to proceed, tell client
+    send_response(client_sock, MSG_S2C_WRITE_OK, NULL, 0);
+
+    // 5. Receive all write changes from client
+    int changes_capacity = 8;
+    int changes_count = 0;
+    WriteChange* changes = (WriteChange*)malloc(changes_capacity * sizeof(WriteChange));
+    
+    MsgHeader header;
+    while (recv_header(client_sock, &header) > 0) {
+        if (header.type == MSG_C2S_WRITE_DATA) {
+            if (changes_count == changes_capacity) {
+                changes_capacity *= 2;
+                changes = (WriteChange*)realloc(changes, changes_capacity * sizeof(WriteChange));
+            }
+            Req_Write_Data data;
+            recv_payload(client_sock, &data, header.payload_len);
+            
+            changes[changes_count].index = data.word_index;
+            changes[changes_count].content = strdup(data.content);
+            changes_count++;
+            
+        } else if (header.type == MSG_C2S_WRITE_ETIRW) {
+            break; // End of transaction
+        }
+    }
+
+    // 6. Apply changes (sort by index descending)
+    qsort(changes, changes_count, sizeof(WriteChange), compare_changes);
+
+    int num_words;
+    char* sentence_str = (num_sentences > 0) ? sentences[req->sentence_num] : strdup("");
+    char** words = ss_split_words(sentence_str, &num_words);
+    
+    for (int i = 0; i < changes_count; i++) {
+        int idx = changes[i].index;
+        if (idx > num_words) idx = num_words; // Append
+        if (idx < 0) idx = 0; // Prepend
+        
+        // "Insert" word by reallocing and shifting
+        words = (char**)realloc(words, (num_words + 1) * sizeof(char*));
+        memmove(&words[idx + 1], &words[idx], (num_words - idx) * sizeof(char*));
+        words[idx] = strdup(changes[i].content);
+        num_words++;
+    }
+
+    // 7. Re-join words, update sentences array
+    char* new_sentence = ss_join_words(words, num_words);
+    if (num_sentences > 0) {
+        free(sentences[req->sentence_num]);
+        sentences[req->sentence_num] = new_sentence;
+    } else {
+        // File was empty, this is the first sentence
+        sentences = (char**)realloc(sentences, 1 * sizeof(char*));
+        sentences[0] = new_sentence;
+        num_sentences = 1;
+    }
+
+    // 8. Re-join sentences and write back to file
+    char* new_file_content = ss_join_sentences(sentences, num_sentences);
+    
+    FILE* f = fopen(filepath, "w");
+    fwrite(new_file_content, 1, strlen(new_file_content), f);
+    fclose(f);
+
+    // 9. Clean up
+    free(new_file_content);
+    ss_free_words(words, num_words);
+    ss_free_sentences(sentences, num_sentences);
+    for (int i = 0; i < changes_count; i++) free(changes[i].content);
+    free(changes);
+
+    // 10. Release locks and send response
+    pthread_rwlock_unlock(&lock->file_lock);
+    pthread_mutex_unlock(sentence_lock);
+
+    ss_log("WRITE: Completed for %s (sentence %d)", req->filename, req->sentence_num);
+    repl_schedule_update(req->filename);
+    send_success_response_to_client(client_sock, "Write successful");
+}
