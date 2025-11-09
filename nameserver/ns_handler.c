@@ -541,15 +541,21 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
     printf("DEBUG: Mutex locked, checking access for user '%s' on file '%s'\n", session->username, payload.filename);
     printf("DEBUG: g_access_table = %p\n", (void*)g_access_table);
     char* perms = user_ht_get_permission(g_access_table, session->username, payload.filename);
-    printf("DEBUG: Got perms = %s\n", perms ? perms : "NULL");
+    printf("DEBUG: Got perms = '%s'\n", perms ? perms : "NULL");
     
     if (header->type == MSG_C2N_READ_REQ || header->type == MSG_C2N_STREAM_REQ) {
-        if (perms && strstr(perms, "read")) has_access = true;
+        printf("DEBUG: Checking READ/STREAM access\n");
+        if (perms && strstr(perms, "read")) {
+            printf("DEBUG: Found 'read' in perms\n");
+            has_access = true;
+        }
     } else if (header->type == MSG_C2N_WRITE_REQ || header->type == MSG_C2N_UNDO_REQ || header->type == MSG_C2N_CHECKPOINT_REQ) {
+        printf("DEBUG: Checking WRITE/UNDO/CHECKPOINT access\n");
         if (perms && strstr(perms, "write")) has_access = true;
     }
     // Check ownership inline to avoid deadlock (we already hold the mutex)
     if (perms && strstr(perms, "owner")) {
+        printf("DEBUG: Found 'owner' in perms, granting access\n");
         has_access = true; // Owner has all access
     }
     pthread_mutex_unlock(&g_access_table_mutex);

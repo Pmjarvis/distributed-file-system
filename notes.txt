@@ -1,0 +1,22 @@
+in ns_access.c, there is a LIMIT to the hash table size related to the access Control
+data structure. "INITIAL_TABLE_SIZE". also, we only allow 50% of INITIAL_TABLE_SIZE as the actual
+number of users in the system -> "LOWER LOAD FACTOR" 
+
+Lower Load Factor (e.g., 50%)
+✅ Fewer collisions - Less likely that multiple keys hash to the same bucket
+✅ Faster lookups - O(1) average case stays closer to O(1)
+✅ Shorter chains - When collisions occur, the linked lists are shorter
+❌ More memory - Wastes 50% of allocated space
+
+Higher Load Factor (e.g., 90%)
+✅ Better memory utilization - Uses most of the allocated space
+❌ More collisions - Many keys hash to same bucket
+❌ Slower lookups - O(1) degrades toward O(n) as chains grow
+❌ Longer chains - More nodes to traverse in linked lists
+
+---------------------------------------------------------
+Issues found:
+
+- "READ"ing a file does not update its "Last Access" time in both VIEW -l & INFO
+- "Size" not updating in "VIEW -l" & INFO
+- have to add sentence count & character count in "VIEW -l" & "INFO"

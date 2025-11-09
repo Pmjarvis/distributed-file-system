@@ -12,7 +12,8 @@
 //  Configuration & Forward Declarations
 // ----------------------------------------------------------------------------
 
-#define INITIAL_USER_TABLE_SIZE 17
+#define INITIAL_TABLE_SIZE 197  // Prime number for better hash distribution
+#define INITIAL_USER_TABLE_SIZE 101
 #define INITIAL_FILE_TABLE_SIZE 11
 //#define DB_PATH "./permission_db"
 

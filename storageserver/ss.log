@@ -1,378 +1,209 @@
-[2025-11-05 03:09:30] --- LOGGING STARTED ---
-[2025-11-05 03:09:30] MAIN: Starting Storage Server...
-[2025-11-05 03:09:30] FATAL: Could not connect to Name Server at 127.0.0.1:8081
-[2025-11-05 03:09:36] --- LOGGING STARTED ---
-[2025-11-05 03:09:36] MAIN: Starting Storage Server...
-[2025-11-05 03:09:36] MAIN: Connected to Name Server. Scanning local files...
-[2025-11-05 03:09:36] MAIN: Found 13 local files. Registering...
-[2025-11-05 03:09:36] MAIN: Registration complete. This SS ID is 0
-[2025-11-05 03:09:36] MAIN: Listening for Clients and NS on port 9001
-[2025-11-05 03:09:36] MAIN: All threads started. Server is running.
-[2025-11-05 03:09:36] MAIN: Listening for Replication on port 9002
-[2025-11-05 03:09:58] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:09:58] READ: Starting read for file f
-[2025-11-05 03:09:58] READ: Full path is ss_data/files/f
-[2025-11-05 03:09:58] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:09:58] READ: Chunk 1 - read 17 bytes, is_final=1
-[2025-11-05 03:09:58] READ: Chunk 1 sent
-[2025-11-05 03:09:58] READ: Read complete for f, sent 1 chunks
-[2025-11-05 03:09:58] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:10:36] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:10:36] CREATE: File ll.txt created by l
-[2025-11-05 03:10:36] REPL: Scheduling update for ll.txt
-[2025-11-05 03:10:36] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:10:36] REPL: Connected to backup. Replicating update for ll.txt...
-[2025-11-05 03:10:36] REPL_IN: New incoming replication connection
-[2025-11-05 03:10:36] REPL_IN: Receiving replica for ll.txt (0 bytes)
-[2025-11-05 03:10:36] REPL_IN: Finished receiving ll.txt
-[2025-11-05 03:10:36] REPL: Successfully replicated ll.txt (0 bytes)
-[2025-11-05 03:10:36] REPL: ACK received for file ll.txt
-[2025-11-05 03:10:40] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:10:40] READ: Starting read for file ll.txt
-[2025-11-05 03:10:40] READ: Full path is ss_data/files/ll.txt
-[2025-11-05 03:10:40] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:10:40] READ: File is empty, sending empty final chunk
-[2025-11-05 03:10:40] READ: Read complete for ll.txt, sent 0 chunks
-[2025-11-05 03:10:40] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:12:55] --- LOGGING STARTED ---
-[2025-11-05 03:12:55] MAIN: Starting Storage Server...
-[2025-11-05 03:12:55] MAIN: Connected to Name Server. Scanning local files...
-[2025-11-05 03:12:55] MAIN: Found 14 local files. Registering...
-[2025-11-05 03:12:55] MAIN: Registration complete. This SS ID is 0
-[2025-11-05 03:12:55] MAIN: Listening for Clients and NS on port 9001
-[2025-11-05 03:12:55] MAIN: All threads started. Server is running.
-[2025-11-05 03:12:55] MAIN: Listening for Replication on port 9002
-[2025-11-05 03:13:04] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:13:04] READ: Starting read for file f
-[2025-11-05 03:13:04] READ: Full path is ss_data/files/f
-[2025-11-05 03:13:04] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:13:04] READ: Chunk 1 - read 162 bytes, is_final=1
-[2025-11-05 03:13:04] READ: Chunk 1 sent
-[2025-11-05 03:13:04] READ: Read complete for f, sent 1 chunks
-[2025-11-05 03:13:04] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:13:20] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
-[2025-11-05 03:13:23] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:13:28] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 33)
-[2025-11-05 03:13:28] DELETE: File f deleted
-[2025-11-05 03:13:28] REPL: Scheduling delete for f
-[2025-11-05 03:13:28] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:13:28] REPL: Connected to backup. Replicating delete for f...
-[2025-11-05 03:13:28] REPL_IN: New incoming replication connection
-[2025-11-05 03:13:28] REPL_IN: Receiving delete for f
-[2025-11-05 03:13:28] REPL_IN: Failed to delete f: No such file or directory
-[2025-11-05 03:13:28] REPL: Replicated delete for f
-[2025-11-05 03:13:37] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:13:37] CREATE: File f created by l
-[2025-11-05 03:13:37] REPL: Scheduling update for f
-[2025-11-05 03:13:37] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:13:37] REPL: Connected to backup. Replicating update for f...
-[2025-11-05 03:13:37] REPL_IN: New incoming replication connection
-[2025-11-05 03:13:37] REPL: Successfully replicated f (0 bytes)
-[2025-11-05 03:13:37] REPL_IN: Receiving replica for f (0 bytes)
-[2025-11-05 03:13:37] REPL_IN: Finished receiving f
-[2025-11-05 03:13:37] REPL: ACK received for file f
-[2025-11-05 03:14:20] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:14:20] READ: Starting read for file f
-[2025-11-05 03:14:20] READ: Full path is ss_data/files/f
-[2025-11-05 03:14:20] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:14:20] READ: File is empty, sending empty final chunk
-[2025-11-05 03:14:20] READ: Read complete for f, sent 0 chunks
-[2025-11-05 03:14:20] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:14:50] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:14:50] WRITE: Locked file f (sentence 0)
-[2025-11-05 03:15:17] WRITE: Completed for f (sentence 0)
-[2025-11-05 03:15:17] REPL: Scheduling update for f
-[2025-11-05 03:15:17] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:15:17] REPL: Connected to backup. Replicating update for f...
-[2025-11-05 03:15:17] REPL_IN: New incoming replication connection
-[2025-11-05 03:15:17] REPL_IN: Receiving replica for f (10 bytes)
-[2025-11-05 03:15:17] REPL: Successfully replicated f (10 bytes)
-[2025-11-05 03:15:17] REPL_IN: Finished receiving f
-[2025-11-05 03:15:17] REPL: ACK received for file f
-[2025-11-05 03:15:19] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:15:19] READ: Starting read for file f
-[2025-11-05 03:15:19] READ: Full path is ss_data/files/f
-[2025-11-05 03:15:19] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:15:19] READ: Chunk 1 - read 10 bytes, is_final=1
-[2025-11-05 03:15:19] READ: Chunk 1 sent
-[2025-11-05 03:15:19] READ: Read complete for f, sent 1 chunks
-[2025-11-05 03:15:19] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:15:29] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 45)
-[2025-11-05 03:15:29] UNDO: File f reverted
-[2025-11-05 03:15:29] REPL: Scheduling update for f
-[2025-11-05 03:15:29] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:15:29] REPL: Connected to backup. Replicating update for f...
-[2025-11-05 03:15:29] REPL: Successfully replicated f (0 bytes)
-[2025-11-05 03:15:29] REPL_IN: New incoming replication connection
-[2025-11-05 03:15:29] REPL_IN: Receiving replica for f (0 bytes)
-[2025-11-05 03:15:29] REPL_IN: Finished receiving f
-[2025-11-05 03:15:29] REPL: ACK received for file f
-[2025-11-05 03:15:32] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:15:32] READ: Starting read for file f
-[2025-11-05 03:15:32] READ: Full path is ss_data/files/f
-[2025-11-05 03:15:32] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:15:32] READ: File is empty, sending empty final chunk
-[2025-11-05 03:15:32] READ: Read complete for f, sent 0 chunks
-[2025-11-05 03:15:32] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:16:06] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:16:06] CREATE: File exec.txt created by l
-[2025-11-05 03:16:06] REPL: Scheduling update for exec.txt
-[2025-11-05 03:16:06] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:16:06] REPL: Connected to backup. Replicating update for exec.txt...
-[2025-11-05 03:16:06] REPL_IN: New incoming replication connection
-[2025-11-05 03:16:06] REPL_IN: Receiving replica for exec.txt (0 bytes)
-[2025-11-05 03:16:06] REPL_IN: Finished receiving exec.txt
-[2025-11-05 03:16:06] REPL: Successfully replicated exec.txt (0 bytes)
-[2025-11-05 03:16:06] REPL: ACK received for file exec.txt
-[2025-11-05 03:16:09] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:16:09] READ: Starting read for file exec.txt
-[2025-11-05 03:16:09] READ: Full path is ss_data/files/exec.txt
-[2025-11-05 03:16:09] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:16:09] READ: File is empty, sending empty final chunk
-[2025-11-05 03:16:09] READ: Read complete for exec.txt, sent 0 chunks
-[2025-11-05 03:16:09] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:16:16] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:16:16] WRITE: Locked file exec.txt (sentence 0)
-[2025-11-05 03:16:50] WRITE: Completed for exec.txt (sentence 0)
-[2025-11-05 03:16:50] REPL: Scheduling update for exec.txt
-[2025-11-05 03:16:50] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:16:50] REPL: Connected to backup. Replicating update for exec.txt...
-[2025-11-05 03:16:50] REPL_IN: New incoming replication connection
-[2025-11-05 03:16:50] REPL_IN: Receiving replica for exec.txt (46 bytes)
-[2025-11-05 03:16:50] REPL: Successfully replicated exec.txt (46 bytes)
-[2025-11-05 03:16:50] REPL_IN: Finished receiving exec.txt
-[2025-11-05 03:16:50] REPL: ACK received for file exec.txt
-[2025-11-05 03:16:57] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:16:57] READ: Starting read for file exec.txt
-[2025-11-05 03:16:57] READ: Full path is ss_data/files/exec.txt
-[2025-11-05 03:16:57] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:16:57] READ: Chunk 1 - read 46 bytes, is_final=1
-[2025-11-05 03:16:57] READ: Chunk 1 sent
-[2025-11-05 03:16:57] READ: Read complete for exec.txt, sent 1 chunks
-[2025-11-05 03:16:57] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:17:01] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
-[2025-11-05 03:17:02] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:18:19] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:18:19] READ: Starting read for file exec.txt
-[2025-11-05 03:18:19] READ: Full path is ss_data/files/exec.txt
-[2025-11-05 03:18:19] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:18:19] READ: Chunk 1 - read 46 bytes, is_final=1
-[2025-11-05 03:18:19] READ: Chunk 1 sent
-[2025-11-05 03:18:19] READ: Read complete for exec.txt, sent 1 chunks
-[2025-11-05 03:18:19] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:19:10] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:19:10] CREATE: File z created by l
-[2025-11-05 03:19:10] REPL: Scheduling update for z
-[2025-11-05 03:19:10] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:19:10] REPL: Connected to backup. Replicating update for z...
-[2025-11-05 03:19:10] REPL_IN: New incoming replication connection
-[2025-11-05 03:19:10] REPL_IN: Receiving replica for z (0 bytes)
-[2025-11-05 03:19:10] REPL: Successfully replicated z (0 bytes)
-[2025-11-05 03:19:10] REPL_IN: Finished receiving z
-[2025-11-05 03:19:10] REPL: ACK received for file z
-[2025-11-05 03:19:14] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:19:14] WRITE: Locked file z (sentence 0)
-[2025-11-05 03:19:21] WRITE: Completed for z (sentence 0)
-[2025-11-05 03:19:21] REPL: Scheduling update for z
-[2025-11-05 03:19:21] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:19:21] REPL: Connected to backup. Replicating update for z...
-[2025-11-05 03:19:21] REPL: Successfully replicated z (9 bytes)
-[2025-11-05 03:19:21] REPL_IN: New incoming replication connection
-[2025-11-05 03:19:21] REPL_IN: Receiving replica for z (9 bytes)
-[2025-11-05 03:19:21] REPL_IN: Finished receiving z
-[2025-11-05 03:19:21] REPL: ACK received for file z
-[2025-11-05 03:19:23] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:19:23] READ: Starting read for file z
-[2025-11-05 03:19:23] READ: Full path is ss_data/files/z
-[2025-11-05 03:19:23] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:19:23] READ: Chunk 1 - read 9 bytes, is_final=1
-[2025-11-05 03:19:23] READ: Chunk 1 sent
-[2025-11-05 03:19:23] READ: Read complete for z, sent 1 chunks
-[2025-11-05 03:19:23] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:19:26] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
-[2025-11-05 03:19:27] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:22:30] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:22:30] CREATE: File p.txt created by pomu
-[2025-11-05 03:22:30] REPL: Scheduling update for p.txt
-[2025-11-05 03:22:30] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:22:30] REPL: Connected to backup. Replicating update for p.txt...
-[2025-11-05 03:22:30] REPL: Successfully replicated p.txt (0 bytes)
-[2025-11-05 03:22:30] REPL_IN: New incoming replication connection
-[2025-11-05 03:22:30] REPL_IN: Receiving replica for p.txt (0 bytes)
-[2025-11-05 03:22:30] REPL_IN: Finished receiving p.txt
-[2025-11-05 03:22:30] REPL: ACK received for file p.txt
-[2025-11-05 03:23:07] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-05 03:23:07] CREATE: File 12 created by pomu
-[2025-11-05 03:23:07] REPL: Scheduling update for 12
-[2025-11-05 03:23:07] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:23:07] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:23:07] REPL: Successfully replicated 12 (0 bytes)
-[2025-11-05 03:23:07] REPL_IN: New incoming replication connection
-[2025-11-05 03:23:07] REPL_IN: Receiving replica for 12 (0 bytes)
-[2025-11-05 03:23:07] REPL_IN: Finished receiving 12
-[2025-11-05 03:23:07] REPL: ACK received for file 12
-[2025-11-05 03:23:47] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:23:47] READ: Starting read for file 12
-[2025-11-05 03:23:47] READ: Full path is ss_data/files/12
-[2025-11-05 03:23:47] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:23:47] READ: File is empty, sending empty final chunk
-[2025-11-05 03:23:47] READ: Read complete for 12, sent 0 chunks
-[2025-11-05 03:23:47] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:24:31] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:24:31] WRITE: Locked file 12 (sentence 0)
-[2025-11-05 03:24:37] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:24:37] WRITE: Sentence 0 of 12 is already locked
-[2025-11-05 03:24:37] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:24:47] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:25:14] WRITE: Completed for 12 (sentence 0)
-[2025-11-05 03:25:14] REPL: Scheduling update for 12
-[2025-11-05 03:25:14] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:25:14] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:25:14] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:25:14] WRITE: Sentence index 1 out of range (max 0)
-[2025-11-05 03:25:14] REPL_IN: New incoming replication connection
-[2025-11-05 03:25:14] REPL_IN: Receiving replica for 12 (5 bytes)
-[2025-11-05 03:25:14] REPL: Successfully replicated 12 (5 bytes)
-[2025-11-05 03:25:14] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:25:14] REPL_IN: Finished receiving 12
-[2025-11-05 03:25:14] REPL: ACK received for file 12
-[2025-11-05 03:25:36] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:25:36] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:25:36] WRITE: Sentence index 1 out of range (max 0)
-[2025-11-05 03:25:36] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:25:46] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:25:46] WRITE: Locked file 12 (sentence 0)
-[2025-11-05 03:25:54] WRITE: Completed for 12 (sentence 0)
-[2025-11-05 03:25:54] REPL: Scheduling update for 12
-[2025-11-05 03:25:54] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:25:54] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:25:54] REPL_IN: New incoming replication connection
-[2025-11-05 03:25:54] REPL_IN: Receiving replica for 12 (7 bytes)
-[2025-11-05 03:25:54] REPL: Successfully replicated 12 (7 bytes)
-[2025-11-05 03:25:54] REPL_IN: Finished receiving 12
-[2025-11-05 03:25:54] REPL: ACK received for file 12
-[2025-11-05 03:25:56] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:25:56] READ: Starting read for file 12
-[2025-11-05 03:25:56] READ: Full path is ss_data/files/12
-[2025-11-05 03:25:56] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:25:56] READ: Chunk 1 - read 7 bytes, is_final=1
-[2025-11-05 03:25:56] READ: Chunk 1 sent
-[2025-11-05 03:25:56] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:25:56] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:26:30] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:26:30] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:26:30] WRITE: Sentence index 1 out of range (max 0)
-[2025-11-05 03:26:30] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:26:36] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:26:36] WRITE: Locked file 12 (sentence 0)
-[2025-11-05 03:26:44] WRITE: Completed for 12 (sentence 0)
-[2025-11-05 03:26:44] REPL: Scheduling update for 12
-[2025-11-05 03:26:44] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:26:44] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:26:44] REPL_IN: New incoming replication connection
-[2025-11-05 03:26:44] REPL_IN: Receiving replica for 12 (11 bytes)
-[2025-11-05 03:26:44] REPL: Successfully replicated 12 (11 bytes)
-[2025-11-05 03:26:44] REPL_IN: Finished receiving 12
-[2025-11-05 03:26:44] REPL: ACK received for file 12
-[2025-11-05 03:26:52] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:26:52] READ: Starting read for file 12
-[2025-11-05 03:26:52] READ: Full path is ss_data/files/12
-[2025-11-05 03:26:52] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:26:52] READ: Chunk 1 - read 11 bytes, is_final=1
-[2025-11-05 03:26:52] READ: Chunk 1 sent
-[2025-11-05 03:26:52] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:26:52] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:26:59] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:26:59] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:26:59] WRITE: Sentence index 1 out of range (max 0)
-[2025-11-05 03:26:59] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:27:23] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:27:23] WRITE: Locked file 12 (sentence 0)
-[2025-11-05 03:27:31] WRITE: Completed for 12 (sentence 0)
-[2025-11-05 03:27:31] REPL: Scheduling update for 12
-[2025-11-05 03:27:31] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:27:31] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:27:31] REPL_IN: New incoming replication connection
-[2025-11-05 03:27:31] REPL_IN: Receiving replica for 12 (16 bytes)
-[2025-11-05 03:27:31] REPL: Successfully replicated 12 (16 bytes)
-[2025-11-05 03:27:31] REPL_IN: Finished receiving 12
-[2025-11-05 03:27:31] REPL: ACK received for file 12
-[2025-11-05 03:27:34] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:27:34] READ: Starting read for file 12
-[2025-11-05 03:27:34] READ: Full path is ss_data/files/12
-[2025-11-05 03:27:34] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:27:34] READ: Chunk 1 - read 16 bytes, is_final=1
-[2025-11-05 03:27:34] READ: Chunk 1 sent
-[2025-11-05 03:27:34] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:27:34] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:27:43] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:27:43] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:28:13] WRITE: Completed for 12 (sentence 1)
-[2025-11-05 03:28:13] REPL: Scheduling update for 12
-[2025-11-05 03:28:13] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:28:13] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:28:13] REPL_IN: New incoming replication connection
-[2025-11-05 03:28:13] REPL_IN: Receiving replica for 12 (27 bytes)
-[2025-11-05 03:28:13] REPL: Successfully replicated 12 (27 bytes)
-[2025-11-05 03:28:13] REPL_IN: Finished receiving 12
-[2025-11-05 03:28:13] REPL: ACK received for file 12
-[2025-11-05 03:28:15] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:28:15] READ: Starting read for file 12
-[2025-11-05 03:28:15] READ: Full path is ss_data/files/12
-[2025-11-05 03:28:15] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:28:15] READ: Chunk 1 - read 27 bytes, is_final=1
-[2025-11-05 03:28:15] READ: Chunk 1 sent
-[2025-11-05 03:28:15] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:28:15] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:28:22] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:28:22] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:28:40] WRITE: Completed for 12 (sentence 1)
-[2025-11-05 03:28:40] REPL: Scheduling update for 12
-[2025-11-05 03:28:40] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:28:40] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:28:40] REPL_IN: New incoming replication connection
-[2025-11-05 03:28:40] REPL_IN: Receiving replica for 12 (46 bytes)
-[2025-11-05 03:28:40] REPL: Successfully replicated 12 (46 bytes)
-[2025-11-05 03:28:40] REPL_IN: Finished receiving 12
-[2025-11-05 03:28:40] REPL: ACK received for file 12
-[2025-11-05 03:28:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:28:42] READ: Starting read for file 12
-[2025-11-05 03:28:42] READ: Full path is ss_data/files/12
-[2025-11-05 03:28:42] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:28:42] READ: Chunk 1 - read 46 bytes, is_final=1
-[2025-11-05 03:28:42] READ: Chunk 1 sent
-[2025-11-05 03:28:42] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:28:42] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:28:53] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:28:53] WRITE: Locked file 12 (sentence 0)
-[2025-11-05 03:28:57] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:28:57] WRITE: Sentence 0 of 12 is already locked
-[2025-11-05 03:28:57] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:29:01] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-05 03:29:11] WRITE: Completed for 12 (sentence 0)
-[2025-11-05 03:29:11] REPL: Scheduling update for 12
-[2025-11-05 03:29:11] WRITE: Locked file 12 (sentence 1)
-[2025-11-05 03:29:11] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:29:11] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:29:11] REPL_IN: New incoming replication connection
-[2025-11-05 03:29:11] REPL_IN: Receiving replica for 12 (45 bytes)
-[2025-11-05 03:29:11] REPL: Successfully replicated 12 (45 bytes)
-[2025-11-05 03:29:11] REPL_IN: Finished receiving 12
-[2025-11-05 03:29:11] REPL: ACK received for file 12
-[2025-11-05 03:29:39] WRITE: Completed for 12 (sentence 1)
-[2025-11-05 03:29:39] REPL: Scheduling update for 12
-[2025-11-05 03:29:39] HANDLER: Closing connection from 127.0.0.1
-[2025-11-05 03:29:39] REPL: Connected to backup. Replicating update for 12...
-[2025-11-05 03:29:39] REPL_IN: New incoming replication connection
-[2025-11-05 03:29:39] REPL_IN: Receiving replica for 12 (81 bytes)
-[2025-11-05 03:29:39] REPL: Successfully replicated 12 (81 bytes)
-[2025-11-05 03:29:39] REPL_IN: Finished receiving 12
-[2025-11-05 03:29:39] REPL: ACK received for file 12
-[2025-11-05 03:29:41] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-05 03:29:41] READ: Starting read for file 12
-[2025-11-05 03:29:41] READ: Full path is ss_data/files/12
-[2025-11-05 03:29:41] READ: File opened successfully, starting to read chunks
-[2025-11-05 03:29:41] READ: Chunk 1 - read 81 bytes, is_final=1
-[2025-11-05 03:29:41] READ: Chunk 1 sent
-[2025-11-05 03:29:41] READ: Read complete for 12, sent 1 chunks
-[2025-11-05 03:29:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:19:13] --- LOGGING STARTED ---
+[2025-11-05 17:19:13] MAIN: Starting Storage Server...
+[2025-11-05 17:19:13] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-05 17:19:13] MAIN: Found 26 local files. Registering...
+[2025-11-05 17:19:13] MAIN: Registration complete. This SS ID is 0
+[2025-11-05 17:19:13] MAIN: All threads started. Server is running.
+[2025-11-05 17:19:13] MAIN: Listening for Clients and NS on port 9001
+[2025-11-05 17:19:13] MAIN: Listening for Replication on port 9002
+[2025-11-05 17:19:32] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-05 17:19:32] CREATE: File first.txt created by nov5_run3
+[2025-11-05 17:19:32] REPL: Scheduling update for first.txt
+[2025-11-05 17:19:32] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:19:32] REPL: Connected to backup. Replicating update for first.txt...
+[2025-11-05 17:19:32] REPL: Successfully replicated first.txt (0 bytes)
+[2025-11-05 17:19:32] REPL_IN: New incoming replication connection
+[2025-11-05 17:19:32] REPL_IN: Receiving replica for first.txt (0 bytes)
+[2025-11-05 17:19:32] REPL_IN: Finished receiving first.txt
+[2025-11-05 17:19:32] REPL: ACK received for file first.txt
+[2025-11-05 17:19:35] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-05 17:19:35] CREATE: File second.txt created by nov5_run3
+[2025-11-05 17:19:35] REPL: Scheduling update for second.txt
+[2025-11-05 17:19:35] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:19:35] REPL: Connected to backup. Replicating update for second.txt...
+[2025-11-05 17:19:35] REPL_IN: New incoming replication connection
+[2025-11-05 17:19:35] REPL_IN: Receiving replica for second.txt (0 bytes)
+[2025-11-05 17:19:35] REPL: Successfully replicated second.txt (0 bytes)
+[2025-11-05 17:19:35] REPL_IN: Finished receiving second.txt
+[2025-11-05 17:19:35] REPL: ACK received for file second.txt
+[2025-11-05 17:19:39] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:19:39] READ: Starting read for file first.txt
+[2025-11-05 17:19:39] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:19:39] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:19:39] READ: File is empty, sending empty final chunk
+[2025-11-05 17:19:39] READ: Read complete for first.txt, sent 0 chunks
+[2025-11-05 17:19:39] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:19:43] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:19:43] READ: Starting read for file second.txt
+[2025-11-05 17:19:43] READ: Full path is ss_data/files/second.txt
+[2025-11-05 17:19:43] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:19:43] READ: File is empty, sending empty final chunk
+[2025-11-05 17:19:43] READ: Read complete for second.txt, sent 0 chunks
+[2025-11-05 17:19:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:20:05] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:20:05] READ: Starting read for file first.txt
+[2025-11-05 17:20:05] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:20:05] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:20:05] READ: File is empty, sending empty final chunk
+[2025-11-05 17:20:05] READ: Read complete for first.txt, sent 0 chunks
+[2025-11-05 17:20:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:20:13] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:20:13] READ: Starting read for file first.txt
+[2025-11-05 17:20:13] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:20:13] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:20:13] READ: File is empty, sending empty final chunk
+[2025-11-05 17:20:13] READ: Read complete for first.txt, sent 0 chunks
+[2025-11-05 17:20:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:21:03] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:21:03] READ: Starting read for file first.txt
+[2025-11-05 17:21:03] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:21:03] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:21:03] READ: File is empty, sending empty final chunk
+[2025-11-05 17:21:03] READ: Read complete for first.txt, sent 0 chunks
+[2025-11-05 17:21:03] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:21:53] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 45)
+[2025-11-05 17:21:53] UNDO: No undo history for first.txt
+[2025-11-05 17:21:53] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:22:39] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:22:39] WRITE: Locked file first.txt (sentence 1)
+[2025-11-05 17:22:44] WRITE: Completed for first.txt (sentence 1)
+[2025-11-05 17:22:44] REPL: Scheduling update for first.txt
+[2025-11-05 17:22:44] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:22:44] REPL: Connected to backup. Replicating update for first.txt...
+[2025-11-05 17:22:44] REPL_IN: New incoming replication connection
+[2025-11-05 17:22:44] REPL_IN: Receiving replica for first.txt (5 bytes)
+[2025-11-05 17:22:44] REPL: Successfully replicated first.txt (5 bytes)
+[2025-11-05 17:22:44] REPL_IN: Finished receiving first.txt
+[2025-11-05 17:22:44] REPL: ACK received for file first.txt
+[2025-11-05 17:22:50] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:22:50] READ: Starting read for file first.txt
+[2025-11-05 17:22:50] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:22:50] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:22:50] READ: Chunk 1 - read 5 bytes, is_final=1
+[2025-11-05 17:22:50] READ: Chunk 1 sent
+[2025-11-05 17:22:50] READ: Read complete for first.txt, sent 1 chunks
+[2025-11-05 17:22:50] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:22:56] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:22:56] READ: Starting read for file first.txt
+[2025-11-05 17:22:56] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:22:56] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:22:56] READ: Chunk 1 - read 5 bytes, is_final=1
+[2025-11-05 17:22:56] READ: Chunk 1 sent
+[2025-11-05 17:22:56] READ: Read complete for first.txt, sent 1 chunks
+[2025-11-05 17:22:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:23:00] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:23:00] WRITE: Locked file first.txt (sentence 0)
+[2025-11-05 17:23:05] WRITE: Completed for first.txt (sentence 0)
+[2025-11-05 17:23:05] REPL: Scheduling update for first.txt
+[2025-11-05 17:23:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:23:05] REPL: Connected to backup. Replicating update for first.txt...
+[2025-11-05 17:23:05] REPL_IN: New incoming replication connection
+[2025-11-05 17:23:05] REPL_IN: Receiving replica for first.txt (11 bytes)
+[2025-11-05 17:23:05] REPL: Successfully replicated first.txt (11 bytes)
+[2025-11-05 17:23:05] REPL_IN: Finished receiving first.txt
+[2025-11-05 17:23:05] REPL: ACK received for file first.txt
+[2025-11-05 17:23:10] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:23:10] READ: Starting read for file first.txt
+[2025-11-05 17:23:10] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:23:10] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:23:10] READ: Chunk 1 - read 11 bytes, is_final=1
+[2025-11-05 17:23:10] READ: Chunk 1 sent
+[2025-11-05 17:23:10] READ: Read complete for first.txt, sent 1 chunks
+[2025-11-05 17:23:10] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:23:16] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:23:16] WRITE: Locked file first.txt (sentence 0)
+[2025-11-05 17:23:30] WRITE: Completed for first.txt (sentence 0)
+[2025-11-05 17:23:30] REPL: Scheduling update for first.txt
+[2025-11-05 17:23:30] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:23:30] REPL: Connected to backup. Replicating update for first.txt...
+[2025-11-05 17:23:30] REPL_IN: New incoming replication connection
+[2025-11-05 17:23:30] REPL_IN: Receiving replica for first.txt (38 bytes)
+[2025-11-05 17:23:30] REPL: Successfully replicated first.txt (38 bytes)
+[2025-11-05 17:23:30] REPL_IN: Finished receiving first.txt
+[2025-11-05 17:23:30] REPL: ACK received for file first.txt
+[2025-11-05 17:23:33] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:23:33] READ: Starting read for file first.txt
+[2025-11-05 17:23:33] READ: Full path is ss_data/files/first.txt
+[2025-11-05 17:23:33] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:23:33] READ: Chunk 1 - read 38 bytes, is_final=1
+[2025-11-05 17:23:33] READ: Chunk 1 sent
+[2025-11-05 17:23:33] READ: Read complete for first.txt, sent 1 chunks
+[2025-11-05 17:23:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:23:54] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:23:54] WRITE: Locked file first.txt (sentence 1)
+[2025-11-05 17:23:54] WRITE: Sentence index 1 out of range (max 0)
+[2025-11-05 17:23:54] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:24:00] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:24:00] WRITE: Locked file second.txt (sentence 100)
+[2025-11-05 17:24:15] WRITE: Completed for second.txt (sentence 100)
+[2025-11-05 17:24:15] REPL: Scheduling update for second.txt
+[2025-11-05 17:24:15] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:24:15] REPL: Connected to backup. Replicating update for second.txt...
+[2025-11-05 17:24:15] REPL_IN: New incoming replication connection
+[2025-11-05 17:24:15] REPL_IN: Receiving replica for second.txt (22 bytes)
+[2025-11-05 17:24:15] REPL: Successfully replicated second.txt (22 bytes)
+[2025-11-05 17:24:15] REPL_IN: Finished receiving second.txt
+[2025-11-05 17:24:15] REPL: ACK received for file second.txt
+[2025-11-05 17:24:19] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:24:19] READ: Starting read for file second.txt
+[2025-11-05 17:24:19] READ: Full path is ss_data/files/second.txt
+[2025-11-05 17:24:19] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:24:19] READ: Chunk 1 - read 22 bytes, is_final=1
+[2025-11-05 17:24:19] READ: Chunk 1 sent
+[2025-11-05 17:24:19] READ: Read complete for second.txt, sent 1 chunks
+[2025-11-05 17:24:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:24:41] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:24:41] WRITE: Locked file second.txt (sentence 2)
+[2025-11-05 17:24:41] WRITE: Sentence index 2 out of range (max 1)
+[2025-11-05 17:24:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:24:46] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:24:46] WRITE: Locked file second.txt (sentence 0)
+[2025-11-05 17:24:53] WRITE: Completed for second.txt (sentence 0)
+[2025-11-05 17:24:53] REPL: Scheduling update for second.txt
+[2025-11-05 17:24:53] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:24:53] REPL: Connected to backup. Replicating update for second.txt...
+[2025-11-05 17:24:53] REPL: Successfully replicated second.txt (26 bytes)
+[2025-11-05 17:24:53] REPL_IN: New incoming replication connection
+[2025-11-05 17:24:53] REPL_IN: Receiving replica for second.txt (26 bytes)
+[2025-11-05 17:24:53] REPL_IN: Finished receiving second.txt
+[2025-11-05 17:24:53] REPL: ACK received for file second.txt
+[2025-11-05 17:24:57] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-05 17:24:57] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:25:13] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:25:13] WRITE: Locked file second.txt (sentence 1)
+[2025-11-05 17:25:19] WRITE: Completed for second.txt (sentence 1)
+[2025-11-05 17:25:19] REPL: Scheduling update for second.txt
+[2025-11-05 17:25:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:25:19] REPL: Connected to backup. Replicating update for second.txt...
+[2025-11-05 17:25:19] REPL_IN: New incoming replication connection
+[2025-11-05 17:25:19] REPL_IN: Receiving replica for second.txt (28 bytes)
+[2025-11-05 17:25:19] REPL: Successfully replicated second.txt (28 bytes)
+[2025-11-05 17:25:19] REPL_IN: Finished receiving second.txt
+[2025-11-05 17:25:19] REPL: ACK received for file second.txt
+[2025-11-05 17:25:23] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-05 17:25:24] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:25:30] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:25:30] WRITE: Locked file second.txt (sentence 3)
+[2025-11-05 17:25:30] WRITE: Sentence index 3 out of range (max 2)
+[2025-11-05 17:25:30] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:25:33] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-05 17:25:33] WRITE: Locked file second.txt (sentence 2)
+[2025-11-05 17:25:38] WRITE: Completed for second.txt (sentence 2)
+[2025-11-05 17:25:38] REPL: Scheduling update for second.txt
+[2025-11-05 17:25:38] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:25:38] REPL: Connected to backup. Replicating update for second.txt...
+[2025-11-05 17:25:38] REPL_IN: New incoming replication connection
+[2025-11-05 17:25:38] REPL_IN: Receiving replica for second.txt (32 bytes)
+[2025-11-05 17:25:38] REPL: Successfully replicated second.txt (32 bytes)
+[2025-11-05 17:25:38] REPL_IN: Finished receiving second.txt
+[2025-11-05 17:25:38] REPL: ACK received for file second.txt
+[2025-11-05 17:25:41] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-05 17:25:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-05 17:26:23] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-05 17:26:23] READ: Starting read for file second.txt
+[2025-11-05 17:26:23] READ: Full path is ss_data/files/second.txt
+[2025-11-05 17:26:23] READ: File opened successfully, starting to read chunks
+[2025-11-05 17:26:23] READ: Chunk 1 - read 32 bytes, is_final=1
+[2025-11-05 17:26:23] READ: Chunk 1 sent
+[2025-11-05 17:26:23] READ: Read complete for second.txt, sent 1 chunks
+[2025-11-05 17:26:23] HANDLER: Closing connection from 127.0.0.1
