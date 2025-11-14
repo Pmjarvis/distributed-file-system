@@ -11,6 +11,7 @@ int send_response(int sock, MsgType type, const void* payload, uint32_t len);
 int send_error_response_to_client(int sock, const char* msg);
 int send_success_response_to_client(int sock, const char* msg);
 int send_lock_error_to_client(int sock, const char* msg); // <-- FIX: ADDED THIS
+int send_file_not_found_to_client(int sock, const char* msg);
 
 // --- NS-facing responses (for SS to use) ---
 int send_error_response_to_ns(int sock, const char* msg);

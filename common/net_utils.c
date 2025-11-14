@@ -53,6 +53,13 @@ int send_lock_error_to_client(int sock, const char* msg) {
     return send_response(sock, MSG_S2C_WRITE_LOCKED, &err, sizeof(err));
 }
 
+int send_file_not_found_to_client(int sock, const char* msg) {
+    Res_Error err;
+    strncpy(err.msg, msg, MAX_PAYLOAD - 1);
+    err.msg[MAX_PAYLOAD - 1] = '\0';
+    return send_response(sock, MSG_S2C_FILE_NOT_FOUND, &err, sizeof(err));
+}
+
 // --- NS-facing ---
 int send_error_response_to_ns(int sock, const char* msg) {
     Res_Error err;
@@ -80,7 +87,7 @@ static int recv_all(int sock, void* buffer, size_t len) {
             return -1;
         }
         if (res == 0) {
-            fprintf(stderr, "Connection closed by peer\n");
+            fprintf(stderr, "Connection closed by peer gracefully\n"); // TCP close
             return 0; // Connection closed
         }
         bytes_received += res;

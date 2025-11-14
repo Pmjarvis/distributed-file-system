@@ -90,6 +90,7 @@ typedef enum {
     MSG_S2C_WRITE_OK,        // Payload: Res_Success
     MSG_S2C_GENERIC_OK,      // Payload: Res_Success
     MSG_S2C_GENERIC_FAIL,    // Payload: Res_Error
+    MSG_S2C_FILE_NOT_FOUND,  // Payload: Res_Error
 
     // --- SS <-> SS (Replication) ---
     MSG_S2S_REPLICATE_FILE,  // Payload: Req_Replicate

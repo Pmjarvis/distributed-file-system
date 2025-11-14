@@ -25,6 +25,7 @@ char g_backup_ip[16];
 int g_backup_port = -1;
 FileLockMap g_file_lock_map;
 ReplicationQueue g_repl_queue;
+MetadataHashTable* g_metadata_table = NULL;
 // ---
 
 static void* client_listener_thread(void* arg);
@@ -44,6 +45,29 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     int file_count = ss_scan_files(&file_list);
     
     ss_log("MAIN: Found %d local files. Registering...", file_count);
+    
+    // Populate metadata table for each scanned file
+    for (int i = 0; i < file_count; i++) {
+        FileMetadata* meta = &file_list[i];
+        
+        // Check if already in metadata table
+        if (!metadata_table_exists(g_metadata_table, meta->filename)) {
+            // Insert new entry
+            metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
+                                meta->size_bytes, meta->word_count, meta->char_count,
+                                meta->last_access_time, meta->last_modified_time);
+            ss_log("MAIN: Added '%s' to metadata table", meta->filename);
+        } else {
+            // Update existing entry (file may have changed on disk)
+            FileMetadataNode* node = metadata_table_get(g_metadata_table, meta->filename);
+            if (node) {
+                metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
+                                    meta->size_bytes, meta->word_count, meta->char_count,
+                                    meta->last_access_time, meta->last_modified_time);
+                ss_log("MAIN: Updated '%s' in metadata table", meta->filename);
+            }
+        }
+    }
     
     Req_SSRegister reg;
     strncpy(reg.ip, g_ss_ip, 16);
@@ -116,6 +140,21 @@ int main(int argc, char* argv[]) {
     ss_create_dirs();
     lock_map_init(&g_file_lock_map, 64);
     
+    // Initialize metadata hash table
+    ss_log("MAIN: Initializing metadata hash table...");
+    g_metadata_table = metadata_table_load(METADATA_DB_PATH);
+    if (!g_metadata_table) {
+        ss_log("MAIN: No existing metadata DB found, creating new table");
+        g_metadata_table = metadata_table_init(OUTER_TABLE_SIZE);
+        if (!g_metadata_table) {
+            ss_log("FATAL: Failed to initialize metadata hash table");
+            exit(1);
+        }
+    } else {
+        ss_log("MAIN: Loaded metadata for %u files from disk", 
+               metadata_table_get_count(g_metadata_table));
+    }
+    
     _connect_and_register(ns_ip, ns_port);
     
     // Start replication worker
@@ -141,6 +180,19 @@ int main(int argc, char* argv[]) {
     pthread_join(hb_tid, NULL);
     
     ss_log("MAIN: Shutting down...");
+    
+    // Save metadata table to disk
+    if (g_metadata_table) {
+        ss_log("MAIN: Saving metadata table (%u entries)...", 
+               metadata_table_get_count(g_metadata_table));
+        if (metadata_table_save(g_metadata_table, METADATA_DB_PATH) == 0) {
+            ss_log("MAIN: Metadata table saved successfully");
+        } else {
+            ss_log("ERROR: Failed to save metadata table");
+        }
+        metadata_table_free(g_metadata_table);
+    }
+    
     close(g_ns_sock);
     repl_shutdown_worker();
     lock_map_destroy(&g_file_lock_map);

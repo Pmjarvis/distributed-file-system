@@ -2,6 +2,7 @@
 #define SS_GLOBALS_H
 
 #include "ss_data_structs.h"
+#include "ss_metadata.h"
 
 // Connection to Name Server
 extern int g_ns_sock;
@@ -20,6 +21,9 @@ extern FileLockMap g_file_lock_map;
 
 // Global replication queue
 extern ReplicationQueue g_repl_queue;
+
+// Global metadata hash table
+extern MetadataHashTable* g_metadata_table;
 
 // Data directories
 #define SS_ROOT_DIR "ss_data"

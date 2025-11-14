@@ -296,8 +296,9 @@ void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
     }
     fclose(f);
     
-    // TODO: Set file owner (e.g., using extended attributes)
-    // For now, we just create it.
+    // Insert into metadata table
+    metadata_table_insert(g_metadata_table, req->filename, req->username,
+                         0, 0, 0, time(NULL), time(NULL));
     
     ss_log("CREATE: File %s created by %s", req->filename, req->username);
     repl_schedule_update(req->filename); // Replicate empty file
@@ -346,18 +347,40 @@ void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
     
     pthread_rwlock_unlock(&lock->file_lock);
     
+    // Remove from metadata table
+    metadata_table_remove(g_metadata_table, req->filename);
+    
     ss_log("DELETE: File %s deleted", req->filename);
     repl_schedule_delete(req->filename);
     send_success_response_to_ns(ns_sock, "File deleted");
 }
 
 void ss_handle_get_info(int ns_sock, Req_FileOp* req) {
-    FileMetadata meta;
-    if (ss_get_file_metadata(req->filename, &meta) != 0) {
-        ss_log("INFO: Failed to get metadata for %s", req->filename);
+    // Check metadata table first
+    FileMetadataNode* node = metadata_table_get(g_metadata_table, req->filename);
+    if (!node) {
+        ss_log("INFO: File not found in metadata table: %s", req->filename);
         send_error_response_to_ns(ns_sock, "File not found");
         return;
     }
+    
+    // Update last access time
+    metadata_table_update_access_time(g_metadata_table, req->filename);
+    
+    // Build FileMetadata response from cached data
+    FileMetadata meta;
+    strncpy(meta.filename, node->filename, MAX_FILENAME - 1);
+    meta.filename[MAX_FILENAME - 1] = '\0';
+    strncpy(meta.owner, node->owner, MAX_USERNAME - 1);
+    meta.owner[MAX_USERNAME - 1] = '\0';
+    meta.size_bytes = node->file_size;
+    meta.word_count = node->word_count;
+    meta.char_count = node->char_count;
+    meta.last_access_time = node->last_access;
+    meta.last_modified_time = node->last_modified;
+    
+    ss_log("INFO: Returning cached metadata for %s (size: %lu, words: %lu, chars: %lu)",
+           req->filename, meta.size_bytes, meta.word_count, meta.char_count);
     
     send_response(ns_sock, MSG_S2N_FILE_INFO_RES, &meta, sizeof(meta));
 }
@@ -387,6 +410,17 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
 
 void ss_handle_read(int client_sock, Req_FileOp* req) {
     ss_log("READ: Starting read for file %s", req->filename);
+    
+    // Check metadata table first
+    if (!metadata_table_exists(g_metadata_table, req->filename)) {
+        ss_log("READ: File not found in metadata table: %s", req->filename);
+        send_file_not_found_to_client(client_sock, "File not found");
+        return;
+    }
+    
+    // Update last access time in metadata table
+    metadata_table_update_access_time(g_metadata_table, req->filename);
+    
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_rwlock_rdlock(&lock->file_lock);
     
@@ -397,7 +431,7 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
     FILE* f = fopen(filepath, "r");
     if (!f) {
         pthread_rwlock_unlock(&lock->file_lock);
-        ss_log("READ: File not found %s", req->filename);
+        ss_log("READ: File not found on disk %s (metadata inconsistency)", req->filename);
         send_error_response_to_client(client_sock, "File not found");
         return;
     }
@@ -436,6 +470,16 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
 }
 
 void ss_handle_stream(int client_sock, Req_FileOp* req) {
+    // Check metadata table first
+    if (!metadata_table_exists(g_metadata_table, req->filename)) {
+        ss_log("STREAM: File not found in metadata table: %s", req->filename);
+        send_file_not_found_to_client(client_sock, "File not found");
+        return;
+    }
+    
+    // Update last access time
+    metadata_table_update_access_time(g_metadata_table, req->filename);
+    
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_rwlock_rdlock(&lock->file_lock);
 
@@ -445,7 +489,7 @@ void ss_handle_stream(int client_sock, Req_FileOp* req) {
     FILE* f = fopen(filepath, "r");
     if (!f) {
         pthread_rwlock_unlock(&lock->file_lock);
-        ss_log("STREAM: File not found %s", req->filename);
+        ss_log("STREAM: File not found on disk %s (metadata inconsistency)", req->filename);
         send_error_response_to_client(client_sock, "File not found");
         return;
     }
@@ -501,6 +545,39 @@ void ss_handle_undo(int client_sock, Req_FileOp* req) {
     // 4. rename(tmp -> undo)
     rename(tmppath, undopath); // Old file is new undo. Ignore error.
     
+    // 5. Recalculate metadata after undo
+    struct stat file_st;
+    if (stat(filepath, &file_st) == 0) {
+        // Read file to calculate word/char counts
+        long file_size;
+        char* content = ss_read_file_to_memory(filepath, &file_size);
+        if (content) {
+            int num_sentences;
+            char** sentences = ss_split_sentences(content, &num_sentences);
+            
+            uint64_t word_count = 0;
+            for (int i = 0; i < num_sentences; i++) {
+                int num_words;
+                char** words = ss_split_words(sentences[i], &num_words);
+                word_count += num_words;
+                ss_free_words(words, num_words);
+            }
+            
+            uint64_t char_count = strlen(content);
+            
+            // Update metadata table
+            metadata_table_update_size(g_metadata_table, req->filename, file_st.st_size);
+            metadata_table_update_counts(g_metadata_table, req->filename, word_count, char_count);
+            metadata_table_update_modified_time(g_metadata_table, req->filename);
+            
+            ss_log("UNDO: Updated metadata for %s (size: %ld, words: %lu, chars: %lu)",
+                   req->filename, file_st.st_size, word_count, char_count);
+            
+            ss_free_sentences(sentences, num_sentences);
+            free(content);
+        }
+    }
+    
     pthread_rwlock_unlock(&lock->file_lock);
     
     ss_log("UNDO: File %s reverted", req->filename);
@@ -539,6 +616,38 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
             send_error_response_to_client(client_sock, "Failed to revert checkpoint");
             return;
         }
+        
+        // Recalculate metadata after revert
+        struct stat st;
+        if (stat(filepath, &st) == 0) {
+            long file_size;
+            char* content = ss_read_file_to_memory(filepath, &file_size);
+            if (content) {
+                int num_sentences;
+                char** sentences = ss_split_sentences(content, &num_sentences);
+                
+                uint64_t word_count = 0;
+                for (int i = 0; i < num_sentences; i++) {
+                    int num_words;
+                    char** words = ss_split_words(sentences[i], &num_words);
+                    word_count += num_words;
+                    ss_free_words(words, num_words);
+                }
+                
+                uint64_t char_count = strlen(content);
+                
+                metadata_table_update_size(g_metadata_table, req->filename, st.st_size);
+                metadata_table_update_counts(g_metadata_table, req->filename, word_count, char_count);
+                metadata_table_update_modified_time(g_metadata_table, req->filename);
+                
+                ss_log("REVERT: Updated metadata for %s (size: %ld, words: %lu, chars: %lu)",
+                       req->filename, st.st_size, word_count, char_count);
+                
+                ss_free_sentences(sentences, num_sentences);
+                free(content);
+            }
+        }
+        
         pthread_rwlock_unlock(&lock->file_lock);
         ss_log("REVERT: Reverted %s to checkpoint %s", filepath, req->tag);
         repl_schedule_update(req->filename);
@@ -781,6 +890,28 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     FILE* f = fopen(filepath, "w");
     fwrite(new_file_content, 1, strlen(new_file_content), f);
     fclose(f);
+    
+    // 8b. Update metadata table with new counts
+    uint64_t new_char_count = strlen(new_file_content);
+    uint64_t new_word_count = 0;
+    for (int i = 0; i < num_sentences; i++) {
+        int words_in_sentence;
+        char** sentence_words = ss_split_words(sentences[i], &words_in_sentence);
+        new_word_count += words_in_sentence;
+        ss_free_words(sentence_words, words_in_sentence);
+    }
+    
+    // Get file size from disk
+    struct stat st;
+    stat(filepath, &st);
+    
+    // Update metadata table
+    metadata_table_update_size(g_metadata_table, req->filename, st.st_size);
+    metadata_table_update_counts(g_metadata_table, req->filename, new_word_count, new_char_count);
+    metadata_table_update_modified_time(g_metadata_table, req->filename);
+    
+    ss_log("WRITE: Updated metadata for %s (size: %ld, words: %lu, chars: %lu)",
+           req->filename, st.st_size, new_word_count, new_char_count);
 
     // 9. Clean up
     free(new_file_content);
