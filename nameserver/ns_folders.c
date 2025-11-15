@@ -128,32 +128,24 @@ const char* createTreeFolder(Node* current_directory, const char* foldername) {
 }
 
 // --- 2. & 3. VIEWFOLDER ---
-char* viewTreeFolder(Node* root_node, Node* current_directory, const char* foldername) {
-    Node* folderToView = NULL;
-
-    if (strcmp(foldername, "ROOT") == 0) {
-        folderToView = root_node;
-    } else {
-        folderToView = findChild(current_directory, foldername, NODE_FOLDER);
-        if (folderToView == NULL) {
-            // Check if user wants to view current directory
-            if (strcmp(current_directory->name, foldername) == 0) {
-                 folderToView = current_directory;
-            } else {
-                return strdup("Error: Folder not found in current directory.");
-            }
-        }
+char* viewTreeFolder(Node* current_directory) {
+    if (!current_directory) {
+        return strdup("Error: Invalid directory.");
     }
 
     size_t buf_size = 1024;
     char* buffer = (char*)malloc(buf_size);
-    snprintf(buffer, buf_size, "--- Contents of '%s' ---\n", foldername);
+    if (!buffer) return NULL;
     
-    if (folderToView->child_count == 0) {
+    // Show the current directory name
+    const char* dir_name = (current_directory->type == NODE_ROOT) ? "ROOT" : current_directory->name;
+    snprintf(buffer, buf_size, "--- Contents of '%s' ---\n", dir_name);
+    
+    if (current_directory->child_count == 0) {
         strncat(buffer, " (empty)\n", buf_size - strlen(buffer) - 1);
     } else {
-        for (int i = 0; i < folderToView->child_count; i++) {
-            Node* child = folderToView->children[i];
+        for (int i = 0; i < current_directory->child_count; i++) {
+            Node* child = current_directory->children[i];
             char line[MAX_PATH + 10];
             if (child->type == NODE_FILE) {
                 snprintf(line, sizeof(line), "  FILE: %s\n", child->name);
@@ -163,7 +155,12 @@ char* viewTreeFolder(Node* root_node, Node* current_directory, const char* folde
             
             if (strlen(buffer) + strlen(line) + 1 > buf_size) {
                 buf_size *= 2;
-                buffer = (char*)realloc(buffer, buf_size);
+                char* new_buffer = (char*)realloc(buffer, buf_size);
+                if (!new_buffer) {
+                    free(buffer);
+                    return NULL;
+                }
+                buffer = new_buffer;
             }
             strncat(buffer, line, buf_size - strlen(buffer) - 1);
         }

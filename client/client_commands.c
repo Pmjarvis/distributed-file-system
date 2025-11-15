@@ -205,13 +205,36 @@ void do_folder_cmd(char* args, const char* command) {
     if (arg1) strncpy(req.arg1, arg1, MAX_PATH - 1);
     if (arg2) strncpy(req.arg2, arg2, MAX_PATH - 1);
     
-    if (!arg1 && (strcmp(command, "OPENPARENT") != 0)) {
+    // VIEWFOLDER and OPENPARENT don't require arguments
+    if (!arg1 && (strcmp(command, "OPENPARENT") != 0) && (strcmp(command, "VIEWFOLDER") != 0)) {
         fprintf(stderr, "Usage: %s <arg1> [arg2]\n", command);
         return;
     }
     
     send_request(g_ns_sock, MSG_C2N_FOLDER_CMD, &req, sizeof(req));
-    handle_generic_response(g_ns_sock, NULL);
+    
+    // VIEWFOLDER returns MSG_N2C_VIEW_RES, not generic response
+    if (strcmp(command, "VIEWFOLDER") == 0) {
+        MsgHeader header;
+        if (recv_header(g_ns_sock, &header) <= 0) {
+            fprintf(stderr, "ERROR: Connection lost.\n");
+            return;
+        }
+        
+        if (header.type == MSG_N2C_VIEW_RES) {
+            Res_View res;
+            recv_payload(g_ns_sock, &res, header.payload_len);
+            printf("%s", res.data);
+        } else if (header.type == MSG_N2C_GENERIC_FAIL) {
+            Res_Error res;
+            recv_payload(g_ns_sock, &res, header.payload_len);
+            fprintf(stderr, "ERROR: %s\n", res.msg);
+        } else {
+            fprintf(stderr, "ERROR: Unexpected response type %d\n", header.type);
+        }
+    } else {
+        handle_generic_response(g_ns_sock, NULL);
+    }
 }
 
 void do_open_folder(char* args) {

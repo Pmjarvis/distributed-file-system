@@ -95,7 +95,17 @@ typedef enum {
     // --- SS <-> SS (Replication) ---
     MSG_S2S_REPLICATE_FILE,  // Payload: Req_Replicate
     MSG_S2S_DELETE_FILE,     // Payload: Req_FileOp
-    MSG_S2S_ACK
+    MSG_S2S_ACK,
+
+    // --- NS -> SS (Recovery Sync) ---
+    MSG_N2S_SYNC_FROM_BACKUP, // Payload: Req_SyncFromBackup (tell backup to send all files to primary)
+    MSG_N2S_SYNC_TO_PRIMARY,  // Payload: Req_SyncToPrimary (tell primary it needs recovery from backup)
+    MSG_N2S_RE_REPLICATE_ALL, // Payload: Req_ReReplicate (tell primary to re-replicate all files to backup)
+    
+    // --- SS -> SS (Direct Recovery Connection) ---
+    MSG_S2S_START_RECOVERY,   // Payload: Req_StartRecovery
+    MSG_S2S_FILE_LIST,        // Payload: Req_FileList
+    MSG_S2S_RECOVERY_COMPLETE // Payload: none
 
 } MsgType;
 
@@ -238,5 +248,35 @@ typedef struct {
     uint64_t file_size;
     // Followed by file_size bytes of data
 } Req_Replicate;
+
+// NS->SS Recovery Sync
+typedef struct {
+    int target_ss_id;        // ID of SS to connect to
+    char target_ip[16];      // IP of SS to connect to
+    int target_port;         // Port of SS to connect to
+} Req_SyncFromBackup;
+
+typedef struct {
+    int backup_ss_id;        // ID of backup SS
+    char backup_ip[16];      // IP of backup SS
+    int backup_port;         // Port of backup SS
+} Req_SyncToPrimary;
+
+typedef struct {
+    int backup_ss_id;        // ID of backup SS
+    char backup_ip[16];      // IP of backup SS
+    int backup_port;         // Port of backup SS
+} Req_ReReplicate;
+
+// SS->SS Recovery
+typedef struct {
+    int ss_id;               // Sender's SS ID
+    bool is_primary_recovery; // true if primary recovering from backup, false if backup recovering from primary
+} Req_StartRecovery;
+
+typedef struct {
+    uint32_t file_count;
+    // Followed by file_count * sizeof(FileMetadata)
+} Req_FileList;
 
 #endif // PROTOCOL_H

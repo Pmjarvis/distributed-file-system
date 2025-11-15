@@ -5,7 +5,7 @@ LIBS = -pthread
 
 # Source files
 COMMON_OBJ = ../common/net_utils.o
-SS_OBJ = ss_main.o ss_handler.o ss_file_manager.o ss_logger.o ss_data_structs.o ss_replicator.o ss_metadata.o
+SS_OBJ = ss_main.o ss_handler.o ss_file_manager.o ss_logger.o ss_data_structs.o ss_replicator.o ss_metadata.o ss_recovery.o
 
 # Target
 TARGET = storageserver

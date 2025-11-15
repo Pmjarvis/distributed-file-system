@@ -1,5 +1,7 @@
 {
     "files.associations": {
         "socket.h": "c"
-    }
+    },
+    "chat.agent.maxRequests": 1000,
+    "chat.agent.enabled": true
 }

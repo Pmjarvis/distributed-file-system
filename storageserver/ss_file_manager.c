@@ -285,6 +285,13 @@ char* ss_join_sentences(char** sentences, int num_sentences) {
 // --- NS Request Handlers ---
 
 void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
+    // Check if SS is currently syncing
+    if (g_is_syncing) {
+        ss_log("CREATE: Blocked - storage server is currently syncing");
+        send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
+        return;
+    }
+    
     char filepath[MAX_PATH];
     ss_get_path(SS_FILES_DIR, req->filename, filepath);
     
@@ -306,6 +313,13 @@ void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
 }
 
 void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
+    // Check if SS is currently syncing
+    if (g_is_syncing) {
+        ss_log("DELETE: Blocked - storage server is currently syncing");
+        send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
+        return;
+    }
+    
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_rwlock_wrlock(&lock->file_lock);
     
@@ -409,6 +423,13 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
 // --- Client Request Handlers ---
 
 void ss_handle_read(int client_sock, Req_FileOp* req) {
+    // Check if SS is currently syncing
+    if (g_is_syncing) {
+        ss_log("READ: Blocked - storage server is currently syncing");
+        send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
+        return;
+    }
+    
     ss_log("READ: Starting read for file %s", req->filename);
     
     // Check metadata table first
@@ -772,6 +793,13 @@ static int compare_changes(const void* a, const void* b) {
 
 // --- Complex Write Transaction ---
 void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
+    // Check if SS is currently syncing
+    if (g_is_syncing) {
+        ss_log("WRITE: Blocked - storage server is currently syncing");
+        send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
+        return;
+    }
+    
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_mutex_t* sentence_lock = lock_map_get_sentence_lock(lock, req->sentence_num);
 

@@ -360,7 +360,34 @@ while (recv_header(ss_sock, &header) > 0) {
     recv_payload(ss_sock, &meta, header.payload_len);
     register_file_from_ss(ss_id, &meta);
 }
-```
+```=================================================
+
+✅ Fix Complete!
+I've successfully fixed the file namespace issue. Here's what changed:
+
+Problem Fixed:
+Before: Files were globally unique - different users COULD NOT have the same filename
+After: Each user has their own file namespace - different users CAN have the same filename
+Key Changes:
+Hash Table Composite Key - Changed from filename to (owner, filename)
+
+Updated hash functions to hash both owner and filename
+Updated comparison logic to match both fields
+API Updates - All functions now require owner parameter:
+
+file_map_table_search(table, owner, filename)
+file_map_table_delete(table, owner, filename)
+find_ss_for_file(owner, filename)
+get_file_metadata_from_ss(owner, filename, meta)
+Handler Updates - All file operations now scoped to current user:
+
+CREATE: Only checks if SAME user has duplicate
+DELETE: Deletes only current user's file
+INFO/READ/WRITE: Operates on current user's files
+Cache Keys - Changed from "filename" to "owner:filename"
+
+there is a bug - when two different users have a file with same filename, they are able to ACCESS/READ/WRITE/INFO/VIEW etc. the file of the other user as well.
+FIX THIS
 ====================================================================================================
 implemented hash table in ss for quick metadata fetching
 need to implement another hash table in ns side, hash based on filename and then instant mapping
@@ -381,3 +408,30 @@ implement periodic checkpointing every 60 seconds to save all data to disk
 
 🔴 Fix metadata_table_load() signature to match usage
 implement these two
+
+---------------
+Implement the following specifications or make sure they already exist:
+1. A user cannot create two files with same filename
+2. If two files have same filename, they must have same owner and they must be distinguished based on name of owner in all operations.
+3. No two users can have same username, i.e. each username is unique
+Make sure these changes are implemented.
+
+in ss_file_manager.c:
+- line 182 in ss_split_sentences, sentences[*num_sentences] is not null terminated
+- TODO in ss_get_file_metadata
+- in ss_get_file_metadata, when calculating word_count, it does not count
+delimiter as separate word if delimiter is not separated by space on both sides 
+
+==================
+
+✅ VIEWFOLDER Now Fully Working!
+The Problem
+The error "Received unexpected response type 4" occurred because:
+
+Server sends MSG_N2C_VIEW_RES (type 4) containing folder contents
+Client was using handle_generic_response() which only knows:
+MSG_N2C_GENERIC_OK (success)
+MSG_N2C_GENERIC_FAIL (error)
+Client didn't know how to handle MSG_N2C_VIEW_RES
+The Fix
+Updated client_commands.c do_folder_cmd() to handle VIEWFOLDER specially:

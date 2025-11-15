@@ -221,29 +221,66 @@ static void handle_create(UserSession* session, MsgHeader* header) {
     Req_FileOp payload;
     recv_payload(session->client_sock, &payload, header->payload_len);
     
+    // Check if THIS USER already has a file with this name
+    // Different users CAN have files with the same filename
+    FileMapNode* existing = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    if (existing) {
+        // Same user trying to create duplicate file
+        send_error_response_to_client(session->client_sock, "You already have a file with this name.");
+        return;
+    }
+    
     StorageServer* ss = get_ss_for_new_file(payload.filename);
     if (!ss) {
         send_error_response_to_client(session->client_sock, "No available Storage Servers to create file.");
         return;
     }
     
-    // 1. Tell SS to create the (empty) file
+    // Get backup SS info
+    pthread_mutex_lock(&g_ss_list_mutex);
+    int backup_ss_id = ss->backup_ss_id;
+    StorageServer* backup_ss = NULL;
+    if (backup_ss_id != -1) {
+        backup_ss = get_ss_by_id(backup_ss_id);
+        if (backup_ss && !backup_ss->is_online) {
+            backup_ss = NULL; // Backup is offline
+        }
+    }
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    // 1. Tell PRIMARY SS to create the (empty) file
     strncpy(payload.username, session->username, MAX_USERNAME);
     int res = ss_request_response(ss, MSG_N2S_CREATE_FILE, &payload, sizeof(payload));
     
     if (res != 0) {
-        send_error_response_to_client(session->client_sock, "Storage Server failed to create file.");
+        send_error_response_to_client(session->client_sock, "Primary Storage Server failed to create file.");
         return;
     }
+    
+    // 2. SYNCHRONOUSLY tell BACKUP SS to create the file (if backup exists)
+    if (backup_ss) {
+        printf("NS: Replicating CREATE to backup SS %d for file %s:%s\n", 
+               backup_ss_id, session->username, payload.filename);
+        int backup_res = ss_request_response(backup_ss, MSG_N2S_CREATE_FILE, &payload, sizeof(payload));
+        
+        if (backup_res != 0) {
+            fprintf(stderr, "NS: WARNING - Backup SS %d failed to create file %s:%s\n",
+                    backup_ss_id, session->username, payload.filename);
+            // Don't fail the entire operation if backup fails
+        } else {
+            printf("NS: Backup CREATE successful on SS %d\n", backup_ss_id);
+        }
+    } else {
+        printf("NS: No backup SS available for file %s:%s\n", session->username, payload.filename);
+    }
 
-    // 2. Update Access Control (set owner)
+    // 3. Update Access Control (set owner)
     pthread_mutex_lock(&g_access_table_mutex);
     user_ht_add_permission(g_access_table, session->username, payload.filename, "read-write-owner");
-    // --- FIX ---
     user_ht_save(g_access_table, DB_PATH);
     pthread_mutex_unlock(&g_access_table_mutex);
     
-    // 3. Update NS's internal file mapping hash table
+    // 4. Update NS's internal file mapping hash table
     FileMetadata meta;
     strncpy(meta.filename, payload.filename, MAX_FILENAME - 1);
     meta.filename[MAX_FILENAME - 1] = '\0';
@@ -254,17 +291,12 @@ static void handle_create(UserSession* session, MsgHeader* header) {
     meta.char_count = 0;
     meta.last_access_time = time(NULL);
     
-    pthread_mutex_lock(&g_ss_list_mutex);
-    int backup_ss_id = (ss->backup_ss_id != -1) ? ss->backup_ss_id : -1;
-    pthread_mutex_unlock(&g_ss_list_mutex);
-    
     // Insert into hash table (has internal locking)
     file_map_table_insert(g_file_map_table, payload.filename, ss->ss_id, backup_ss_id, session->username);
 
-    // 4. Add to user's folder hierarchy
+    // 5. Add to user's folder hierarchy
     createTreeFile(session->current_directory, payload.filename);
     
-    // --- FIX ---
     send_success_response_to_client(session->client_sock, "File created successfully.");
 }
 
@@ -272,44 +304,82 @@ static void handle_delete(UserSession* session, MsgHeader* header) {
     Req_FileOp payload;
     recv_payload(session->client_sock, &payload, header->payload_len);
     
-    // 1. Check permissions (must be owner)
+    // 1. Check permissions (must be owner) - file belongs to current user
     if (!is_owner(session->username, payload.filename)) {
         send_error_response_to_client(session->client_sock, "Access Denied: Only the owner can delete a file.");
         return;
     }
     
-    StorageServer* ss = find_ss_for_file(payload.filename);
+    // Get file info to find backup SS
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    if (!file_node) {
+        send_error_response_to_client(session->client_sock, "File not found.");
+        return;
+    }
+    
+    int backup_ss_id = file_node->backup_ss_id;
+    
+    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
     if (!ss) {
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
         return;
     }
     
-    // 2. Tell SS to delete file
+    // 2. Tell PRIMARY SS to delete file
     int res = ss_request_response(ss, MSG_N2S_DELETE_FILE, &payload, sizeof(payload));
     if (res != 0) {
         send_error_response_to_client(session->client_sock, "Storage Server failed to delete file.");
         return;
     }
     
-    // 3. Remove from hash table (has internal locking)
-    file_map_table_delete(g_file_map_table, payload.filename);
+    // 3. Tell BACKUP SS to delete file (if exists)
+    if (backup_ss_id != -1) {
+        pthread_mutex_lock(&g_ss_list_mutex);
+        StorageServer* backup_ss = get_ss_by_id(backup_ss_id);
+        if (backup_ss && backup_ss->is_online) {
+            pthread_mutex_unlock(&g_ss_list_mutex);
+            printf("NS: Replicating DELETE to backup SS %d for file %s:%s\n", 
+                   backup_ss_id, session->username, payload.filename);
+            int backup_res = ss_request_response(backup_ss, MSG_N2S_DELETE_FILE, &payload, sizeof(payload));
+            if (backup_res != 0) {
+                fprintf(stderr, "NS: WARNING - Backup SS %d failed to delete file %s:%s\n",
+                        backup_ss_id, session->username, payload.filename);
+            }
+        } else {
+            pthread_mutex_unlock(&g_ss_list_mutex);
+        }
+    }
     
-    // 4. Remove from cache
+    // 4. Decrement file_count on the SS (for accurate load balancing)
+    pthread_mutex_lock(&g_ss_list_mutex);
+    if (ss && ss->file_count > 0) {
+        ss->file_count--;
+        printf("NS: Decremented file_count for SS %d (now: %d)\n", ss->ss_id, ss->file_count);
+    }
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    // 5. Remove from hash table (has internal locking) - use owner+filename as key
+    file_map_table_delete(g_file_map_table, session->username, payload.filename);
+    
+    // 6. Remove from cache (cache key includes owner)
+    char cache_key[MAX_USERNAME + MAX_FILENAME + 2];
+    snprintf(cache_key, sizeof(cache_key), "%s:%s", session->username, payload.filename);
     pthread_mutex_lock(&g_cache_mutex);
-    lru_cache_remove(g_file_cache, payload.filename);
+    lru_cache_remove(g_file_cache, cache_key);
     pthread_mutex_unlock(&g_cache_mutex);
     
-    // 5. Remove from Access Control
+    // 7. Remove from Access Control - only revoke for THIS user, not all users
+    // (Different users can have files with the same filename!)
     pthread_mutex_lock(&g_access_table_mutex);
-    user_ht_revoke_file_from_all(g_access_table, payload.filename);
+    user_ht_revoke_permission(g_access_table, session->username, payload.filename);
     user_ht_save(g_access_table, DB_PATH);
     pthread_mutex_unlock(&g_access_table_mutex);
     
-    // 6. Remove from folder hierarchy (if it exists)
-    Node* file_node = findChild(session->current_directory, payload.filename, NODE_FILE);
-    if(file_node) {
-        removeChild(session->current_directory, file_node);
-        freeTree(file_node);
+    // 8. Remove from folder hierarchy (if it exists)
+    Node* file_node2 = findChild(session->current_directory, payload.filename, NODE_FILE);
+    if(file_node2) {
+        removeChild(session->current_directory, file_node2);
+        freeTree(file_node2);
     }
     
     send_success_response_to_client(session->client_sock, "File deleted successfully.");
@@ -330,8 +400,8 @@ static void handle_info(UserSession* session, MsgHeader* header) {
         return;
     }
 
-    // 2. Find file
-    StorageServer* ss = find_ss_for_file(payload.filename);
+    // 2. Find file (scoped to current user's files)
+    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
     if (!ss) {
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
         return;
@@ -339,13 +409,13 @@ static void handle_info(UserSession* session, MsgHeader* header) {
     
     // 3. Get fresh metadata from SS
     FileMetadata meta;
-    if (get_file_metadata_from_ss(payload.filename, &meta) != 0) {
+    if (get_file_metadata_from_ss(session->username, payload.filename, &meta) != 0) {
         send_error_response_to_client(session->client_sock, "Failed to get file metadata from Storage Server.");
         return;
     }
     
-    // 4. Get owner from hash table (has internal locking)
-    FileMapNode* file_node = file_map_table_search(g_file_map_table, payload.filename);
+    // 4. Get owner from hash table (has internal locking) - should be current user
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, session->username, payload.filename);
     if (!file_node) {
         send_error_response_to_client(session->client_sock, "File mapping not found on NS.");
         return;
@@ -443,8 +513,8 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
         return;
     }
 
-    // 2. Find SS
-    StorageServer* ss = find_ss_for_file(payload.filename);
+    // 2. Find SS (scoped to current user's file)
+    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
     if (!ss) {
         send_error_response_to_client(session->client_sock, "File not found or SS is offline.");
         return;
@@ -491,7 +561,8 @@ static void handle_folder_cmd(UserSession* session, MsgHeader* header) {
     if (strcmp(payload.command, "CREATEFOLDER") == 0) {
         err_msg = createTreeFolder(session->current_directory, payload.arg1);
     } else if (strcmp(payload.command, "VIEWFOLDER") == 0) {
-        view_result = viewTreeFolder(session->folder_hierarchy_root, session->current_directory, payload.arg1);
+        // VIEWFOLDER shows the current directory (no arguments needed)
+        view_result = viewTreeFolder(session->current_directory);
         if (!view_result) err_msg = "Error generating folder view.";
     } else if (strcmp(payload.command, "MOVE") == 0) {
         err_msg = moveTreeFile(session->current_directory, payload.arg1, payload.arg2);
@@ -499,9 +570,26 @@ static void handle_folder_cmd(UserSession* session, MsgHeader* header) {
         err_msg = upMoveTreeFile(session->current_directory, payload.arg1);
     } else if (strcmp(payload.command, "OPEN") == 0) {
         bool create = (strstr(payload.flags, "c") != NULL);
-        new_dir = openTreeFolder(session->current_directory, payload.arg1, create);
-        if (new_dir) session->current_directory = new_dir;
-        else err_msg = "Folder not found and -c flag not specified.";
+        
+        // First check if name collision exists when -c is specified
+        if (create) {
+            Node* existing = findChildByName(session->current_directory, payload.arg1);
+            if (existing) {
+                if (existing->type == NODE_FILE) {
+                    err_msg = "Cannot create folder: A file with this name already exists.";
+                } else {
+                    err_msg = "Cannot create folder: A folder with this name already exists.";
+                }
+            } else {
+                new_dir = openTreeFolder(session->current_directory, payload.arg1, create);
+                if (new_dir) session->current_directory = new_dir;
+                else err_msg = "Failed to create folder.";
+            }
+        } else {
+            new_dir = openTreeFolder(session->current_directory, payload.arg1, create);
+            if (new_dir) session->current_directory = new_dir;
+            else err_msg = "Folder not found. Use -c flag to create it.";
+        }
     } else if (strcmp(payload.command, "OPENPARENT") == 0) {
         new_dir = openTreeParentDirectory(session->current_directory);
         if (new_dir) session->current_directory = new_dir;
@@ -571,9 +659,9 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 2. Find Storage Server
-    printf("DEBUG: Finding SS for file '%s'\n", payload.filename);
-    StorageServer* ss = find_ss_for_file(payload.filename);
+    // 2. Find Storage Server (scoped to current user's file)
+    printf("DEBUG: Finding SS for file '%s' (owner: %s)\n", payload.filename, session->username);
+    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
     if (!ss) {
         printf("DEBUG: SS not found, sending error\n");
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");

@@ -32,6 +32,7 @@ FileLockMap g_file_lock_map;
 ReplicationQueue g_repl_queue;
 MetadataHashTable* g_metadata_table = NULL;
 volatile int g_shutdown = 0;  // Graceful shutdown flag
+volatile int g_is_syncing = 0; // Recovery sync flag
 // ---
 
 static void* client_listener_thread(void* arg);

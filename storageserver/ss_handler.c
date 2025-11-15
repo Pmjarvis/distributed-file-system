@@ -78,12 +78,34 @@ void* handle_connection(void* arg) {
             Req_FileOp req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_get_content_for_exec(sock, &req);
+        } else if (header.type == MSG_N2S_SYNC_FROM_BACKUP) {
+            Req_SyncFromBackup req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_sync_from_backup(sock, &req);
+        } else if (header.type == MSG_N2S_SYNC_TO_PRIMARY) {
+            Req_SyncToPrimary req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_sync_to_primary(sock, &req);
+        } else if (header.type == MSG_N2S_RE_REPLICATE_ALL) {
+            Req_ReReplicate req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_re_replicate_all(sock, &req);
         }
 
-    // --- THIS IS A REPLICATION CONNECTION ---
-    } else if (header.type >= MSG_S2S_REPLICATE_FILE && header.type <= MSG_S2S_ACK) {
-        // This should NOT happen. The replication listener handles this.
-        ss_log("HANDLER: ERROR: Main listener got a replication request from %s. Closing.", ip);
+    // --- THIS IS A REPLICATION/RECOVERY CONNECTION (from another SS) ---
+    } else if (header.type >= MSG_S2S_REPLICATE_FILE && header.type <= MSG_S2S_RECOVERY_COMPLETE) {
+        ss_log("HANDLER: SS-to-SS connection from %s (Req: %d)", ip, header.type);
+        
+        if (header.type == MSG_S2S_REPLICATE_FILE || header.type == MSG_S2S_DELETE_FILE) {
+            // Normal replication (handled by replicator)
+            handle_replication_receive(sock);
+            return NULL; // Socket closed by handler
+        } else if (header.type == MSG_S2S_START_RECOVERY) {
+            Req_StartRecovery req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_recovery_connection(sock, &req);
+            return NULL; // Socket closed by handler
+        }
         
     } else {
         ss_log("HANDLER: Unknown connection type from %s (first msg %d)", ip, header.type);

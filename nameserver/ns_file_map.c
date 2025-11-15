@@ -15,11 +15,18 @@ static FileMapNode g_file_map_tombstone = {0};
 #define FNV_OFFSET_BASIS_64 14695981039346656037ULL
 
 /**
- * @brief Hash function 1 (Primary): FNV-1a
+ * @brief Hash function 1 (Primary): FNV-1a for composite key (owner, filename)
  */
-static uint64_t fnv1a_hash(const char *str) {
+static uint64_t fnv1a_hash(const char *owner, const char *filename) {
     uint64_t hash = FNV_OFFSET_BASIS_64;
-    unsigned char *s = (unsigned char *)str;
+    // Hash owner first
+    unsigned char *s = (unsigned char *)owner;
+    while (*s) {
+        hash ^= (uint64_t)(*s++);
+        hash *= FNV_PRIME_64;
+    }
+    // Then hash filename
+    s = (unsigned char *)filename;
     while (*s) {
         hash ^= (uint64_t)(*s++);
         hash *= FNV_PRIME_64;
@@ -28,24 +35,30 @@ static uint64_t fnv1a_hash(const char *str) {
 }
 
 /**
- * @brief Hash function 2 (Secondary for Double Hashing): djb2
+ * @brief Hash function 2 (Secondary for Double Hashing): djb2 for composite key
  */
-static uint64_t djb2_hash(const char *str) {
+static uint64_t djb2_hash(const char *owner, const char *filename) {
     uint64_t hash = 5381;
     int c;
-    unsigned char *s = (unsigned char *)str;
+    // Hash owner first
+    unsigned char *s = (unsigned char *)owner;
     while ((c = *s++)) {
         hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    }
+    // Then hash filename
+    s = (unsigned char *)filename;
+    while ((c = *s++)) {
+        hash = ((hash << 5) + hash) + c;
     }
     return hash;
 }
 
 /**
- * @brief Get the bucket lock index for a filename
- * Uses primary hash to determine which lock protects this filename
+ * @brief Get the bucket lock index for a (owner, filename) pair
+ * Uses primary hash to determine which lock protects this key
  */
-static size_t get_lock_index(FileMapHashTable* table, const char* filename) {
-    uint64_t hash = fnv1a_hash(filename);
+static size_t get_lock_index(FileMapHashTable* table, const char* owner, const char* filename) {
+    uint64_t hash = fnv1a_hash(owner, filename);
     return hash % table->num_locks;
 }
 
@@ -54,11 +67,11 @@ static size_t get_lock_index(FileMapHashTable* table, const char* filename) {
 // ----------------------------------------------------------------------------
 
 /**
- * @brief Core double-hashing probe logic
+ * @brief Core double-hashing probe logic for composite key (owner, filename)
  */
-static size_t file_map_find_slot(FileMapHashTable* table, const char* filename, int* p_found) {
-    uint64_t hash1 = fnv1a_hash(filename);
-    uint64_t hash2 = djb2_hash(filename);
+static size_t file_map_find_slot(FileMapHashTable* table, const char* owner, const char* filename, int* p_found) {
+    uint64_t hash1 = fnv1a_hash(owner, filename);
+    uint64_t hash2 = djb2_hash(owner, filename);
     
     size_t index = hash1 % table->size;
     size_t step = (hash2 % (table->size - 1)) + 1;
@@ -79,8 +92,8 @@ static size_t file_map_find_slot(FileMapHashTable* table, const char* filename, 
             if (first_tombstone == (size_t)-1) {
                 first_tombstone = index;
             }
-        } else if (strcmp(node->filename, filename) == 0) {
-            // Found the key
+        } else if (strcmp(node->owner, owner) == 0 && strcmp(node->filename, filename) == 0) {
+            // Found the key - must match BOTH owner and filename
             *p_found = 1;
             return index;
         }
@@ -170,10 +183,10 @@ void file_map_table_free(FileMapHashTable* table) {
 int file_map_table_insert(FileMapHashTable* table, const char* filename,
                           int primary_ss_id, int backup_ss_id,
                           const char* owner) {
-    if (!table || !filename) return 0;
+    if (!table || !filename || !owner) return 0;
     
-    // Get the bucket lock for this filename
-    size_t lock_idx = get_lock_index(table, filename);
+    // Get the bucket lock for this (owner, filename) pair
+    size_t lock_idx = get_lock_index(table, owner, filename);
     pthread_mutex_lock(&table->bucket_locks[lock_idx]);
     
     if (table->count >= table->size / 2) {
@@ -183,7 +196,7 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
     }
 
     int found = 0;
-    size_t index = file_map_find_slot(table, filename, &found);
+    size_t index = file_map_find_slot(table, owner, filename, &found);
 
     if (index == (size_t)-1) {
         pthread_mutex_unlock(&table->bucket_locks[lock_idx]);
@@ -194,10 +207,6 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
         // Update existing entry
         table->nodes[index]->primary_ss_id = primary_ss_id;
         table->nodes[index]->backup_ss_id = backup_ss_id;
-        if (owner) {
-            strncpy(table->nodes[index]->owner, owner, MAX_USERNAME - 1);
-            table->nodes[index]->owner[MAX_USERNAME - 1] = '\0';
-        }
         pthread_mutex_unlock(&table->bucket_locks[lock_idx]);
     } else {
         // Insert new entry
@@ -212,12 +221,8 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
         node->primary_ss_id = primary_ss_id;
         node->backup_ss_id = backup_ss_id;
         
-        if (owner) {
-            strncpy(node->owner, owner, MAX_USERNAME - 1);
-            node->owner[MAX_USERNAME - 1] = '\0';
-        } else {
-            node->owner[0] = '\0';
-        }
+        strncpy(node->owner, owner, MAX_USERNAME - 1);
+        node->owner[MAX_USERNAME - 1] = '\0';
 
         table->nodes[index] = node;
         
@@ -231,15 +236,15 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
     return 1;
 }
 
-FileMapNode* file_map_table_search(FileMapHashTable* table, const char* filename) {
-    if (!table || !filename) return NULL;
+FileMapNode* file_map_table_search(FileMapHashTable* table, const char* owner, const char* filename) {
+    if (!table || !owner || !filename) return NULL;
     
-    // Get the bucket lock for this filename
-    size_t lock_idx = get_lock_index(table, filename);
+    // Get the bucket lock for this (owner, filename) pair
+    size_t lock_idx = get_lock_index(table, owner, filename);
     pthread_mutex_lock(&table->bucket_locks[lock_idx]);
     
     int found = 0;
-    size_t index = file_map_find_slot(table, filename, &found);
+    size_t index = file_map_find_slot(table, owner, filename, &found);
 
     FileMapNode* result = NULL;
     if (found) {
@@ -250,15 +255,15 @@ FileMapNode* file_map_table_search(FileMapHashTable* table, const char* filename
     return result;
 }
 
-int file_map_table_delete(FileMapHashTable* table, const char* filename) {
-    if (!table || !filename) return 0;
+int file_map_table_delete(FileMapHashTable* table, const char* owner, const char* filename) {
+    if (!table || !owner || !filename) return 0;
     
-    // Get the bucket lock for this filename
-    size_t lock_idx = get_lock_index(table, filename);
+    // Get the bucket lock for this (owner, filename) pair
+    size_t lock_idx = get_lock_index(table, owner, filename);
     pthread_mutex_lock(&table->bucket_locks[lock_idx]);
     
     int found = 0;
-    size_t index = file_map_find_slot(table, filename, &found);
+    size_t index = file_map_find_slot(table, owner, filename, &found);
 
     if (found) {
         FileMapNode* node = table->nodes[index];
@@ -456,15 +461,15 @@ void file_map_table_iterate(FileMapHashTable* table, FileMapIteratorCallback cal
     }
 }
 
-int file_map_table_update_primary(FileMapHashTable* table, const char* filename, int new_primary_ss_id) {
-    if (!table || !filename) return 0;
+int file_map_table_update_primary(FileMapHashTable* table, const char* owner, const char* filename, int new_primary_ss_id) {
+    if (!table || !owner || !filename) return 0;
     
-    // Get the bucket lock for this filename
-    size_t lock_idx = get_lock_index(table, filename);
+    // Get the bucket lock for this (owner, filename) pair
+    size_t lock_idx = get_lock_index(table, owner, filename);
     pthread_mutex_lock(&table->bucket_locks[lock_idx]);
     
     int found = 0;
-    size_t index = file_map_find_slot(table, filename, &found);
+    size_t index = file_map_find_slot(table, owner, filename, &found);
 
     if (found) {
         table->nodes[index]->primary_ss_id = new_primary_ss_id;
@@ -476,15 +481,15 @@ int file_map_table_update_primary(FileMapHashTable* table, const char* filename,
     return 0;
 }
 
-int file_map_table_update_backup(FileMapHashTable* table, const char* filename, int new_backup_ss_id) {
-    if (!table || !filename) return 0;
+int file_map_table_update_backup(FileMapHashTable* table, const char* owner, const char* filename, int new_backup_ss_id) {
+    if (!table || !owner || !filename) return 0;
     
-    // Get the bucket lock for this filename
-    size_t lock_idx = get_lock_index(table, filename);
+    // Get the bucket lock for this (owner, filename) pair
+    size_t lock_idx = get_lock_index(table, owner, filename);
     pthread_mutex_lock(&table->bucket_locks[lock_idx]);
     
     int found = 0;
-    size_t index = file_map_find_slot(table, filename, &found);
+    size_t index = file_map_find_slot(table, owner, filename, &found);
 
     if (found) {
         table->nodes[index]->backup_ss_id = new_backup_ss_id;

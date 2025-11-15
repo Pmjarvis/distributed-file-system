@@ -16,6 +16,7 @@
 // --- Global Variable Definitions ---
 StorageServer* g_ss_list_head = NULL;
 int g_ss_count = 0;
+int g_ss_active_count = 0;
 int g_ss_id_counter = 0;
 pthread_mutex_t g_ss_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -67,6 +68,7 @@ void init_server_state() {
     
     g_ss_list_head = NULL;
     g_ss_count = 0;
+    g_ss_active_count = 0;
     g_ss_id_counter = 0;
     
     g_access_requests_head = NULL;

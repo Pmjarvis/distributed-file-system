@@ -40,7 +40,7 @@ const char* createTreeFolder(Node* current_directory, const char* foldername);
 
 // Returns a malloc'd string of folder contents. Caller must free.
 // Returns NULL on error.
-char* viewTreeFolder(Node* root_node, Node* current_directory, const char* foldername);
+char* viewTreeFolder(Node* current_directory);
 
 // Returns error message on failure, NULL on success
 const char* moveTreeFile(Node* current_directory, const char* filename, const char* foldername);

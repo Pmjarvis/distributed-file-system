@@ -28,6 +28,9 @@ extern MetadataHashTable* g_metadata_table;
 // Graceful shutdown flag
 extern volatile int g_shutdown;
 
+// Recovery sync flag (blocks operations during recovery)
+extern volatile int g_is_syncing;
+
 // Data directories
 #define SS_ROOT_DIR "ss_data"
 #define SS_FILES_DIR "ss_data/files"

@@ -18,18 +18,20 @@ typedef struct StorageServer {
     int sock_fd;
     char ip[16];
     int client_port;
-    bool is_online;
+    bool is_online;           // true if currently connected
+    bool is_syncing;          // true if currently performing recovery sync (blocked)
     time_t last_heartbeat;
     
-    int backup_ss_id;       // ID of the SS it backs up TO
-    int backup_of_ss_id;    // ID of the SS it IS a backup FOR
+    int file_count;           // Number of files stored on this SS (for load balancing)
+    int backup_ss_id;         // ID of the SS this node BACKS UP (next in circular list)
     
-    struct StorageServer* next;
+    struct StorageServer* next; // Points to next in circular linked list
 } StorageServer;
 
-// List of all connected storage servers
+// Circular linked list of all storage servers (active and inactive)
 extern StorageServer* g_ss_list_head;
-extern int g_ss_count;
+extern int g_ss_count;          // Total number of SS nodes (including inactive)
+extern int g_ss_active_count;   // Number of currently online SSs
 extern int g_ss_id_counter;
 extern pthread_mutex_t g_ss_list_mutex;
 

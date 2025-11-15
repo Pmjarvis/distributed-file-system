@@ -70,19 +70,21 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
 /**
  * @brief Searches for a file in the hash table
  * @param table The hash table
+ * @param owner The file owner username
  * @param filename The filename to search for
  * @return Pointer to the FileMapNode if found, NULL otherwise
  * @note The returned pointer should NOT be freed by the caller
  */
-FileMapNode* file_map_table_search(FileMapHashTable* table, const char* filename);
+FileMapNode* file_map_table_search(FileMapHashTable* table, const char* owner, const char* filename);
 
 /**
  * @brief Deletes a file from the hash table
  * @param table The hash table
+ * @param owner The file owner username
  * @param filename The filename to delete
  * @return 1 on success, 0 if not found
  */
-int file_map_table_delete(FileMapHashTable* table, const char* filename);
+int file_map_table_delete(FileMapHashTable* table, const char* owner, const char* filename);
 
 /**
  * @brief Saves the hash table to disk
@@ -112,19 +114,21 @@ void file_map_table_iterate(FileMapHashTable* table, FileMapIteratorCallback cal
 /**
  * @brief Updates the primary SS ID for a file
  * @param table The hash table
+ * @param owner The file owner username
  * @param filename The filename
  * @param new_primary_ss_id New primary SS ID
  * @return 1 on success, 0 if not found
  */
-int file_map_table_update_primary(FileMapHashTable* table, const char* filename, int new_primary_ss_id);
+int file_map_table_update_primary(FileMapHashTable* table, const char* owner, const char* filename, int new_primary_ss_id);
 
 /**
  * @brief Updates the backup SS ID for a file
  * @param table The hash table
+ * @param owner The file owner username
  * @param filename The filename
  * @param new_backup_ss_id New backup SS ID
  * @return 1 on success, 0 if not found
  */
-int file_map_table_update_backup(FileMapHashTable* table, const char* filename, int new_backup_ss_id);
+int file_map_table_update_backup(FileMapHashTable* table, const char* owner, const char* filename, int new_backup_ss_id);
 
 #endif // NS_FILE_MAP_H

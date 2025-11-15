@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
             printf("  LIST\n");
             printf("  ADDACCESS -R|-W <file> <user>    REMACCESS <file> <user>\n");
             printf("  REQACCESS <file>    VIEWREQS    GRANTACCESS -R|-W <file> <user>\n");
-            printf("  CREATEFOLDER <dir>  VIEWFOLDER <dir|ROOT>\n");
+            printf("  CREATEFOLDER <dir>  VIEWFOLDER\n");
             printf("  OPEN [-c] <dir>     OPENPARENT\n");
             printf("  MOVE <file> <dir>   UPMOVE <file>\n");
             printf("  CHECKPOINT <file> <tag>    REVERT <file> <tag>\n");
