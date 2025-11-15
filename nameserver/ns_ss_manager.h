@@ -22,14 +22,11 @@ StorageServer* find_ss_for_file(const char* filename);
 // Finds the primary SS where a new file should be created
 StorageServer* get_ss_for_new_file(const char* filename);
 
-// Adds a file to an SS's internal list (after creation)
-void add_file_to_ss_list(StorageServer* ss, FileMetadata* meta);
+// Requests fresh metadata from SS and updates hash table
+int refresh_file_metadata_from_ss(const char* filename);
 
-// Removes a file from an SS's internal list (after deletion)
-void remove_file_from_ss_list(StorageServer* ss, const char* filename);
-
-// Finds a file in a single SS's list (helper function)
-SSFileNode* find_file_in_ss_list(StorageServer* ss, const char* filename); // <--- ADDED THIS
+// Gets metadata from SS without caching (returns 0 on success, -1 on failure)
+int get_file_metadata_from_ss(const char* filename, FileMetadata* out_meta);
 
 // Formats file lists for VIEW command
 char* format_file_list(UserHashTable* access_table, const char* username, const char* flags);

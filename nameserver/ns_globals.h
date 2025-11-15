@@ -9,13 +9,8 @@
 #include "ns_folders.h"  // Your folder hierarchy header
 #include "ns_cache.h"    // Cache header
 #include "ns_user_manager.h" // User list header
+#include "ns_file_map.h" // File mapping hash table
 
-
-// --- File List stored by NS for each SS ---
-typedef struct SSFileNode {
-    FileMetadata meta; // This type is defined in protocol.h
-    struct SSFileNode* next;
-} SSFileNode;
 
 // --- Storage Server Management ---
 typedef struct StorageServer {
@@ -25,8 +20,6 @@ typedef struct StorageServer {
     int client_port;
     bool is_online;
     time_t last_heartbeat;
-    
-    SSFileNode* file_list_head; // Head of linked list of files
     
     int backup_ss_id;       // ID of the SS it backs up TO
     int backup_of_ss_id;    // ID of the SS it IS a backup FOR
@@ -54,6 +47,9 @@ extern pthread_mutex_t g_access_table_mutex;
 // --- Caching ---
 extern LRUCache* g_file_cache;
 extern pthread_mutex_t g_cache_mutex;
+
+// --- File Mapping Hash Table (now has internal locking) ---
+extern FileMapHashTable* g_file_map_table;
 
 
 // --- Per-Client Session ---

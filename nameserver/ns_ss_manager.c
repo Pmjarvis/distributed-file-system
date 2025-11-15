@@ -92,14 +92,7 @@ void* ss_handler_thread(void* arg) {
         ss_node->last_heartbeat = time(NULL);
         ss_node->sock_fd = ss_sock;
         
-        // Clear old file list
-        SSFileNode* curr_file = ss_node->file_list_head;
-        while (curr_file) {
-            SSFileNode* next = curr_file->next;
-            free(curr_file);
-            curr_file = next;
-        }
-        ss_node->file_list_head = NULL;
+        // Note: File list now stored in global hash table, not per-SS list
     } else {
         // New SS
         new_ss_id = g_ss_id_counter++;
@@ -112,7 +105,6 @@ void* ss_handler_thread(void* arg) {
         ss_node->client_port = reg_payload.client_port;
         ss_node->is_online = true;
         ss_node->last_heartbeat = time(NULL);
-        ss_node->file_list_head = NULL;
        // ss_node->backup_ss_id = reg_payload.backup_ss_id; // Will be resolved later
         ss_node->backup_of_ss_id = -1; // Will be set by another SS
         ss_node->next = g_ss_list_head;
@@ -120,7 +112,7 @@ void* ss_handler_thread(void* arg) {
         g_ss_count++;
     }
     
-    // Receive file list
+    // Receive file list and add to global hash table
     for (uint32_t i = 0; i < reg_payload.file_count; i++) {
         FileMetadata meta;
         if(recv_payload(ss_sock, &meta, sizeof(FileMetadata)) <= 0) {
@@ -131,7 +123,12 @@ void* ss_handler_thread(void* arg) {
             free(arg);
             return NULL;
         }
-        add_file_to_ss_list(ss_node, &meta);
+        
+        // Determine backup SS ID
+        int backup_ss_id = (ss_node->backup_ss_id != -1) ? ss_node->backup_ss_id : -1;
+        
+        // Insert into global file mapping hash table (has internal locking)
+        file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, meta.owner);
     }
     
     // Simple backup assignment: SS N backs up SS N-1. SS 0 backs up SS N-1.
@@ -254,9 +251,20 @@ StorageServer* find_ss_for_file(const char* filename) {
         return primary_ss;
     }
 
-    // 2. Cache miss or SS is down. Find primary SS by hash.
+    // 2. Cache miss or SS is down. Look up file in hash table (has internal locking)
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, filename);
+    
+    if (!file_node) {
+        // File not found in hash table
+        return NULL;
+    }
+    
+    int primary_ss_id = file_node->primary_ss_id;
+    int backup_ss_id = file_node->backup_ss_id;
+    
+    // 3. Find the primary SS by ID
     pthread_mutex_lock(&g_ss_list_mutex);
-    primary_ss = get_primary_ss_for_file(filename);
+    primary_ss = get_ss_by_id(primary_ss_id);
 
     if (primary_ss && primary_ss->is_online) {
         // Found online primary. Update cache.
@@ -268,23 +276,24 @@ StorageServer* find_ss_for_file(const char* filename) {
         return primary_ss;
     }
     
-    // 3. Primary is down. Find backup.
-    if (primary_ss && primary_ss->backup_ss_id != -1) {
-        backup_ss = get_ss_by_id(primary_ss->backup_ss_id);
+    // 4. Primary is down. Try backup.
+    if (backup_ss_id != -1) {
+        backup_ss = get_ss_by_id(backup_ss_id);
         if (backup_ss && backup_ss->is_online) {
             fprintf(stderr, "SS: Primary %d for '%s' is down. Using backup %d.\n",
-                    primary_ss->ss_id, filename, backup_ss->ss_id);
+                    primary_ss_id, filename, backup_ss_id);
             pthread_mutex_unlock(&g_ss_list_mutex);
             return backup_ss;
         }
     }
     
-    // 4. Both are down
+    // 5. Both are down
     pthread_mutex_unlock(&g_ss_list_mutex);
     return NULL;
 }
 
 StorageServer* get_ss_for_new_file(const char* filename) {
+    // For new files, use hash-based selection to determine primary SS
     pthread_mutex_lock(&g_ss_list_mutex);
     StorageServer* primary_ss = get_primary_ss_for_file(filename);
     
@@ -298,45 +307,205 @@ StorageServer* get_ss_for_new_file(const char* filename) {
     return NULL;
 }
 
-void add_file_to_ss_list(StorageServer* ss, FileMetadata* meta) {
-    // Note: Assumes g_ss_list_mutex is HELD
-    SSFileNode* new_node = (SSFileNode*)malloc(sizeof(SSFileNode));
-    memcpy(&new_node->meta, meta, sizeof(FileMetadata));
-    new_node->next = ss->file_list_head;
-    ss->file_list_head = new_node;
-}
-
-void remove_file_from_ss_list(StorageServer* ss, const char* filename) {
-    // Note: Assumes g_ss_list_mutex is HELD
-    SSFileNode* curr = ss->file_list_head;
-    SSFileNode* prev = NULL;
+int refresh_file_metadata_from_ss(const char* filename) {
+    // This function is deprecated - metadata is no longer cached in hash table
+    // Just verify file exists in mapping (has internal locking)
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, filename);
     
-    while(curr) {
-        if (strcmp(curr->meta.filename, filename) == 0) {
-            if (prev) {
-                prev->next = curr->next;
-            } else {
-                ss->file_list_head = curr->next;
-            }
-            free(curr);
-            return;
-        }
-        prev = curr;
-        curr = curr->next;
-    }
+    return (file_node != NULL) ? 0 : -1;
 }
 
-// --- REMOVED 'static' from this function ---
-SSFileNode* find_file_in_ss_list(StorageServer* ss, const char* filename) {
-    // Note: Assumes g_ss_list_mutex is HELD
-    SSFileNode* curr = ss->file_list_head;
-    while(curr) {
-        if (strcmp(curr->meta.filename, filename) == 0) {
-            return curr;
-        }
-        curr = curr->next;
+// Get metadata from SS without caching in hash table
+// Returns 0 on success, -1 on failure
+// Caller must provide a FileMetadata* to store result
+int get_file_metadata_from_ss(const char* filename, FileMetadata* out_meta) {
+    if (!filename || !out_meta) {
+        return -1;
     }
-    return NULL;
+    
+    // 1. Find which SS has this file (has internal locking)
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, filename);
+    if (!file_node) {
+        return -1; // File not found
+    }
+    int ss_id = file_node->primary_ss_id;
+    
+    // 2. Find the SS node
+    pthread_mutex_lock(&g_ss_list_mutex);
+    StorageServer* ss = g_ss_list_head;
+    while (ss && ss->ss_id != ss_id) {
+        ss = ss->next;
+    }
+    if (!ss || !ss->is_online) {
+        pthread_mutex_unlock(&g_ss_list_mutex);
+        return -1; // SS offline
+    }
+    
+    // 3. Connect to SS
+    int ss_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (ss_sock < 0) {
+        pthread_mutex_unlock(&g_ss_list_mutex);
+        return -1;
+    }
+    
+    struct sockaddr_in ss_addr;
+    ss_addr.sin_family = AF_INET;
+    ss_addr.sin_port = htons(ss->client_port);
+    inet_pton(AF_INET, ss->ip, &ss_addr.sin_addr);
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    if (connect(ss_sock, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) < 0) {
+        close(ss_sock);
+        return -1;
+    }
+    
+    // 4. Send info request
+    Req_FileOp req;
+    memset(&req, 0, sizeof(req));
+    strncpy(req.filename, filename, MAX_FILENAME - 1);
+    req.filename[MAX_FILENAME - 1] = '\0';
+    
+    if (send_response(ss_sock, MSG_N2S_GET_INFO, &req, sizeof(req)) < 0) {
+        close(ss_sock);
+        return -1;
+    }
+    
+    // 5. Receive response
+    MsgHeader header;
+    if (recv_header(ss_sock, &header) <= 0) {
+        close(ss_sock);
+        return -1;
+    }
+    
+    if (header.type != MSG_S2N_FILE_INFO_RES) {
+        close(ss_sock);
+        return -1; // Error or unexpected response
+    }
+    
+    if (recv_payload(ss_sock, out_meta, header.payload_len) <= 0) {
+        close(ss_sock);
+        return -1;
+    }
+    
+    close(ss_sock);
+    return 0;
+}
+
+// Helper structure for format_file_list iterator
+typedef struct {
+    char** buffer_ptr;
+    size_t* buf_size_ptr;
+    UserHashTable* access_table;
+    const char* username;
+    bool list_all;
+    bool long_format;
+} FormatFileListContext;
+
+// Iterator callback for format_file_list
+static void format_file_list_callback(const FileMapNode* node, void* user_data) {
+    FormatFileListContext* ctx = (FormatFileListContext*)user_data;
+    
+    bool has_access = false;
+    if (ctx->list_all) {
+        has_access = true;
+    } else {
+        // Check access
+        pthread_mutex_lock(&g_access_table_mutex);
+        char* perms = user_ht_get_permission(ctx->access_table, ctx->username, node->filename);
+        if (perms) has_access = true;
+        pthread_mutex_unlock(&g_access_table_mutex);
+    }
+    
+    if (has_access) {
+        char line[MAX_PATH + 200];
+        if (ctx->long_format) {
+            // Query SS for fresh metadata
+            // Note: We already have node->primary_ss_id from the iteration
+            // Don't call get_file_metadata_from_ss() as it would cause deadlock
+            // (iterate holds all locks, get_file_metadata calls search which needs a lock)
+            
+            FileMetadata meta;
+            int ss_id = node->primary_ss_id;
+            
+            // Get SS connection info
+            pthread_mutex_lock(&g_ss_list_mutex);
+            StorageServer* ss = g_ss_list_head;
+            while (ss && ss->ss_id != ss_id) {
+                ss = ss->next;
+            }
+            
+            bool got_metadata = false;
+            if (ss && ss->is_online) {
+                // Connect to SS
+                int ss_sock = socket(AF_INET, SOCK_STREAM, 0);
+                if (ss_sock >= 0) {
+                    struct sockaddr_in ss_addr;
+                    ss_addr.sin_family = AF_INET;
+                    ss_addr.sin_port = htons(ss->client_port);
+                    inet_pton(AF_INET, ss->ip, &ss_addr.sin_addr);
+                    pthread_mutex_unlock(&g_ss_list_mutex);
+                    
+                    if (connect(ss_sock, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) == 0) {
+                        // Send info request
+                        Req_FileOp req;
+                        memset(&req, 0, sizeof(req));
+                        strncpy(req.filename, node->filename, MAX_FILENAME - 1);
+                        req.filename[MAX_FILENAME - 1] = '\0';
+                        
+                        if (send_response(ss_sock, MSG_N2S_GET_INFO, &req, sizeof(req)) >= 0) {
+                            // Receive response
+                            MsgHeader header;
+                            if (recv_header(ss_sock, &header) > 0 && 
+                                header.type == MSG_S2N_FILE_INFO_RES) {
+                                if (recv_payload(ss_sock, &meta, header.payload_len) > 0) {
+                                    got_metadata = true;
+                                }
+                            }
+                        }
+                    }
+                    close(ss_sock);
+                } else {
+                    pthread_mutex_unlock(&g_ss_list_mutex);
+                }
+            } else {
+                pthread_mutex_unlock(&g_ss_list_mutex);
+            }
+            
+            if (got_metadata) {
+                char time_str[64];
+                struct tm local_tm;
+                localtime_r(&meta.last_access_time, &local_tm);
+                strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", &local_tm);
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | %d\n",
+                         node->filename,
+                         node->owner,
+                         (unsigned long long)meta.size_bytes,
+                         time_str,
+                         node->primary_ss_id);
+            } else {
+                // If metadata fetch fails, show minimal info
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8s | %-20s | %d\n",
+                         node->filename,
+                         node->owner,
+                         "N/A",
+                         "N/A",
+                         node->primary_ss_id);
+            }
+        } else {
+            snprintf(line, sizeof(line), "-> %s\n", node->filename);
+        }
+        
+        // Check if buffer needs resizing
+        if (strlen(*(ctx->buffer_ptr)) + strlen(line) + 1 > *(ctx->buf_size_ptr)) {
+            size_t new_size = *(ctx->buf_size_ptr) * 2;
+            char* new_buffer = (char*)realloc(*(ctx->buffer_ptr), new_size);
+            if (new_buffer) {
+                *(ctx->buffer_ptr) = new_buffer;
+                *(ctx->buf_size_ptr) = new_size;
+            }
+        }
+        strcat(*(ctx->buffer_ptr), line);
+    }
 }
 
 char* format_file_list(UserHashTable* access_table, const char* username, const char* flags) {
@@ -345,68 +514,26 @@ char* format_file_list(UserHashTable* access_table, const char* username, const 
     
     size_t buf_size = 4096;
     char* buffer = (char*)malloc(buf_size);
-    char* ptr = buffer;
-    ptr[0] = '\0';
+    buffer[0] = '\0';
     
     if (long_format) {
-        snprintf(ptr, buf_size, "%-30s | %-10s | %-8s | %-20s | %s\n",
+        snprintf(buffer, buf_size, "%-30s | %-10s | %-8s | %-20s | %s\n",
                  "Filename", "Owner", "Size", "Last Access", "SS_ID");
-        strncat(ptr, "----------------------------------------------------------------------------------------\n", buf_size - strlen(ptr) - 1);
+        strncat(buffer, "----------------------------------------------------------------------------------------\n", buf_size - strlen(buffer) - 1);
     }
 
-    pthread_mutex_lock(&g_ss_list_mutex);
-    StorageServer* curr_ss = g_ss_list_head;
+    // Set up context for iterator
+    FormatFileListContext ctx = {
+        .buffer_ptr = &buffer,
+        .buf_size_ptr = &buf_size,
+        .access_table = access_table,
+        .username = username,
+        .list_all = list_all,
+        .long_format = long_format
+    };
     
-    while (curr_ss) {
-        if (!curr_ss->is_online) {
-            curr_ss = curr_ss->next;
-            continue;
-        }
-        
-        SSFileNode* curr_file = curr_ss->file_list_head;
-        while(curr_file) {
-            bool has_access = false;
-            if (list_all) {
-                has_access = true;
-            } else {
-                // Check access
-                pthread_mutex_lock(&g_access_table_mutex);
-                char* perms = user_ht_get_permission(access_table, username, curr_file->meta.filename);
-                if (perms) has_access = true;
-                pthread_mutex_unlock(&g_access_table_mutex);
-            }
-            
-            if (has_access) {
-                char line[MAX_PATH + 200];
-                if (long_format) {
-                    char time_str[64];
-                    struct tm local_tm;
-                    localtime_r(&curr_file->meta.last_access_time, &local_tm);
-                    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", &local_tm);
-                    snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | %d\n",
-                             curr_file->meta.filename,
-                             curr_file->meta.owner,
-                             (unsigned long long)curr_file->meta.size_bytes,
-                             time_str,
-                             curr_ss->ss_id);
-                } else {
-                    snprintf(line, sizeof(line), "-> %s\n", curr_file->meta.filename);
-                }
-                
-                // Check if buffer needs resizing
-                if (strlen(buffer) + strlen(line) + 1 > buf_size) {
-                    size_t offset = ptr - buffer;
-                    buf_size *= 2;
-                    buffer = (char*)realloc(buffer, buf_size);
-                    ptr = buffer + offset;
-                }
-                strcat(ptr, line);
-            }
-            curr_file = curr_file->next;
-        }
-        curr_ss = curr_ss->next;
-    }
+    // Iterate over all files in the hash table
+    file_map_table_iterate(g_file_map_table, format_file_list_callback, &ctx);
     
-    pthread_mutex_unlock(&g_ss_list_mutex);
     return buffer;
 }

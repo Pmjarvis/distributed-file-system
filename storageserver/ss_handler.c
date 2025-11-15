@@ -42,6 +42,10 @@ void* handle_connection(void* arg) {
             Req_Write_Transaction req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_write_transaction(sock, &req);
+            // WRITE transaction handles multiple messages, so return early
+            // The socket will be closed after the transaction completes
+            close(sock);
+            return NULL;
         } else if (header.type == MSG_C2S_UNDO) {
             Req_FileOp req;
             recv_payload(sock, &req, header.payload_len);

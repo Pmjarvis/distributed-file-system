@@ -243,7 +243,7 @@ static void handle_create(UserSession* session, MsgHeader* header) {
     user_ht_save(g_access_table, DB_PATH);
     pthread_mutex_unlock(&g_access_table_mutex);
     
-    // 3. Update NS's internal list of files
+    // 3. Update NS's internal file mapping hash table
     FileMetadata meta;
     strncpy(meta.filename, payload.filename, MAX_FILENAME - 1);
     meta.filename[MAX_FILENAME - 1] = '\0';
@@ -255,8 +255,11 @@ static void handle_create(UserSession* session, MsgHeader* header) {
     meta.last_access_time = time(NULL);
     
     pthread_mutex_lock(&g_ss_list_mutex);
-    add_file_to_ss_list(ss, &meta);
+    int backup_ss_id = (ss->backup_ss_id != -1) ? ss->backup_ss_id : -1;
     pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    // Insert into hash table (has internal locking)
+    file_map_table_insert(g_file_map_table, payload.filename, ss->ss_id, backup_ss_id, session->username);
 
     // 4. Add to user's folder hierarchy
     createTreeFile(session->current_directory, payload.filename);
@@ -288,10 +291,8 @@ static void handle_delete(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 3. Remove from NS list
-    pthread_mutex_lock(&g_ss_list_mutex);
-    remove_file_from_ss_list(ss, payload.filename);
-    pthread_mutex_unlock(&g_ss_list_mutex);
+    // 3. Remove from hash table (has internal locking)
+    file_map_table_delete(g_file_map_table, payload.filename);
     
     // 4. Remove from cache
     pthread_mutex_lock(&g_cache_mutex);
@@ -336,23 +337,27 @@ static void handle_info(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 3. Get info from SS
-    // --- FIX: Removed unused variable ---
-    // int ss_sock = socket(AF_INET, SOCK_STREAM, 0); 
-    
-    pthread_mutex_lock(&g_ss_list_mutex);
-    // --- FIX: This function is now visible ---
-    SSFileNode* file_node = find_file_in_ss_list(ss, payload.filename);
-    if (!file_node) {
-        pthread_mutex_unlock(&g_ss_list_mutex);
-        send_error_response_to_client(session->client_sock, "File metadata not found on NS.");
+    // 3. Get fresh metadata from SS
+    FileMetadata meta;
+    if (get_file_metadata_from_ss(payload.filename, &meta) != 0) {
+        send_error_response_to_client(session->client_sock, "Failed to get file metadata from Storage Server.");
         return;
     }
+    
+    // 4. Get owner from hash table (has internal locking)
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, payload.filename);
+    if (!file_node) {
+        send_error_response_to_client(session->client_sock, "File mapping not found on NS.");
+        return;
+    }
+    char owner[MAX_USERNAME];
+    strncpy(owner, file_node->owner, MAX_USERNAME - 1);
+    owner[MAX_USERNAME - 1] = '\0';
     
     Res_Info res;
     char time_str[64];
     struct tm local_tm;
-    localtime_r(&file_node->meta.last_access_time, &local_tm);
+    localtime_r(&meta.last_access_time, &local_tm);
     strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", &local_tm);
     
     snprintf(res.data, MAX_PAYLOAD,
@@ -362,14 +367,13 @@ static void handle_info(UserSession* session, MsgHeader* header) {
              "Words: %u\n"
              "Chars: %u\n"
              "Last Access: %s\n",
-             file_node->meta.filename,
-             file_node->meta.owner,
-             (unsigned long long)file_node->meta.size_bytes,
-             file_node->meta.word_count,
-             file_node->meta.char_count,
+             payload.filename,
+             owner,
+             (unsigned long long)meta.size_bytes,
+             meta.word_count,
+             meta.char_count,
              time_str);
              
-    pthread_mutex_unlock(&g_ss_list_mutex);
     send_response(session->client_sock, MSG_N2C_INFO_RES, &res, sizeof(res));
 }
 

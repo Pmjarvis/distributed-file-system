@@ -7,7 +7,7 @@ LIBS += $(shell pkg-config --libs glib-2.0)
 
 # Source files
 COMMON_OBJ = ../common/net_utils.o
-NS_OBJ = ns_main.o ns_handler.o ns_user_manager.o ns_cache.o ns_ss_manager.o ns_access.o ns_folders.o
+NS_OBJ = ns_main.o ns_handler.o ns_user_manager.o ns_cache.o ns_ss_manager.o ns_access.o ns_folders.o ns_file_map.o
 
 # Target
 TARGET = nameserver

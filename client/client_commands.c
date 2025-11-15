@@ -377,10 +377,42 @@ void do_write(char* args) {
     while(1) {
         printf("w> ");
         fflush(stdout);
-        if (!fgets(line_buf, sizeof(line_buf), stdin)) {
-            break; // EOF
+        
+        // Clear any error state on stdin
+        if (feof(stdin)) {
+            fprintf(stderr, "[DEBUG] stdin is at EOF before fgets\n");
+            clearerr(stdin);
         }
-        line_buf[strcspn(line_buf, "\n")] = 0; // remove newline
+        if (ferror(stdin)) {
+            fprintf(stderr, "[DEBUG] stdin has error before fgets\n");
+            clearerr(stdin);
+        }
+        
+        if (!fgets(line_buf, sizeof(line_buf), stdin)) {
+            // EOF or error - send ETIRW to close properly
+            if (feof(stdin)) {
+                fprintf(stderr, "\n[DEBUG] fgets returned NULL: stdin is at EOF\n");
+            } else if (ferror(stdin)) {
+                fprintf(stderr, "\n[DEBUG] fgets returned NULL: stdin has error\n");
+                perror("fgets error");
+            } else {
+                fprintf(stderr, "\n[DEBUG] fgets returned NULL for unknown reason\n");
+            }
+            fprintf(stderr, "Exiting write mode without saving.\n");
+            send_request(ss_sock, MSG_C2S_WRITE_ETIRW, NULL, 0);
+            break;
+        }
+        
+        // Remove newline
+        size_t len = strlen(line_buf);
+        if (len > 0 && line_buf[len-1] == '\n') {
+            line_buf[len-1] = '\0';
+        }
+        
+        // Skip empty lines
+        if (strlen(line_buf) == 0) {
+            continue;
+        }
         
         if (strcmp(line_buf, "ETIRW") == 0) {
             send_request(ss_sock, MSG_C2S_WRITE_ETIRW, NULL, 0);

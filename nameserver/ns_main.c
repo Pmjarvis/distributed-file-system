@@ -28,6 +28,8 @@ pthread_mutex_t g_access_table_mutex = PTHREAD_MUTEX_INITIALIZER;
 LRUCache* g_file_cache = NULL;
 pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+FileMapHashTable* g_file_map_table = NULL;
+
 AccessRequest* g_access_requests_head = NULL;
 pthread_mutex_t g_access_req_mutex = PTHREAD_MUTEX_INITIALIZER;
 // ---
@@ -56,6 +58,13 @@ void init_server_state() {
     printf("Cache initialized.\n");
     pthread_mutex_unlock(&g_cache_mutex);
     
+    // Init file mapping hash table (has internal locking)
+    g_file_map_table = file_map_table_load("./file_map.db", INITIAL_FILE_MAP_SIZE);
+    if (!g_file_map_table) {
+        g_file_map_table = file_map_table_create(INITIAL_FILE_MAP_SIZE);
+    }
+    printf("File mapping table initialized.\n");
+    
     g_ss_list_head = NULL;
     g_ss_count = 0;
     g_ss_id_counter = 0;
@@ -80,19 +89,17 @@ void cleanup_server_state() {
     lru_cache_free(g_file_cache, NULL);
     pthread_mutex_unlock(&g_cache_mutex);
     
+    // Save and free file mapping table (has internal locking)
+    if (g_file_map_table) {
+        file_map_table_save(g_file_map_table, "./file_map.db");
+        file_map_table_free(g_file_map_table);
+    }
+    
     // Free storage server list
     pthread_mutex_lock(&g_ss_list_mutex);
     StorageServer* curr_ss = g_ss_list_head;
     while (curr_ss) {
         StorageServer* next_ss = curr_ss->next;
-        
-        // Free file list for this SS
-        SSFileNode* curr_file = curr_ss->file_list_head;
-        while (curr_file) {
-            SSFileNode* next_file = curr_file->next;
-            free(curr_file);
-            curr_file = next_file;
-        }
         
         if (curr_ss->sock_fd != -1) {
             close(curr_ss->sock_fd);

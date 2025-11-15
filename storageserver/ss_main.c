@@ -282,6 +282,12 @@ static void* client_listener_thread(void* arg) {
             continue;
         }
         
+        // Remove timeout from accepted socket (client connections should block)
+        struct timeval tv_infinite;
+        tv_infinite.tv_sec = 0;
+        tv_infinite.tv_usec = 0;
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv_infinite, sizeof(tv_infinite));
+        
         ConnectionArg* conn_arg = (ConnectionArg*)malloc(sizeof(ConnectionArg));
         conn_arg->sock_fd = sock;
         inet_ntop(AF_INET, &client_addr.sin_addr, conn_arg->ip_addr, 16);
@@ -325,6 +331,12 @@ static void* replication_listener_thread(void* arg) {
             ss_log("ERROR: Replication accept failed: %s", strerror(errno));
             continue;
         }
+        
+        // Remove timeout from accepted socket
+        struct timeval tv_infinite;
+        tv_infinite.tv_sec = 0;
+        tv_infinite.tv_usec = 0;
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv_infinite, sizeof(tv_infinite));
         
         ss_log("REPL_IN: New incoming replication connection");
         // We can't spawn a thread here, as handle_replication_receive

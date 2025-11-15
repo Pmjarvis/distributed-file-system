@@ -362,3 +362,22 @@ while (recv_header(ss_sock, &header) > 0) {
 }
 ```
 ====================================================================================================
+implemented hash table in ss for quick metadata fetching
+need to implement another hash table in ns side, hash based on filename and then instant mapping
+to ss won't work because what if one ss is down, also backup ss management is hard. just have a hash table that stores filename, main ss and backup ss
+
+
+Non-atomic save snapshot	🟠 Medium	Count mismatch warnings	Should fix (lock-all during save)
+
+what are all the fixes of this?
+
+🔴 CRITICAL PROBLEM: Metadata Lost on Crash!
+Issue
+If SS crashes (power failure, segfault, kill -9), metadata is LOST!
+also what are the solutions to this?
+
+make the saving of the metadata hash table atomic
+implement periodic checkpointing every 60 seconds to save all data to disk
+
+🔴 Fix metadata_table_load() signature to match usage
+implement these two
