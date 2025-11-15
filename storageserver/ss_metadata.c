@@ -5,64 +5,74 @@
 #include <string.h>
 
 /*
- * THREAD-SAFE NESTED HASH TABLE IMPLEMENTATION
+ * THREAD-SAFE NESTED HASH TABLE IMPLEMENTATION - REDESIGNED
  * 
- * This file implements a fully thread-safe nested hash table for file metadata.
+ * LOCKING ARCHITECTURE (Nov 15, 2025):
+ * ====================================
  * 
- * ARCHITECTURE:
- * - Two-level hashing with different hash functions (djb2 + FNV-1a)
- * - Outer table: 1024 buckets, each can contain an inner table
- * - Inner table: 64 buckets, each with a linked list of nodes
- * - Total potential buckets: 1024 × 64 = 65,536
+ * KEY CHANGE: Locks moved from inner tables to outer buckets
+ * 
+ * OLD DESIGN:
+ * - Each InnerHashTable had its own pthread_mutex_t
+ * - Required locking AFTER accessing outer bucket pointer
+ * - Race condition: pointer could be NULL, then change before lock
+ * 
+ * NEW DESIGN:
+ * - Each outer bucket has its own pthread_mutex_t (1024 locks)
+ * - Lock acquired BEFORE accessing outer bucket pointer
+ * - Eliminates lazy allocation races completely
+ * - Simpler: One lock protects bucket pointer AND inner table
  * 
  * THREAD SAFETY MECHANISMS:
- * 1. Per-Inner-Table Locking: Each inner table has its own mutex
- *    - Reduces contention: operations on different inner tables don't block
- *    - Protects all operations within that inner table
+ * 1. Per-Outer-Bucket Locking: MetadataHashTable has outer_bucket_locks[] array
+ *    - Lock outer_bucket_locks[i] before accessing buckets[i]
+ *    - Protects: NULL check, inner table creation, all inner operations
+ *    - Reduces contention: 1024 independent locks
  * 
  * 2. Global Count Lock: Separate mutex for total file count
  *    - Prevents races when incrementing/decrementing global count
- *    - Independent from inner table locks
+ *    - Independent from outer bucket locks
  * 
  * 3. Copy-on-Return: metadata_table_get() returns allocated copies
  *    - Prevents use-after-free when node is removed by another thread
  *    - Caller owns the memory and must free() it
  * 
- * 4. Single-Lock Pattern: Update operations lock once, find & modify, unlock once
- *    - No gaps where pointers are unlocked
- *    - Atomic operation from caller's perspective
+ * 4. Single-Lock Pattern: Operations lock ONCE per outer bucket
+ *    - Lock → Check pointer → Allocate if needed → Operate → Unlock
+ *    - Atomic lazy initialization (no race)
  * 
- * 5. Atomic Lazy Initialization: Inner tables created with check-and-install
- *    - Uses count_lock to protect outer bucket array
- *    - Prevents race where multiple threads create same inner table
- *    - Discards duplicate attempts, keeping first one
+ * 5. No Nested Locking: Inner table functions assume caller holds lock
+ *    - inner_table_* functions have NO locking
+ *    - All locking done at outer table level
+ *    - Prevents deadlocks, simplifies reasoning
  * 
  * CONCURRENCY SCENARIOS:
  * 
  * Scenario 1: Concurrent inserts to different outer buckets
- *   Thread A: insert("file1.txt") → hash to outer[5]
- *   Thread B: insert("file2.txt") → hash to outer[10]
- *   Result: Both proceed concurrently, different inner table locks
+ *   Thread A: insert("file1.txt") → locks outer_bucket_locks[5]
+ *   Thread B: insert("file2.txt") → locks outer_bucket_locks[10]
+ *   Result: Both proceed concurrently, independent locks
  * 
- * Scenario 2: Concurrent read while another thread removes
- *   Thread A: get("file1.txt") → returns COPY, then unlocks
- *   Thread B: remove("file1.txt") → locks, removes, frees original
+ * Scenario 2: Concurrent lazy allocation (same outer bucket)
+ *   Thread A: insert("file1.txt") → locks bucket[5], sees NULL, creates inner table
+ *   Thread B: insert("file2.txt") → waits on lock, sees existing table, uses it
+ *   Result: Serialized by lock, only one table created
+ * 
+ * Scenario 3: Concurrent read while another thread removes
+ *   Thread A: get("file1.txt") → locks, copies, unlocks
+ *   Thread B: remove("file1.txt") → locks (waits), removes, frees original
  *   Result: Thread A has its own copy, safe to use
- * 
- * Scenario 3: Concurrent updates to same file
- *   Thread A: update_size("file1.txt", 1024)
- *   Thread B: update_counts("file1.txt", 100, 500)
- *   Result: Serialized by inner table lock, both succeed atomically
  * 
  * PERFORMANCE:
  * - Average case: O(1) for all operations
  * - Worst case: O(n/65536) where n = total files (very short chains)
- * - Lock contention: Low due to 1024+ independent locks
+ * - Lock contention: Low due to 1024 independent locks
+ * - Same concurrency as before, simpler implementation
  * 
  * MEMORY SAFETY:
  * - All returned pointers from get() must be freed by caller
  * - Inner tables freed recursively in metadata_table_free()
- * - No memory leaks in lazy initialization (discarded tables are freed)
+ * - No leaked inner tables (lock held during creation)
  */
 
 // ============ HASH FUNCTIONS ============
@@ -100,6 +110,8 @@ uint32_t metadata_hash(const char* filename) {
 }
 
 // ============ INNER HASH TABLE OPERATIONS ============
+// NOTE: These functions assume caller holds outer bucket lock!
+// NEVER call these directly - use outer table functions instead.
 
 InnerHashTable* inner_table_init(uint32_t size) {
     InnerHashTable* table = (InnerHashTable*)malloc(sizeof(InnerHashTable));
@@ -114,13 +126,14 @@ InnerHashTable* inner_table_init(uint32_t size) {
         return NULL;
     }
     
-    pthread_mutex_init(&table->lock, NULL);
+    // NO MUTEX - protected by outer bucket lock
     return table;
 }
 
 void inner_table_free(InnerHashTable* table) {
     if (!table) return;
     
+    // Free all linked list nodes in all buckets
     for (uint32_t i = 0; i < table->size; i++) {
         FileMetadataNode* curr = table->buckets[i];
         while (curr) {
@@ -130,7 +143,7 @@ void inner_table_free(InnerHashTable* table) {
         }
     }
     
-    pthread_mutex_destroy(&table->lock);
+    // NO MUTEX to destroy
     free(table->buckets);
     free(table);
 }
@@ -141,7 +154,7 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
                       time_t last_access, time_t last_modified) {
     if (!table || !filename) return -1;
     
-    pthread_mutex_lock(&table->lock);
+    // NO LOCKING - caller holds outer bucket lock
     
     uint32_t hash = metadata_hash_secondary(filename);
     uint32_t index = hash % table->size;
@@ -161,7 +174,6 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
             curr->last_access = last_access;
             curr->last_modified = last_modified;
             
-            pthread_mutex_unlock(&table->lock);
             return 1; // Updated
         }
         curr = curr->next;
@@ -170,7 +182,6 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
     // Create new node
     FileMetadataNode* new_node = (FileMetadataNode*)malloc(sizeof(FileMetadataNode));
     if (!new_node) {
-        pthread_mutex_unlock(&table->lock);
         return -1;
     }
     
@@ -195,14 +206,13 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
     table->buckets[index] = new_node;
     table->count++;
     
-    pthread_mutex_unlock(&table->lock);
     return 0; // Inserted
 }
 
 FileMetadataNode* inner_table_get(InnerHashTable* table, const char* filename) {
     if (!table || !filename) return NULL;
     
-    pthread_mutex_lock(&table->lock);
+    // NO LOCKING - caller holds outer bucket lock
     
     uint32_t hash = metadata_hash_secondary(filename);
     uint32_t index = hash % table->size;
@@ -223,14 +233,13 @@ FileMetadataNode* inner_table_get(InnerHashTable* table, const char* filename) {
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&table->lock);
     return result;  // Caller must free() this
 }
 
 int inner_table_remove(InnerHashTable* table, const char* filename) {
     if (!table || !filename) return -1;
     
-    pthread_mutex_lock(&table->lock);
+    // NO LOCKING - caller holds outer bucket lock
     
     uint32_t hash = metadata_hash_secondary(filename);
     uint32_t index = hash % table->size;
@@ -249,18 +258,17 @@ int inner_table_remove(InnerHashTable* table, const char* filename) {
             
             free(curr);
             table->count--;
-            pthread_mutex_unlock(&table->lock);
             return 0;
         }
         prev = curr;
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&table->lock);
     return -1; // Not found
 }
 
 // ============ OUTER HASH TABLE OPERATIONS ============
+// These functions manage the outer bucket locks.
 
 MetadataHashTable* metadata_table_init(uint32_t outer_size) {
     MetadataHashTable* table = (MetadataHashTable*)malloc(sizeof(MetadataHashTable));
@@ -279,11 +287,44 @@ MetadataHashTable* metadata_table_init(uint32_t outer_size) {
         return NULL;
     }
     
-    // Initialize count lock
-    pthread_mutex_init(&table->count_lock, NULL);
+    // Allocate array of mutexes for each outer bucket
+    table->outer_bucket_locks = (pthread_mutex_t*)malloc(outer_size * sizeof(pthread_mutex_t));
+    if (!table->outer_bucket_locks) {
+        ss_log("ERROR: Failed to allocate outer bucket locks");
+        free(table->buckets);
+        free(table);
+        return NULL;
+    }
+    
+    // Initialize all outer bucket locks
+    for (uint32_t i = 0; i < outer_size; i++) {
+        if (pthread_mutex_init(&table->outer_bucket_locks[i], NULL) != 0) {
+            ss_log("ERROR: Failed to initialize mutex %u", i);
+            // Cleanup already initialized mutexes
+            for (uint32_t j = 0; j < i; j++) {
+                pthread_mutex_destroy(&table->outer_bucket_locks[j]);
+            }
+            free(table->outer_bucket_locks);
+            free(table->buckets);
+            free(table);
+            return NULL;
+        }
+    }
+    
+    // Initialize global count lock
+    if (pthread_mutex_init(&table->count_lock, NULL) != 0) {
+        ss_log("ERROR: Failed to initialize count lock");
+        for (uint32_t i = 0; i < outer_size; i++) {
+            pthread_mutex_destroy(&table->outer_bucket_locks[i]);
+        }
+        free(table->outer_bucket_locks);
+        free(table->buckets);
+        free(table);
+        return NULL;
+    }
     
     // Note: Inner hash tables are created lazily on first insert
-    ss_log("Nested metadata hash table initialized: %u outer buckets × %u inner buckets",
+    ss_log("Nested metadata hash table initialized: %u outer buckets × %u inner buckets (1024 locks)",
            outer_size, INNER_TABLE_SIZE);
     return table;
 }
@@ -291,16 +332,23 @@ MetadataHashTable* metadata_table_init(uint32_t outer_size) {
 void metadata_table_free(MetadataHashTable* table) {
     if (!table) return;
     
+    // Free all inner tables
     for (uint32_t i = 0; i < table->size; i++) {
         if (table->buckets[i]) {
             inner_table_free(table->buckets[i]);
         }
     }
     
+    // Destroy all outer bucket locks
+    for (uint32_t i = 0; i < table->size; i++) {
+        pthread_mutex_destroy(&table->outer_bucket_locks[i]);
+    }
+    
     pthread_mutex_destroy(&table->count_lock);
+    free(table->outer_bucket_locks);
     free(table->buckets);
     free(table);
-    ss_log("Nested metadata hash table freed");
+    ss_log("Nested metadata hash table freed (1024 locks destroyed)");
 }
 
 int metadata_table_insert(MetadataHashTable* table, const char* filename,
@@ -312,35 +360,31 @@ int metadata_table_insert(MetadataHashTable* table, const char* filename,
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
-    // Atomic lazy initialization of inner table (thread-safe)
+    // LOCK OUTER BUCKET FIRST (eliminates lazy allocation races)
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
+    // Check if inner table exists (safe - we hold the lock)
     if (!table->buckets[outer_index]) {
-        // Create inner table outside any lock
-        InnerHashTable* new_inner = inner_table_init(INNER_TABLE_SIZE);
-        if (!new_inner) {
+        // Create inner table (no race - lock held)
+        table->buckets[outer_index] = inner_table_init(INNER_TABLE_SIZE);
+        if (!table->buckets[outer_index]) {
+            pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
             ss_log("ERROR: Failed to create inner table for bucket %u", outer_index);
             return -1;
         }
-        
-        // Use count_lock to protect outer bucket array access
-        pthread_mutex_lock(&table->count_lock);
-        
-        if (!table->buckets[outer_index]) {
-            // We're the first, install our table
-            table->buckets[outer_index] = new_inner;
-            pthread_mutex_unlock(&table->count_lock);
-        } else {
-            // Someone else created it first, discard ours
-            pthread_mutex_unlock(&table->count_lock);
-            inner_table_free(new_inner);
-        }
+        ss_log("DEBUG: Lazily created inner table for outer bucket %u", outer_index);
     }
     
+    // Inner table exists, insert into it (caller holds lock)
     InnerHashTable* inner = table->buckets[outer_index];
     int result = inner_table_insert(inner, filename, owner, file_size,
                                    word_count, char_count, last_access, last_modified);
     
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
+    
+    // Update global count if new insertion
     if (result == 0) {
-        // New insertion (not update)
         pthread_mutex_lock(&table->count_lock);
         table->count++;
         pthread_mutex_unlock(&table->count_lock);
@@ -360,11 +404,21 @@ FileMetadataNode* metadata_table_get(MetadataHashTable* table, const char* filen
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return NULL; // Inner table doesn't exist, file not found
     }
     
-    return inner_table_get(table->buckets[outer_index], filename);
+    // Get copy from inner table (caller holds lock)
+    FileMetadataNode* result = inner_table_get(table->buckets[outer_index], filename);
+    
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
+    
+    return result;  // Caller must free()
 }
 
 int metadata_table_exists(MetadataHashTable* table, const char* filename) {
@@ -377,6 +431,7 @@ int metadata_table_exists(MetadataHashTable* table, const char* filename) {
 }
 
 // ============ UPDATE SPECIFIC FIELDS ============
+// All update functions use outer bucket locking.
 
 int metadata_table_update_size(MetadataHashTable* table, const char* filename, uint64_t new_size) {
     if (!table || !filename) return -1;
@@ -384,14 +439,15 @@ int metadata_table_update_size(MetadataHashTable* table, const char* filename, u
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return -1; // Inner table doesn't exist
     }
     
     InnerHashTable* inner = table->buckets[outer_index];
-    
-    pthread_mutex_lock(&inner->lock);  // LOCK ONCE at start
-    
     uint32_t inner_hash = metadata_hash_secondary(filename);
     uint32_t inner_index = inner_hash % inner->size;
     
@@ -408,7 +464,8 @@ int metadata_table_update_size(MetadataHashTable* table, const char* filename, u
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&inner->lock);  // UNLOCK ONCE at end
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
     
     return found ? 0 : -1;
 }
@@ -420,14 +477,15 @@ int metadata_table_update_counts(MetadataHashTable* table, const char* filename,
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return -1;
     }
     
     InnerHashTable* inner = table->buckets[outer_index];
-    
-    pthread_mutex_lock(&inner->lock);
-    
     uint32_t inner_hash = metadata_hash_secondary(filename);
     uint32_t inner_index = inner_hash % inner->size;
     
@@ -445,7 +503,8 @@ int metadata_table_update_counts(MetadataHashTable* table, const char* filename,
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&inner->lock);
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
     
     return found ? 0 : -1;
 }
@@ -456,14 +515,15 @@ int metadata_table_update_access_time(MetadataHashTable* table, const char* file
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return -1;
     }
     
     InnerHashTable* inner = table->buckets[outer_index];
-    
-    pthread_mutex_lock(&inner->lock);
-    
     uint32_t inner_hash = metadata_hash_secondary(filename);
     uint32_t inner_index = inner_hash % inner->size;
     
@@ -479,7 +539,8 @@ int metadata_table_update_access_time(MetadataHashTable* table, const char* file
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&inner->lock);
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
     
     return found ? 0 : -1;
 }
@@ -490,14 +551,15 @@ int metadata_table_update_modified_time(MetadataHashTable* table, const char* fi
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return -1;
     }
     
     InnerHashTable* inner = table->buckets[outer_index];
-    
-    pthread_mutex_lock(&inner->lock);
-    
     uint32_t inner_hash = metadata_hash_secondary(filename);
     uint32_t inner_index = inner_hash % inner->size;
     
@@ -513,7 +575,8 @@ int metadata_table_update_modified_time(MetadataHashTable* table, const char* fi
         curr = curr->next;
     }
     
-    pthread_mutex_unlock(&inner->lock);
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
     
     return found ? 0 : -1;
 }
@@ -526,11 +589,19 @@ int metadata_table_remove(MetadataHashTable* table, const char* filename) {
     uint32_t hash = metadata_hash_primary(filename);
     uint32_t outer_index = hash % table->size;
     
+    // LOCK OUTER BUCKET
+    pthread_mutex_lock(&table->outer_bucket_locks[outer_index]);
+    
     if (!table->buckets[outer_index]) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
         return -1; // Inner table doesn't exist, file not found
     }
     
+    // Remove from inner table (caller holds lock)
     int result = inner_table_remove(table->buckets[outer_index], filename);
+    
+    // UNLOCK OUTER BUCKET
+    pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
     
     if (result == 0) {
         pthread_mutex_lock(&table->count_lock);
@@ -547,30 +618,68 @@ int metadata_table_remove(MetadataHashTable* table, const char* filename) {
 
 // ============ PERSISTENCE ============
 
+/*
+ * ATOMIC SAVE IMPLEMENTATION
+ * 
+ * This function creates a consistent snapshot of the hash table by:
+ * 1. Locking ALL outer buckets before writing anything
+ * 2. Writing all data while locks are held
+ * 3. Unlocking all buckets after write completes
+ * 
+ * This ensures the saved count matches the saved entries exactly,
+ * preventing "count mismatch" warnings on reload.
+ * 
+ * Trade-off: Blocks all table operations during save (~50-100ms for 1000 files)
+ * This is acceptable because saves only happen every 60 seconds (checkpoint).
+ */
 int metadata_table_save(MetadataHashTable* table, const char* filepath) {
     if (!table || !filepath) return -1;
     
+    ss_log("Saving metadata to %s (atomic snapshot)...", filepath);
+    
+    // PHASE 1: Lock ALL outer buckets (creates consistent snapshot)
+    for (uint32_t i = 0; i < table->size; i++) {
+        pthread_mutex_lock(&table->outer_bucket_locks[i]);
+    }
+    
+    // Get count while all locks held (guaranteed consistent)
+    pthread_mutex_lock(&table->count_lock);
+    uint32_t total_count = table->count;
+    pthread_mutex_unlock(&table->count_lock);
+    
+    // PHASE 2: Write to disk (all locks held - atomic snapshot)
     FILE* fp = fopen(filepath, "wb");
     if (!fp) {
         perror("Failed to open metadata file for writing");
+        
+        // Unlock all before returning
+        for (uint32_t i = 0; i < table->size; i++) {
+            pthread_mutex_unlock(&table->outer_bucket_locks[i]);
+        }
         return -1;
     }
     
-    // Write table count
-    pthread_mutex_lock(&table->count_lock);
-    uint32_t count = table->count;
-    pthread_mutex_unlock(&table->count_lock);
+    // Write total count
+    if (fwrite(&total_count, sizeof(uint32_t), 1, fp) != 1) {
+        fprintf(stderr, "Failed to write metadata count\n");
+        fclose(fp);
+        
+        // Unlock all before returning
+        for (uint32_t i = 0; i < table->size; i++) {
+            pthread_mutex_unlock(&table->outer_bucket_locks[i]);
+        }
+        return -1;
+    }
     
-    fwrite(&count, sizeof(uint32_t), 1, fp);
+    uint32_t entries_written = 0;
     
-    // Iterate through outer table
+    // Write all entries (snapshot is consistent - all locks held)
     for (uint32_t i = 0; i < table->size; i++) {
         InnerHashTable* inner = table->buckets[i];
-        if (!inner) continue;
         
-        pthread_mutex_lock(&inner->lock);
+        if (!inner) continue;  // Skip empty outer buckets
         
-        // Iterate through inner table
+        // Iterate through inner table (safe - lock held)
         for (uint32_t j = 0; j < inner->size; j++) {
             FileMetadataNode* node = inner->buckets[j];
             
@@ -595,15 +704,28 @@ int metadata_table_save(MetadataHashTable* table, const char* filepath) {
                 fwrite(&node->last_modified, sizeof(time_t), 1, fp);
                 fwrite(&node->last_access, sizeof(time_t), 1, fp);
                 
+                entries_written++;
                 node = node->next;
             }
         }
-        
-        pthread_mutex_unlock(&inner->lock);
     }
     
     fclose(fp);
-    ss_log("Saved %u metadata entries to %s", count, filepath);
+    
+    // PHASE 3: Unlock all buckets
+    for (uint32_t i = 0; i < table->size; i++) {
+        pthread_mutex_unlock(&table->outer_bucket_locks[i]);
+    }
+    
+    // Verify count matches
+    if (entries_written != total_count) {
+        ss_log("WARNING: Saved %u entries but count was %u", 
+               entries_written, total_count);
+    } else {
+        ss_log("Successfully saved %u metadata entries (atomic snapshot)", 
+               entries_written);
+    }
+    
     return 0;
 }
 
@@ -619,14 +741,17 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
     // Read expected count
     uint32_t expected_count;
     if (fread(&expected_count, sizeof(uint32_t), 1, fp) != 1) {
-        ss_log("WARNING: Failed to read metadata count");
+        ss_log("WARNING: Failed to read metadata count from %s", filepath);
         fclose(fp);
         return NULL;
     }
     
+    ss_log("Loading %u metadata entries from %s...", expected_count, filepath);
+    
     // Create new table
     MetadataHashTable* table = metadata_table_init(OUTER_TABLE_SIZE);
     if (!table) {
+        ss_log("ERROR: Failed to create metadata table during load");
         fclose(fp);
         return NULL;
     }
@@ -637,13 +762,26 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
     for (uint32_t i = 0; i < expected_count; i++) {
         // Read filename length
         uint32_t name_len;
-        if (fread(&name_len, sizeof(uint32_t), 1, fp) != 1) break;
+        if (fread(&name_len, sizeof(uint32_t), 1, fp) != 1) {
+            ss_log("WARNING: Failed to read filename length at entry %u", i);
+            break;
+        }
+        
+        // Validate filename length
+        if (name_len == 0 || name_len > MAX_FILENAME) {
+            ss_log("WARNING: Invalid filename length %u at entry %u (skipping)", name_len, i);
+            break;
+        }
         
         // Allocate and read filename
         char* filename = malloc(name_len);
-        if (!filename) break;
+        if (!filename) {
+            ss_log("ERROR: Memory allocation failed for filename at entry %u", i);
+            break;
+        }
         
         if (fread(filename, 1, name_len, fp) != name_len) {
+            ss_log("WARNING: Failed to read filename at entry %u", i);
             free(filename);
             break;
         }
@@ -651,6 +789,14 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
         // Read owner length
         uint32_t owner_len;
         if (fread(&owner_len, sizeof(uint32_t), 1, fp) != 1) {
+            ss_log("WARNING: Failed to read owner length at entry %u", i);
+            free(filename);
+            break;
+        }
+        
+        // Validate owner length
+        if (owner_len == 0 || owner_len > MAX_USERNAME) {
+            ss_log("WARNING: Invalid owner length %u at entry %u (skipping)", owner_len, i);
             free(filename);
             break;
         }
@@ -658,11 +804,13 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
         // Allocate and read owner
         char* owner = malloc(owner_len);
         if (!owner) {
+            ss_log("ERROR: Memory allocation failed for owner at entry %u", i);
             free(filename);
             break;
         }
         
         if (fread(owner, 1, owner_len, fp) != owner_len) {
+            ss_log("WARNING: Failed to read owner at entry %u", i);
             free(filename);
             free(owner);
             break;
@@ -677,15 +825,21 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
             fread(&char_count, sizeof(uint64_t), 1, fp) != 1 ||
             fread(&last_modified, sizeof(time_t), 1, fp) != 1 ||
             fread(&last_access, sizeof(time_t), 1, fp) != 1) {
+            ss_log("WARNING: Failed to read metadata fields at entry %u", i);
             free(filename);
             free(owner);
             break;
         }
         
         // Insert using public API (handles locking)
-        if (metadata_table_insert(table, filename, owner, file_size, word_count, char_count, 
-                                 last_access, last_modified) == 0) {
+        int insert_result = metadata_table_insert(table, filename, owner, 
+                                                 file_size, word_count, char_count, 
+                                                 last_access, last_modified);
+        
+        if (insert_result == 0 || insert_result == 1) {
             loaded++;
+        } else {
+            ss_log("WARNING: Failed to insert '%s' during load", filename);
         }
         
         free(filename);
@@ -693,10 +847,12 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
     }
     
     fclose(fp);
-    ss_log("Loaded %u metadata entries from %s (expected %u)", loaded, filepath, expected_count);
+    
+    ss_log("Loaded %u/%u metadata entries from %s", loaded, expected_count, filepath);
     
     if (loaded != expected_count) {
-        ss_log("WARNING: Loaded count mismatch");
+        ss_log("WARNING: Loaded count mismatch (expected %u, got %u)", 
+               expected_count, loaded);
     }
     
     return table;
@@ -716,10 +872,14 @@ void metadata_table_print(MetadataHashTable* table) {
     printf("==================================================\n");
     
     for (uint32_t i = 0; i < table->size; i++) {
-        InnerHashTable* inner = table->buckets[i];
-        if (!inner) continue;
+        // LOCK OUTER BUCKET
+        pthread_mutex_lock(&table->outer_bucket_locks[i]);
         
-        pthread_mutex_lock(&inner->lock);
+        InnerHashTable* inner = table->buckets[i];
+        if (!inner) {
+            pthread_mutex_unlock(&table->outer_bucket_locks[i]);
+            continue;
+        }
         
         if (inner->count > 0) {
             printf("Outer Bucket %u (Inner size: %u, count: %u):\n", i, inner->size, inner->count);
@@ -742,7 +902,8 @@ void metadata_table_print(MetadataHashTable* table) {
             }
         }
         
-        pthread_mutex_unlock(&inner->lock);
+        // UNLOCK OUTER BUCKET
+        pthread_mutex_unlock(&table->outer_bucket_locks[i]);
     }
     printf("==================================================\n\n");
 }

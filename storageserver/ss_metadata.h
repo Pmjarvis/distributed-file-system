@@ -8,26 +8,39 @@
 /*
  * THREAD-SAFE NESTED HASH TABLE FOR FILE METADATA
  * 
- * This implementation provides a thread-safe nested hash table structure for
- * storing file metadata with the following guarantees:
+ * REDESIGNED LOCKING STRATEGY (Nov 15, 2025):
+ * ============================================
  * 
  * CONCURRENCY MODEL:
  * - Two-level hashing: Outer table (1024 buckets) -> Inner tables (64 buckets each)
- * - Each inner table has its own pthread_mutex_t for fine-grained locking
- * - Global count protected by separate count_lock
- * - Atomic lazy initialization prevents race conditions
+ * - ONE MUTEX PER OUTER BUCKET (not per inner table!)
+ * - Protects: outer bucket pointer + entire inner table (if allocated)
+ * - Eliminates lazy allocation races completely
+ * 
+ * WHY OUTER BUCKET LOCKS?
+ * 1. Simpler: Lock protects bucket pointer AND inner table atomically
+ * 2. Safer: No race between checking pointer and using inner table
+ * 3. Cleaner: No separate lock inside InnerHashTable structure
+ * 4. Same concurrency: Still 1024 independent locks
  * 
  * THREAD SAFETY GUARANTEES:
  * - metadata_table_get() returns a COPY of the node (caller must free())
- * - All update operations acquire lock once and hold during entire operation
+ * - All operations acquire ONE outer bucket lock
+ * - Lock held from pointer check through all inner table operations
  * - No use-after-free: returned pointers are owned by caller
- * - Atomic insert with check-and-install pattern for inner table creation
+ * - No lazy allocation races: pointer check + creation atomic
+ * 
+ * LOCKING RULES:
+ * 1. Always lock outer_bucket_locks[outer_index] before accessing buckets[outer_index]
+ * 2. Never access inner table pointer without holding corresponding outer lock
+ * 3. Lock is held for entire operation (check, allocate, modify, return)
+ * 4. No nested locking (one outer lock at a time)
  * 
  * USAGE NOTES:
  * - Always free() the result of metadata_table_get() when done
  * - Update operations are atomic and thread-safe
  * - Multiple threads can operate on different outer buckets concurrently
- * - Operations on same inner table are serialized (thread-safe)
+ * - Operations on same outer bucket are serialized (thread-safe)
  */
 
 #define MAX_FILENAME 256
@@ -51,19 +64,20 @@ typedef struct FileMetadataNode {
 } FileMetadataNode;
 
 // Inner hash table (stored in each outer bucket)
+// NOTE: No lock inside - protected by outer bucket lock
 typedef struct InnerHashTable {
     FileMetadataNode** buckets;  // Array of inner buckets
     uint32_t size;               // Size of inner table (INNER_TABLE_SIZE)
     uint32_t count;              // Number of entries in this inner table
-    pthread_mutex_t lock;        // Lock for this inner table
 } InnerHashTable;
 
 // Outer hash table structure (nested hash table)
 typedef struct MetadataHashTable {
-    InnerHashTable** buckets;    // Array of inner hash tables
-    uint32_t size;               // Number of outer buckets (OUTER_TABLE_SIZE)
-    uint32_t count;              // Total number of files across all inner tables
-    pthread_mutex_t count_lock;  // Lock for count field
+    InnerHashTable** buckets;             // Array of inner hash tables (may be NULL)
+    pthread_mutex_t* outer_bucket_locks;  // ONE LOCK PER OUTER BUCKET (1024 locks)
+    uint32_t size;                        // Number of outer buckets (OUTER_TABLE_SIZE)
+    uint32_t count;                       // Total number of files (atomic operations)
+    pthread_mutex_t count_lock;           // Lock for global count only
 } MetadataHashTable;
 
 // Function declarations

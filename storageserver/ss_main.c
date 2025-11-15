@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -16,6 +18,9 @@
 #include "ss_replicator.h"
 #include "../common/net_utils.h"
 
+// Checkpoint interval in seconds
+#define CHECKPOINT_INTERVAL_SECONDS 60
+
 // --- Global Variable Definitions ---
 int g_ns_sock = -1;
 char g_ss_ip[16];
@@ -26,11 +31,46 @@ int g_backup_port = -1;
 FileLockMap g_file_lock_map;
 ReplicationQueue g_repl_queue;
 MetadataHashTable* g_metadata_table = NULL;
+volatile int g_shutdown = 0;  // Graceful shutdown flag
 // ---
 
 static void* client_listener_thread(void* arg);
 static void* replication_listener_thread(void* arg);
 static void* ns_heartbeat_thread(void* arg);
+static void* checkpoint_thread(void* arg);
+
+// Signal handler for graceful shutdown
+static void sigint_handler(int sig) {
+    printf("\nReceived signal %d, initiating graceful shutdown...\n", sig);
+    g_shutdown = 1;
+}
+
+// Checkpoint thread - saves metadata periodically
+static void* checkpoint_thread(void* arg) {
+    ss_log("CHECKPOINT: Thread started (interval: %d seconds)", 
+           CHECKPOINT_INTERVAL_SECONDS);
+    
+    while (!g_shutdown) {
+        // Sleep in small intervals to check shutdown flag frequently
+        for (int i = 0; i < CHECKPOINT_INTERVAL_SECONDS && !g_shutdown; i++) {
+            sleep(1);
+        }
+        
+        if (g_shutdown) break;  // Exit if shutting down
+        
+        ss_log("CHECKPOINT: Saving metadata to disk...");
+        
+        if (metadata_table_save(g_metadata_table, METADATA_DB_PATH) < 0) {
+            ss_log("ERROR: Checkpoint save failed!");
+        } else {
+            ss_log("CHECKPOINT: Metadata saved successfully (%u entries)", 
+                   metadata_table_get_count(g_metadata_table));
+        }
+    }
+    
+    ss_log("CHECKPOINT: Thread exiting");
+    return NULL;
+}
 
 static void _connect_and_register(const char* ns_ip, int ns_port) {
     g_ns_sock = connect_to_server(ns_ip, ns_port);
@@ -137,6 +177,11 @@ int main(int argc, char* argv[]) {
     log_init("ss.log");
     ss_log("MAIN: Starting Storage Server...");
     
+    // Install signal handlers for graceful shutdown
+    signal(SIGINT, sigint_handler);
+    signal(SIGTERM, sigint_handler);
+    signal(SIGPIPE, SIG_IGN);  // Ignore SIGPIPE (prevents crash on client disconnect)
+    
     ss_create_dirs();
     lock_map_init(&g_file_lock_map, 64);
     
@@ -161,7 +206,7 @@ int main(int argc, char* argv[]) {
     repl_start_worker();
     
     // Start threads
-    pthread_t client_tid, repl_tid, hb_tid;
+    pthread_t client_tid, repl_tid, hb_tid, checkpoint_tid;
     
     if (pthread_create(&client_tid, NULL, client_listener_thread, NULL) != 0) {
         ss_log("FATAL: Failed to create client listener thread"); exit(1);
@@ -172,23 +217,29 @@ int main(int argc, char* argv[]) {
     if (pthread_create(&hb_tid, NULL, ns_heartbeat_thread, NULL) != 0) {
         ss_log("FATAL: Failed to create heartbeat thread"); exit(1);
     }
+    if (pthread_create(&checkpoint_tid, NULL, checkpoint_thread, NULL) != 0) {
+        ss_log("FATAL: Failed to create checkpoint thread"); exit(1);
+    }
     
     ss_log("MAIN: All threads started. Server is running.");
+    ss_log("MAIN: Press Ctrl+C for graceful shutdown.");
     
+    // Wait for threads (they will exit when g_shutdown is set)
     pthread_join(client_tid, NULL);
     pthread_join(repl_tid, NULL);
     pthread_join(hb_tid, NULL);
+    pthread_join(checkpoint_tid, NULL);
     
-    ss_log("MAIN: Shutting down...");
+    ss_log("MAIN: All threads stopped. Performing final cleanup...");
     
-    // Save metadata table to disk
+    // Save metadata table to disk (final save on shutdown)
     if (g_metadata_table) {
-        ss_log("MAIN: Saving metadata table (%u entries)...", 
+        ss_log("MAIN: Performing final metadata save (%u entries)...", 
                metadata_table_get_count(g_metadata_table));
         if (metadata_table_save(g_metadata_table, METADATA_DB_PATH) == 0) {
-            ss_log("MAIN: Metadata table saved successfully");
+            ss_log("MAIN: Final metadata save successful");
         } else {
-            ss_log("ERROR: Failed to save metadata table");
+            ss_log("ERROR: Final metadata save failed");
         }
         metadata_table_free(g_metadata_table);
     }
@@ -209,12 +260,24 @@ static void* client_listener_thread(void* arg) {
     }
     ss_log("MAIN: Listening for Clients and NS on port %d", g_ss_client_port);
     
-    while(1) {
+    while(!g_shutdown) {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
+        
+        // Set timeout on accept so we can check shutdown flag
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        setsockopt(server_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        
         int sock = accept(server_fd, (struct sockaddr*)&client_addr, &addr_len);
         
         if (sock < 0) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                // Timeout - check shutdown flag
+                continue;
+            }
+            if (g_shutdown) break;  // Shutting down
             ss_log("ERROR: Client accept failed: %s", strerror(errno));
             continue;
         }
@@ -231,6 +294,8 @@ static void* client_listener_thread(void* arg) {
         }
         pthread_detach(tid);
     }
+    
+    ss_log("CLIENT_LISTENER: Thread exiting");
     close(server_fd);
     return NULL;
 }
@@ -243,9 +308,20 @@ static void* replication_listener_thread(void* arg) {
     }
     ss_log("MAIN: Listening for Replication on port %d", g_backup_port);
 
-    while(1) {
+    while(!g_shutdown) {
+        // Set timeout on accept so we can check shutdown flag
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        setsockopt(server_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        
         int sock = accept(server_fd, NULL, NULL);
         if (sock < 0) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                // Timeout - check shutdown flag
+                continue;
+            }
+            if (g_shutdown) break;  // Shutting down
             ss_log("ERROR: Replication accept failed: %s", strerror(errno));
             continue;
         }
@@ -256,6 +332,8 @@ static void* replication_listener_thread(void* arg) {
         // This is a simple model; a better one would use a worker pool.
         handle_replication_receive(sock);
     }
+    
+    ss_log("REPL_LISTENER: Thread exiting");
     close(server_fd);
     return NULL;
 }
@@ -264,13 +342,19 @@ static void* replication_listener_thread(void* arg) {
 static void* ns_heartbeat_thread(void* arg) {
     MsgHeader hb_header = { .type = MSG_S2N_HEARTBEAT, .payload_len = 0 };
     
-    while(1) {
+    while(!g_shutdown) {
         sleep(HEARTBEAT_INTERVAL);
+        
+        if (g_shutdown) break;  // Check shutdown before sending
+        
         if (send(g_ns_sock, &hb_header, sizeof(hb_header), 0) <= 0) {
+            if (g_shutdown) break;  // Connection may be closed during shutdown
             ss_log("FATAL: Failed to send heartbeat to NS. Connection lost.");
             exit(1); // The NS will mark us as dead. We must restart.
         }
         ss_log_console("Sent heartbeat to NS.");
     }
+    
+    ss_log("HEARTBEAT: Thread exiting");
     return NULL;
 }

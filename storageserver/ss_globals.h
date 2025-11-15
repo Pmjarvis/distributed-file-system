@@ -25,6 +25,9 @@ extern ReplicationQueue g_repl_queue;
 // Global metadata hash table
 extern MetadataHashTable* g_metadata_table;
 
+// Graceful shutdown flag
+extern volatile int g_shutdown;
+
 // Data directories
 #define SS_ROOT_DIR "ss_data"
 #define SS_FILES_DIR "ss_data/files"
