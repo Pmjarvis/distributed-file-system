@@ -74,10 +74,18 @@ int ss_get_file_metadata(const char* filename, FileMetadata* meta) {
     meta->last_access_time = st.st_atime;
     meta->last_modified_time = st.st_mtime;
     
-    // TODO: Get owner. This is complex on POSIX without storing it.
-    // We will rely on the NS to tell us the owner on CREATE.
-    // For now, hardcode.
-    strncpy(meta->owner, "unknown", MAX_USERNAME - 1);
+    // FIX: Get owner from metadata table instead of hardcoding "unknown"
+    // The metadata table is populated during CREATE/WRITE/RECOVERY and has correct owner info
+    FileMetadataNode* node = metadata_table_get(g_metadata_table, filename);
+    if (node) {
+        strncpy(meta->owner, node->owner, MAX_USERNAME - 1);
+        meta->owner[MAX_USERNAME - 1] = '\0';
+        free(node);  // metadata_table_get returns a copy
+    } else {
+        // Fallback if metadata not found (shouldn't happen in normal operation)
+        strncpy(meta->owner, "unknown", MAX_USERNAME - 1);
+        meta->owner[MAX_USERNAME - 1] = '\0';
+    }
 
     // Count words/chars
     FILE* f = fopen(filepath, "r");

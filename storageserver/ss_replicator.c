@@ -16,6 +16,12 @@
 static pthread_t g_repl_thread;
 
 static void _do_replication_update(const char* filename) {
+    // FIX: Check if we have a valid backup assigned
+    if (strlen(g_backup_ip) == 0 || g_backup_port == 0) {
+        ss_log("REPL: No backup assigned, skipping replication for %s", filename);
+        return;
+    }
+    
     char filepath[MAX_PATH];
     snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, filename);
     
@@ -49,6 +55,21 @@ static void _do_replication_update(const char* filename) {
     req.filename[MAX_FILENAME - 1] = '\0';
 
     req.file_size = file_stat.st_size;
+    
+    // FIX: Get owner from metadata table and include it
+    FileMetadataNode* meta = metadata_table_get(g_metadata_table, filename);
+    if (meta) {
+        strncpy(req.owner, meta->owner, MAX_USERNAME - 1);
+        req.owner[MAX_USERNAME - 1] = '\0';
+        free(meta);
+        ss_log("REPL: Replicating %s (owner: %s)", filename, req.owner);
+    } else {
+        // Fallback if no metadata found
+        strncpy(req.owner, "unknown", MAX_USERNAME - 1);
+        req.owner[MAX_USERNAME - 1] = '\0';
+        ss_log("REPL: WARNING - No metadata found for %s, using 'unknown' as owner", filename);
+    }
+    
     send_response(sock, MSG_S2S_REPLICATE_FILE, &req, sizeof(req));
     
     // 2. Send file data using sendfile (efficient)
@@ -76,6 +97,12 @@ static void _do_replication_update(const char* filename) {
 }
 
 static void _do_replication_delete(const char* filename) {
+    // FIX: Check if we have a valid backup assigned
+    if (strlen(g_backup_ip) == 0 || g_backup_port == 0) {
+        ss_log("REPL: No backup assigned, skipping delete replication for %s", filename);
+        return;
+    }
+    
     int sock = connect_to_server(g_backup_ip, g_backup_port); // <-- This now compiles
     if (sock < 0) {
         ss_log("REPL: Could not connect to backup server for DELETE %s", filename);
@@ -190,6 +217,23 @@ void handle_replication_receive(int sock) {
         fclose(f);
         ss_log("REPL_IN: Finished receiving %s", req.filename);
         
+        // FIX: Update metadata table with owner info from request
+        time_t now = time(NULL);
+        FileMetadataNode* existing = metadata_table_get(g_metadata_table, req.filename);
+        if (existing) {
+            // Update existing metadata - MUST update owner too!
+            metadata_table_insert(g_metadata_table, req.filename, req.owner,
+                                req.file_size, 0, 0, now, now);
+            free(existing);
+            ss_log("REPL_IN: Updated metadata for %s (owner: %s, size: %llu)", 
+                   req.filename, req.owner, (unsigned long long)req.file_size);
+        } else {
+            // Insert new metadata with owner info from request
+            metadata_table_insert(g_metadata_table, req.filename, req.owner,
+                                req.file_size, 0, 0, now, now);
+            ss_log("REPL_IN: Created metadata for %s (owner: %s)", req.filename, req.owner);
+        }
+        
     } else if (header.type == MSG_S2S_DELETE_FILE) {
         Req_FileOp req;
         if (recv_payload(sock, &req, sizeof(req)) <= 0) {
@@ -202,6 +246,10 @@ void handle_replication_receive(int sock) {
         if (unlink(filepath) != 0) {
             ss_log("REPL_IN: Failed to delete %s: %s", req.filename, strerror(errno));
         }
+        
+        // FIX: Also delete from metadata table
+        metadata_table_remove(g_metadata_table, req.filename);
+        ss_log("REPL_IN: Deleted metadata for %s", req.filename);
     }
     
     send_response(sock, MSG_S2S_ACK, NULL, 0); // Send ACK

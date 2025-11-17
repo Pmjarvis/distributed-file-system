@@ -114,8 +114,9 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     Req_SSRegister reg;
     strncpy(reg.ip, g_ss_ip, 16);
     reg.client_port = g_ss_client_port;
-    strncpy(reg.backup_ip, g_backup_ip, 16);
-    reg.backup_port = g_backup_port;
+    // FIX: backup_ip should be THIS SS's IP (for replication listener), not target backup IP
+    strncpy(reg.backup_ip, g_ss_ip, 16);  // Both ports are on the same SS!
+    reg.backup_port = g_backup_port;  // This is OUR replication listener port from argv[5]
     reg.file_count = file_count;
     
     // 1. Send registration header + payload
@@ -146,9 +147,22 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     g_ss_id = ack.new_ss_id;
     ss_log("MAIN: Registration complete. This SS ID is %d", g_ss_id);
     
+    // FIX: Use backup info from NS (where to SEND replications)
+    if (ack.backup_of_ss_id != -1 && strlen(ack.backup_ss_ip) > 0) {
+        strncpy(g_backup_ip, ack.backup_ss_ip, 16);
+        g_backup_port = ack.backup_ss_port;
+        ss_log("MAIN: Will send replications to: %s:%d", g_backup_ip, g_backup_port);
+    } else {
+        // No backup assigned
+        memset(g_backup_ip, 0, 16);
+        g_backup_port = 0;
+        ss_log("MAIN: No replication target assigned (single SS or no backup available)");
+    }
+    
+    // Note: Recovery is coordinated by NS via MSG_N2S_SYNC_TO_PRIMARY
+    // The NS will initiate recovery if ack.must_recover is true
     if (ack.must_recover) {
-        ss_log("MAIN: This is a recovery. Starting sync from backup...");
-        handle_recovery_sync();
+        ss_log("MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...");
     }
 }
 
@@ -163,18 +177,10 @@ int main(int argc, char* argv[]) {
     int ns_port = atoi(argv[2]);
     strncpy(g_ss_ip, argv[3], 16);
     g_ss_client_port = atoi(argv[4]);
-    g_backup_port = atoi(argv[5]); // This is *our* backup port
+    g_backup_port = atoi(argv[5]); // This is *our* replication listener port
     
-    // NOTE: The backup's IP/port for *sending* replicas is not provided in argv.
-    // According to the design, the Name Server assigns backup relationships
-    // dynamically after registration (see Res_SSRegisterAck.backup_of_ss_id).
-    // In a complete implementation, the NS would also provide the backup SS's
-    // IP and replication port in the registration response.
-    // For now, we use a placeholder value. In production, this would be:
-    // 1. Received from NS in the registration ACK, OR
-    // 2. Obtained via a separate NS query using the backup_of_ss_id, OR
-    // 3. Configured via additional command-line arguments.
-    strncpy(g_backup_ip, "127.0.0.1", 16); // Placeholder - should be provided by NS
+    // Initialize g_backup_ip to empty - will be set by NS during registration
+    memset(g_backup_ip, 0, 16);
     
     log_init("ss.log");
     ss_log("MAIN: Starting Storage Server...");

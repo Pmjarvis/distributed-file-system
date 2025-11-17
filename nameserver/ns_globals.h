@@ -18,6 +18,7 @@ typedef struct StorageServer {
     int sock_fd;
     char ip[16];
     int client_port;
+    int backup_port;          // Port where this SS listens for replication (from Req_SSRegister.backup_port)
     bool is_online;           // true if currently connected
     bool is_syncing;          // true if currently performing recovery sync (blocked)
     time_t last_heartbeat;

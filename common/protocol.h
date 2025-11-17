@@ -240,11 +240,14 @@ typedef struct {
     int new_ss_id;
     bool must_recover; 
     int backup_of_ss_id;
+    char backup_ss_ip[16];      // IP of the backup SS (where to send replications)
+    int backup_ss_port;         // Port of the backup SS (where to send replications)
 } Res_SSRegisterAck;
 
 // S2S
 typedef struct {
     char filename[MAX_FILENAME];
+    char owner[MAX_USERNAME];  // Added: Owner information for metadata
     uint64_t file_size;
     // Followed by file_size bytes of data
 } Req_Replicate;

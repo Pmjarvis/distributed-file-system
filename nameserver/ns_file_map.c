@@ -500,3 +500,43 @@ int file_map_table_update_backup(FileMapHashTable* table, const char* owner, con
     pthread_mutex_unlock(&table->bucket_locks[lock_idx]);
     return 0;
 }
+
+// Delete all entries where primary_ss_id matches the given SS ID
+// Used during SS recovery to clean up stale entries
+int file_map_table_delete_all_for_ss(FileMapHashTable* table, int ss_id) {
+    if (!table) return 0;
+    
+    int deleted_count = 0;
+    
+    // Lock all buckets for this operation
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_lock(&table->bucket_locks[i]);
+    }
+    
+    // Iterate through all entries and delete those belonging to this SS
+    for (size_t i = 0; i < table->size; i++) {
+        FileMapNode* node = table->nodes[i];
+        if (node != NULL && node != &g_file_map_tombstone) {
+            if (node->primary_ss_id == ss_id) {
+                // Delete this entry
+                free(node);
+                table->nodes[i] = &g_file_map_tombstone;
+                deleted_count++;
+            }
+        }
+    }
+    
+    // Update count
+    if (deleted_count > 0) {
+        pthread_mutex_lock(&table->count_lock);
+        table->count -= deleted_count;
+        pthread_mutex_unlock(&table->count_lock);
+    }
+    
+    // Unlock all buckets
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_unlock(&table->bucket_locks[i]);
+    }
+    
+    return deleted_count;
+}

@@ -149,6 +149,16 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         Req_Replicate repl_req;
         strncpy(repl_req.filename, entry->d_name, MAX_FILENAME);
         repl_req.file_size = st.st_size;
+        
+        // FIX: Include owner information from metadata
+        FileMetadataNode* node_for_owner = metadata_table_get(g_metadata_table, entry->d_name);
+        if (node_for_owner) {
+            strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
+            free(node_for_owner);
+        } else {
+            strncpy(repl_req.owner, "unknown", MAX_USERNAME);
+        }
+        
         send_response(target_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
         
         // Send file data
@@ -338,6 +348,16 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
         Req_Replicate repl_req;
         strncpy(repl_req.filename, entry->d_name, MAX_FILENAME);
         repl_req.file_size = st.st_size;
+        
+        // FIX: Include owner information from metadata
+        FileMetadataNode* node_for_owner = metadata_table_get(g_metadata_table, entry->d_name);
+        if (node_for_owner) {
+            strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
+            free(node_for_owner);
+        } else {
+            strncpy(repl_req.owner, "unknown", MAX_USERNAME);
+        }
+        
         send_response(backup_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
         
         off_t offset = 0;

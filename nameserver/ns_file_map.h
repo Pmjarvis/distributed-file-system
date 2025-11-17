@@ -131,4 +131,13 @@ int file_map_table_update_primary(FileMapHashTable* table, const char* owner, co
  */
 int file_map_table_update_backup(FileMapHashTable* table, const char* owner, const char* filename, int new_backup_ss_id);
 
+/**
+ * @brief Deletes all entries for a specific storage server
+ * @param table The hash table
+ * @param ss_id The storage server ID whose entries should be deleted
+ * @return Number of entries deleted
+ * @note This is used during SS recovery to clean up stale entries before re-adding fresh ones
+ */
+int file_map_table_delete_all_for_ss(FileMapHashTable* table, int ss_id);
+
 #endif // NS_FILE_MAP_H
