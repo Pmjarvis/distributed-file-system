@@ -286,7 +286,11 @@ char* ss_join_sentences(char** sentences, int num_sentences) {
 
 void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
     // Check if SS is currently syncing
-    if (g_is_syncing) {
+    pthread_mutex_lock(&g_sync_mutex);
+    int syncing = g_is_syncing;
+    pthread_mutex_unlock(&g_sync_mutex);
+    
+    if (syncing) {
         ss_log("CREATE: Blocked - storage server is currently syncing");
         send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
         return;
@@ -314,7 +318,11 @@ void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
 
 void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
     // Check if SS is currently syncing
-    if (g_is_syncing) {
+    pthread_mutex_lock(&g_sync_mutex);
+    int syncing = g_is_syncing;
+    pthread_mutex_unlock(&g_sync_mutex);
+    
+    if (syncing) {
         ss_log("DELETE: Blocked - storage server is currently syncing");
         send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
         return;
@@ -424,7 +432,11 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
 
 void ss_handle_read(int client_sock, Req_FileOp* req) {
     // Check if SS is currently syncing
-    if (g_is_syncing) {
+    pthread_mutex_lock(&g_sync_mutex);
+    int syncing = g_is_syncing;
+    pthread_mutex_unlock(&g_sync_mutex);
+    
+    if (syncing) {
         ss_log("READ: Blocked - storage server is currently syncing");
         send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
         return;
@@ -794,7 +806,11 @@ static int compare_changes(const void* a, const void* b) {
 // --- Complex Write Transaction ---
 void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     // Check if SS is currently syncing
-    if (g_is_syncing) {
+    pthread_mutex_lock(&g_sync_mutex);
+    int syncing = g_is_syncing;
+    pthread_mutex_unlock(&g_sync_mutex);
+    
+    if (syncing) {
         ss_log("WRITE: Blocked - storage server is currently syncing");
         send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
         return;

@@ -276,7 +276,7 @@ static void handle_create(UserSession* session, MsgHeader* header) {
 
     // 3. Update Access Control (set owner)
     pthread_mutex_lock(&g_access_table_mutex);
-    user_ht_add_permission(g_access_table, session->username, payload.filename, "read-write-owner");
+    user_ht_add_permission(g_access_table, session->username, payload.filename, "rwo");
     user_ht_save(g_access_table, DB_PATH);
     pthread_mutex_unlock(&g_access_table_mutex);
     
@@ -637,17 +637,21 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
     
     if (header->type == MSG_C2N_READ_REQ || header->type == MSG_C2N_STREAM_REQ) {
         printf("DEBUG: Checking READ/STREAM access\n");
-        if (perms && strstr(perms, "read")) {
-            printf("DEBUG: Found 'read' in perms\n");
+        if (perms && strchr(perms, 'r')) {
+            printf("DEBUG: Found 'r' in perms\n");
             has_access = true;
         }
-    } else if (header->type == MSG_C2N_WRITE_REQ || header->type == MSG_C2N_UNDO_REQ || header->type == MSG_C2N_CHECKPOINT_REQ) {
-        printf("DEBUG: Checking WRITE/UNDO/CHECKPOINT access\n");
-        if (perms && strstr(perms, "write")) has_access = true;
+    } else if (header->type == MSG_C2N_WRITE_REQ || header->type == MSG_C2N_UNDO_REQ) {
+        printf("DEBUG: Checking WRITE/UNDO access\n");
+        if (perms && strchr(perms, 'w')) has_access = true;
+    } else if (header->type == MSG_C2N_CHECKPOINT_REQ) {
+        printf("DEBUG: Checking CHECKPOINT access (needs read permission)\n");
+        // Checkpoint only needs read permission (it's like taking a snapshot)
+        if (perms && strchr(perms, 'r')) has_access = true;
     }
     // Check ownership inline to avoid deadlock (we already hold the mutex)
-    if (perms && strstr(perms, "owner")) {
-        printf("DEBUG: Found 'owner' in perms, granting access\n");
+    if (perms && strchr(perms, 'o')) {
+        printf("DEBUG: Found 'o' in perms, granting access\n");
         has_access = true; // Owner has all access
     }
     pthread_mutex_unlock(&g_access_table_mutex);
@@ -739,7 +743,7 @@ static void handle_grant_req_access(UserSession* session, MsgHeader* header) {
 
     // 2. Grant permission
     pthread_mutex_lock(&g_access_table_mutex);
-    const char* perm_str = (payload.perm_flag == 'W') ? "read-write" : "read";
+    const char* perm_str = (payload.perm_flag == 'W') ? "rw" : "r";
     user_ht_add_permission(g_access_table, payload.target_user, payload.filename, perm_str);
     // --- FIX ---
     user_ht_save(g_access_table, DB_PATH);

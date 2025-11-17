@@ -30,6 +30,7 @@ extern volatile int g_shutdown;
 
 // Recovery sync flag (blocks operations during recovery)
 extern volatile int g_is_syncing;
+extern pthread_mutex_t g_sync_mutex;  // Protects g_is_syncing
 
 // Data directories
 #define SS_ROOT_DIR "ss_data"

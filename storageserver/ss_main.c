@@ -33,6 +33,7 @@ ReplicationQueue g_repl_queue;
 MetadataHashTable* g_metadata_table = NULL;
 volatile int g_shutdown = 0;  // Graceful shutdown flag
 volatile int g_is_syncing = 0; // Recovery sync flag
+pthread_mutex_t g_sync_mutex = PTHREAD_MUTEX_INITIALIZER;  // Protects g_is_syncing
 // ---
 
 static void* client_listener_thread(void* arg);

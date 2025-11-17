@@ -1,0 +1,959 @@
+[2025-11-17 18:24:35] --- LOGGING STARTED ---
+[2025-11-17 18:24:35] MAIN: Starting Storage Server...
+[2025-11-17 18:24:35] MAIN: Initializing metadata hash table...
+[2025-11-17 18:24:35] No existing metadata file found at ss_data/metadata.db (starting fresh)
+[2025-11-17 18:24:35] MAIN: No existing metadata DB found, creating new table
+[2025-11-17 18:24:35] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:24:35] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:24:35] MAIN: Found 0 local files. Registering...
+[2025-11-17 18:24:35] MAIN: Registration complete. This SS ID is 0
+[2025-11-17 18:24:35] MAIN: Listening for Clients and NS on port 9001
+[2025-11-17 18:24:35] MAIN: All threads started. Server is running.
+[2025-11-17 18:24:35] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:24:35] MAIN: Listening for Replication on port 9002
+[2025-11-17 18:24:35] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:24:58] --- LOGGING STARTED ---
+[2025-11-17 18:24:58] MAIN: Starting Storage Server...
+[2025-11-17 18:24:58] MAIN: Initializing metadata hash table...
+[2025-11-17 18:24:58] No existing metadata file found at ss_data/metadata.db (starting fresh)
+[2025-11-17 18:24:58] MAIN: No existing metadata DB found, creating new table
+[2025-11-17 18:24:58] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:24:58] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:24:58] MAIN: Found 0 local files. Registering...
+[2025-11-17 18:24:58] MAIN: Registration complete. This SS ID is 1
+[2025-11-17 18:24:58] MAIN: Listening for Clients and NS on port 9003
+[2025-11-17 18:24:58] MAIN: All threads started. Server is running.
+[2025-11-17 18:24:58] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:24:58] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:24:58] MAIN: Listening for Replication on port 9004
+[2025-11-17 18:25:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:25:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:25:35] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-17 18:25:35] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-17 18:25:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:25:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:25:58] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-17 18:25:58] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-17 18:26:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:26:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:26:35] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-17 18:26:35] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-17 18:26:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:26:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:26:58] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-17 18:26:58] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-17 18:27:07] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:27:07] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:27:07] Inserted metadata for: test1.txt (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:27:07] CREATE: File test1.txt created by nov17_1
+[2025-11-17 18:27:07] REPL: Scheduling update for test1.txt
+[2025-11-17 18:27:07] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:27:07] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:27:07] REPL_IN: New incoming replication connection
+[2025-11-17 18:27:07] REPL: Successfully replicated test1.txt (0 bytes)
+[2025-11-17 18:27:07] REPL_IN: Receiving replica for test1.txt (0 bytes)
+[2025-11-17 18:27:07] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:27:07] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:27:07] REPL: ACK received for file test1.txt
+[2025-11-17 18:27:07] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:27:07] Inserted metadata for: test1.txt (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:27:07] CREATE: File test1.txt created by nov17_1
+[2025-11-17 18:27:07] REPL: Scheduling update for test1.txt
+[2025-11-17 18:27:07] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:27:07] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:27:07] REPL_IN: New incoming replication connection
+[2025-11-17 18:27:07] REPL_IN: Receiving replica for test1.txt (0 bytes)
+[2025-11-17 18:27:07] REPL: Successfully replicated test1.txt (0 bytes)
+[2025-11-17 18:27:07] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:27:07] REPL: ACK received for file test1.txt
+[2025-11-17 18:27:13] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:27:13] INFO: Returning cached metadata for test1.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:27:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:27:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:27:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:27:35] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-17 18:27:35] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-17 18:27:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:27:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:27:58] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-17 18:27:58] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-17 18:28:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:28:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:28:35] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-17 18:28:35] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-17 18:28:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:28:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:28:58] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-17 18:28:58] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-17 18:29:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:29:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:29:35] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-17 18:29:35] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-17 18:29:36] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:29:36] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:29:36] Inserted metadata for: test2.txt (owner: nov17_2, size: 0, words: 0, chars: 0)
+[2025-11-17 18:29:36] CREATE: File test2.txt created by nov17_2
+[2025-11-17 18:29:36] REPL: Scheduling update for test2.txt
+[2025-11-17 18:29:36] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:29:36] REPL: Connected to backup. Replicating update for test2.txt...
+[2025-11-17 18:29:36] REPL_IN: New incoming replication connection
+[2025-11-17 18:29:36] REPL_IN: Receiving replica for test2.txt (0 bytes)
+[2025-11-17 18:29:36] REPL: Successfully replicated test2.txt (0 bytes)
+[2025-11-17 18:29:36] REPL_IN: Finished receiving test2.txt
+[2025-11-17 18:29:36] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:29:36] REPL: ACK received for file test2.txt
+[2025-11-17 18:29:36] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:29:36] Inserted metadata for: test2.txt (owner: nov17_2, size: 0, words: 0, chars: 0)
+[2025-11-17 18:29:36] CREATE: File test2.txt created by nov17_2
+[2025-11-17 18:29:36] REPL: Scheduling update for test2.txt
+[2025-11-17 18:29:36] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:29:36] REPL: Connected to backup. Replicating update for test2.txt...
+[2025-11-17 18:29:36] REPL_IN: New incoming replication connection
+[2025-11-17 18:29:36] REPL_IN: Receiving replica for test2.txt (0 bytes)
+[2025-11-17 18:29:36] REPL: Successfully replicated test2.txt (0 bytes)
+[2025-11-17 18:29:36] REPL_IN: Finished receiving test2.txt
+[2025-11-17 18:29:36] REPL: ACK received for file test2.txt
+[2025-11-17 18:29:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:29:49] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:29:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:29:56] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:29:56] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:29:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:29:56] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:29:56] INFO: Returning cached metadata for test1.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:29:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:29:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:29:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:29:58] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:29:58] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:30:12] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:30:12] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:30:12] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:30:12] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:30:12] INFO: Returning cached metadata for test1.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:30:12] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:30:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:30:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:30:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:30:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:30:58] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:30:58] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:30:58] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:30:58] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:31:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:31:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:31:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:31:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:31:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:31:42] WRITE: Locked file test1.txt (sentence 0)
+[2025-11-17 18:31:48] Updated size for test1.txt: 11 bytes
+[2025-11-17 18:31:48] Updated counts for test1.txt: 2 words, 11 chars
+[2025-11-17 18:31:48] WRITE: Updated metadata for test1.txt (size: 11, words: 2, chars: 11)
+[2025-11-17 18:31:48] WRITE: Completed for test1.txt (sentence 0)
+[2025-11-17 18:31:48] REPL: Scheduling update for test1.txt
+[2025-11-17 18:31:48] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:31:48] REPL_IN: New incoming replication connection
+[2025-11-17 18:31:48] REPL: Successfully replicated test1.txt (11 bytes)
+[2025-11-17 18:31:48] REPL_IN: Receiving replica for test1.txt (11 bytes)
+[2025-11-17 18:31:48] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:31:48] REPL: ACK received for file test1.txt
+[2025-11-17 18:31:59] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:31:59] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:31:59] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:31:59] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:32:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:32:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:32:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:32:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:32:59] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:32:59] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:32:59] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:32:59] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:33:10] CHECKPOINT: Thread exiting
+[2025-11-17 18:33:10] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:33:10] REPL_LISTENER: Thread exiting
+[2025-11-17 18:33:13] HEARTBEAT: Thread exiting
+[2025-11-17 18:33:13] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:33:13] MAIN: Performing final metadata save (2 entries)...
+[2025-11-17 18:33:13] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:33:13] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:33:13] MAIN: Final metadata save successful
+[2025-11-17 18:33:13] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:33:13] REPL: Worker thread shutting down.
+[2025-11-17 18:33:13] --- LOGGING STOPPED ---
+[2025-11-17 18:33:21] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:33:21] READ: Starting read for file test1.txt
+[2025-11-17 18:33:21] READ: Full path is ss_data/files/test1.txt
+[2025-11-17 18:33:21] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:33:21] READ: Chunk 1 - read 11 bytes, is_final=1
+[2025-11-17 18:33:21] READ: Chunk 1 sent
+[2025-11-17 18:33:21] READ: Read complete for test1.txt, sent 1 chunks
+[2025-11-17 18:33:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:33:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:33:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:33:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:33:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:34:18] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:34:18] WRITE: Locked file test1.txt (sentence 0)
+[2025-11-17 18:34:29] Updated size for test1.txt: 25 bytes
+[2025-11-17 18:34:29] Updated counts for test1.txt: 4 words, 25 chars
+[2025-11-17 18:34:29] WRITE: Updated metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:34:29] WRITE: Completed for test1.txt (sentence 0)
+[2025-11-17 18:34:29] REPL: Scheduling update for test1.txt
+[2025-11-17 18:34:29] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:34:29] REPL_IN: New incoming replication connection
+[2025-11-17 18:34:29] REPL_IN: Receiving replica for test1.txt (25 bytes)
+[2025-11-17 18:34:29] REPL: Successfully replicated test1.txt (25 bytes)
+[2025-11-17 18:34:29] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:34:29] REPL: ACK received for file test1.txt
+[2025-11-17 18:34:33] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:34:33] READ: Starting read for file test1.txt
+[2025-11-17 18:34:33] READ: Full path is ss_data/files/test1.txt
+[2025-11-17 18:34:33] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:34:33] READ: Chunk 1 - read 25 bytes, is_final=1
+[2025-11-17 18:34:33] READ: Chunk 1 sent
+[2025-11-17 18:34:33] READ: Read complete for test1.txt, sent 1 chunks
+[2025-11-17 18:34:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:34:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:34:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:34:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:34:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:35:04] --- LOGGING STARTED ---
+[2025-11-17 18:35:04] MAIN: Starting Storage Server...
+[2025-11-17 18:35:04] MAIN: Initializing metadata hash table...
+[2025-11-17 18:35:04] Loading 2 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:35:04] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:35:04] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:35:04] Inserted metadata for: test1.txt (owner: nov17_1, size: 25, words: 4, chars: 25)
+[2025-11-17 18:35:04] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:35:04] Inserted metadata for: test2.txt (owner: nov17_2, size: 0, words: 0, chars: 0)
+[2025-11-17 18:35:04] Loaded 2/2 metadata entries from ss_data/metadata.db
+[2025-11-17 18:35:04] MAIN: Loaded metadata for 2 files from disk
+[2025-11-17 18:35:04] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:35:04] MAIN: Found 2 local files. Registering...
+[2025-11-17 18:35:04] Updated metadata for: test2.txt
+[2025-11-17 18:35:04] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:35:04] Updated metadata for: test1.txt
+[2025-11-17 18:35:04] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:35:04] MAIN: Registration complete. This SS ID is 1
+[2025-11-17 18:35:04] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:35:04] RECOVERY: Starting sync from backup at 127.0.0.1:9004...
+[2025-11-17 18:35:04] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:35:04] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:35:04] MAIN: Listening for Clients and NS on port 9003
+[2025-11-17 18:35:04] MAIN: Listening for Replication on port 9004
+[2025-11-17 18:35:04] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:35:04] MAIN: All threads started. Server is running.
+[2025-11-17 18:35:04] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:35:13] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:35:13] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:35:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:35:13] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:35:13] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:35:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:35:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:35:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:35:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:35:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:35:53] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:35:53] READ: Starting read for file test1.txt
+[2025-11-17 18:35:53] READ: Full path is ss_data/files/test1.txt
+[2025-11-17 18:35:53] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:35:53] READ: Chunk 1 - read 25 bytes, is_final=1
+[2025-11-17 18:35:53] READ: Chunk 1 sent
+[2025-11-17 18:35:53] READ: Read complete for test1.txt, sent 1 chunks
+[2025-11-17 18:35:53] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:36:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:36:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:36:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:36:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:36:22] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:36:22] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:36:22] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:36:22] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:36:22] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:36:22] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:36:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:36:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:36:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:36:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:37:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:37:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:37:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:37:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:37:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:37:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:37:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:37:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:38:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:38:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:38:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:38:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:38:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:38:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:38:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:38:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:39:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:39:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:39:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:39:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:39:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:39:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:39:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:39:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:40:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:40:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:40:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:40:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:40:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:40:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:40:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:40:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:41:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:41:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:41:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:41:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:41:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:41:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:41:35] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:41:35] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:42:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:42:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:42:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-17 18:42:04] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-17 18:42:26] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:42:26] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:42:26] Inserted metadata for: STREAM_BACKUO_TEST (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:42:26] CREATE: File STREAM_BACKUO_TEST created by nov17_1
+[2025-11-17 18:42:26] REPL: Scheduling update for STREAM_BACKUO_TEST
+[2025-11-17 18:42:26] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:42:26] REPL: Connected to backup. Replicating update for STREAM_BACKUO_TEST...
+[2025-11-17 18:42:26] REPL: Successfully replicated STREAM_BACKUO_TEST (0 bytes)
+[2025-11-17 18:42:26] REPL_IN: New incoming replication connection
+[2025-11-17 18:42:26] REPL_IN: Receiving replica for STREAM_BACKUO_TEST (0 bytes)
+[2025-11-17 18:42:26] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:42:26] REPL_IN: Finished receiving STREAM_BACKUO_TEST
+[2025-11-17 18:42:26] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:42:26] REPL: ACK received for file STREAM_BACKUO_TEST
+[2025-11-17 18:42:26] Inserted metadata for: STREAM_BACKUO_TEST (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:42:26] CREATE: File STREAM_BACKUO_TEST created by nov17_1
+[2025-11-17 18:42:26] REPL: Scheduling update for STREAM_BACKUO_TEST
+[2025-11-17 18:42:26] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:42:26] REPL: Connected to backup. Replicating update for STREAM_BACKUO_TEST...
+[2025-11-17 18:42:26] REPL_IN: New incoming replication connection
+[2025-11-17 18:42:26] REPL: Successfully replicated STREAM_BACKUO_TEST (0 bytes)
+[2025-11-17 18:42:26] REPL_IN: Receiving replica for STREAM_BACKUO_TEST (0 bytes)
+[2025-11-17 18:42:26] REPL_IN: Finished receiving STREAM_BACKUO_TEST
+[2025-11-17 18:42:26] REPL: ACK received for file STREAM_BACKUO_TEST
+[2025-11-17 18:42:33] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:42:33] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:42:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:42:33] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:42:33] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:42:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:42:33] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:42:33] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 0, words: 0, chars: 0)
+[2025-11-17 18:42:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:42:35] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:42:35] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:42:35] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:42:35] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:43:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:43:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:43:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:43:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:43:08] CHECKPOINT: Thread exiting
+[2025-11-17 18:43:09] REPL_LISTENER: Thread exiting
+[2025-11-17 18:43:09] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:43:10] HEARTBEAT: Thread exiting
+[2025-11-17 18:43:10] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:43:10] MAIN: Performing final metadata save (3 entries)...
+[2025-11-17 18:43:10] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:43:10] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:43:10] MAIN: Final metadata save successful
+[2025-11-17 18:43:10] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:43:10] REPL: Worker thread shutting down.
+[2025-11-17 18:43:10] --- LOGGING STOPPED ---
+[2025-11-17 18:43:18] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:43:18] READ: Starting read for file STREAM_BACKUO_TEST
+[2025-11-17 18:43:18] READ: Full path is ss_data/files/STREAM_BACKUO_TEST
+[2025-11-17 18:43:18] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:43:18] READ: File is empty, sending empty final chunk
+[2025-11-17 18:43:18] READ: Read complete for STREAM_BACKUO_TEST, sent 0 chunks
+[2025-11-17 18:43:18] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:43:29] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:43:29] WRITE: Locked file STREAM_BACKUO_TEST (sentence 0)
+[2025-11-17 18:43:36] Updated size for STREAM_BACKUO_TEST: 11 bytes
+[2025-11-17 18:43:36] Updated counts for STREAM_BACKUO_TEST: 2 words, 11 chars
+[2025-11-17 18:43:36] WRITE: Updated metadata for STREAM_BACKUO_TEST (size: 11, words: 2, chars: 11)
+[2025-11-17 18:43:36] WRITE: Completed for STREAM_BACKUO_TEST (sentence 0)
+[2025-11-17 18:43:36] REPL: Scheduling update for STREAM_BACKUO_TEST
+[2025-11-17 18:43:36] REPL: Connected to backup. Replicating update for STREAM_BACKUO_TEST...
+[2025-11-17 18:43:36] REPL_IN: New incoming replication connection
+[2025-11-17 18:43:36] REPL: Successfully replicated STREAM_BACKUO_TEST (11 bytes)
+[2025-11-17 18:43:36] REPL_IN: Receiving replica for STREAM_BACKUO_TEST (11 bytes)
+[2025-11-17 18:43:36] REPL_IN: Finished receiving STREAM_BACKUO_TEST
+[2025-11-17 18:43:36] REPL: ACK received for file STREAM_BACKUO_TEST
+[2025-11-17 18:43:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:43:42] READ: Starting read for file STREAM_BACKUO_TEST
+[2025-11-17 18:43:42] READ: Full path is ss_data/files/STREAM_BACKUO_TEST
+[2025-11-17 18:43:42] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:43:42] READ: Chunk 1 - read 11 bytes, is_final=1
+[2025-11-17 18:43:42] READ: Chunk 1 sent
+[2025-11-17 18:43:42] READ: Read complete for STREAM_BACKUO_TEST, sent 1 chunks
+[2025-11-17 18:43:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:43:50] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:43:50] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:44:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:44:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:44:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:44:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:44:10] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:44:10] WRITE: Locked file STREAM_BACKUO_TEST (sentence 0)
+[2025-11-17 18:44:28] Updated size for STREAM_BACKUO_TEST: 54 bytes
+[2025-11-17 18:44:28] Updated counts for STREAM_BACKUO_TEST: 10 words, 54 chars
+[2025-11-17 18:44:28] WRITE: Updated metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:44:28] WRITE: Completed for STREAM_BACKUO_TEST (sentence 0)
+[2025-11-17 18:44:28] REPL: Scheduling update for STREAM_BACKUO_TEST
+[2025-11-17 18:44:28] REPL: Connected to backup. Replicating update for STREAM_BACKUO_TEST...
+[2025-11-17 18:44:28] REPL: Successfully replicated STREAM_BACKUO_TEST (54 bytes)
+[2025-11-17 18:44:28] REPL_IN: New incoming replication connection
+[2025-11-17 18:44:28] REPL_IN: Receiving replica for STREAM_BACKUO_TEST (54 bytes)
+[2025-11-17 18:44:28] REPL_IN: Finished receiving STREAM_BACKUO_TEST
+[2025-11-17 18:44:28] REPL: ACK received for file STREAM_BACKUO_TEST
+[2025-11-17 18:44:36] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:44:36] READ: Starting read for file STREAM_BACKUO_TEST
+[2025-11-17 18:44:36] READ: Full path is ss_data/files/STREAM_BACKUO_TEST
+[2025-11-17 18:44:36] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:44:36] READ: Chunk 1 - read 54 bytes, is_final=1
+[2025-11-17 18:44:36] READ: Chunk 1 sent
+[2025-11-17 18:44:36] READ: Read complete for STREAM_BACKUO_TEST, sent 1 chunks
+[2025-11-17 18:44:36] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:44:50] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:44:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:44:56] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:44:56] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:44:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:44:56] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:44:56] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:44:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:45:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:45:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:45:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:45:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:45:32] --- LOGGING STARTED ---
+[2025-11-17 18:45:32] MAIN: Starting Storage Server...
+[2025-11-17 18:45:32] MAIN: Initializing metadata hash table...
+[2025-11-17 18:45:32] Loading 3 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:45:32] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:45:32] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:45:32] Inserted metadata for: STREAM_BACKUO_TEST (owner: nov17_1, size: 54, words: 10, chars: 54)
+[2025-11-17 18:45:32] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:45:32] Inserted metadata for: test1.txt (owner: unknown, size: 25, words: 4, chars: 25)
+[2025-11-17 18:45:32] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:45:32] Inserted metadata for: test2.txt (owner: unknown, size: 0, words: 0, chars: 0)
+[2025-11-17 18:45:32] Loaded 3/3 metadata entries from ss_data/metadata.db
+[2025-11-17 18:45:32] MAIN: Loaded metadata for 3 files from disk
+[2025-11-17 18:45:32] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:45:32] MAIN: Found 3 local files. Registering...
+[2025-11-17 18:45:32] Updated metadata for: test2.txt
+[2025-11-17 18:45:32] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:45:32] Updated metadata for: test1.txt
+[2025-11-17 18:45:32] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:45:32] Updated metadata for: STREAM_BACKUO_TEST
+[2025-11-17 18:45:32] MAIN: Updated 'STREAM_BACKUO_TEST' in metadata table
+[2025-11-17 18:45:32] MAIN: Registration complete. This SS ID is 0
+[2025-11-17 18:45:32] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:45:32] RECOVERY: Starting sync from backup at 127.0.0.1:9002...
+[2025-11-17 18:45:32] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:45:32] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:45:32] MAIN: Listening for Replication on port 9002
+[2025-11-17 18:45:32] MAIN: Listening for Clients and NS on port 9001
+[2025-11-17 18:45:32] MAIN: All threads started. Server is running.
+[2025-11-17 18:45:32] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:45:32] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:45:57] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:45:57] REPL_LISTENER: Thread exiting
+[2025-11-17 18:45:57] HEARTBEAT: Thread exiting
+[2025-11-17 18:45:57] CHECKPOINT: Thread exiting
+[2025-11-17 18:45:57] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:45:57] MAIN: Performing final metadata save (3 entries)...
+[2025-11-17 18:45:57] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:45:57] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:45:57] MAIN: Final metadata save successful
+[2025-11-17 18:45:57] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:45:57] REPL: Worker thread shutting down.
+[2025-11-17 18:45:57] --- LOGGING STOPPED ---
+[2025-11-17 18:45:59] --- LOGGING STARTED ---
+[2025-11-17 18:45:59] MAIN: Starting Storage Server...
+[2025-11-17 18:45:59] MAIN: Initializing metadata hash table...
+[2025-11-17 18:45:59] Loading 3 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:45:59] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:45:59] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:45:59] Inserted metadata for: STREAM_BACKUO_TEST (owner: unknown, size: 54, words: 10, chars: 54)
+[2025-11-17 18:45:59] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:45:59] Inserted metadata for: test1.txt (owner: unknown, size: 25, words: 4, chars: 25)
+[2025-11-17 18:45:59] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:45:59] Inserted metadata for: test2.txt (owner: unknown, size: 0, words: 0, chars: 0)
+[2025-11-17 18:45:59] Loaded 3/3 metadata entries from ss_data/metadata.db
+[2025-11-17 18:45:59] MAIN: Loaded metadata for 3 files from disk
+[2025-11-17 18:45:59] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:45:59] MAIN: Found 3 local files. Registering...
+[2025-11-17 18:45:59] Updated metadata for: test2.txt
+[2025-11-17 18:45:59] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:45:59] Updated metadata for: test1.txt
+[2025-11-17 18:45:59] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:45:59] Updated metadata for: STREAM_BACKUO_TEST
+[2025-11-17 18:45:59] MAIN: Updated 'STREAM_BACKUO_TEST' in metadata table
+[2025-11-17 18:45:59] MAIN: Registration complete. This SS ID is 0
+[2025-11-17 18:45:59] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:45:59] RECOVERY: Starting sync from backup at 127.0.0.1:9002...
+[2025-11-17 18:45:59] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:45:59] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:45:59] MAIN: All threads started. Server is running.
+[2025-11-17 18:45:59] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:45:59] MAIN: Listening for Replication on port 9002
+[2025-11-17 18:45:59] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:45:59] MAIN: Listening for Clients and NS on port 9001
+[2025-11-17 18:46:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:46:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:46:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:46:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:46:39] REPL_LISTENER: Thread exiting
+[2025-11-17 18:46:39] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:46:39] HEARTBEAT: Thread exiting
+[2025-11-17 18:46:39] CHECKPOINT: Thread exiting
+[2025-11-17 18:46:39] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:46:39] MAIN: Performing final metadata save (3 entries)...
+[2025-11-17 18:46:39] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:46:39] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:46:39] MAIN: Final metadata save successful
+[2025-11-17 18:46:39] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:46:39] REPL: Worker thread shutting down.
+[2025-11-17 18:46:39] --- LOGGING STOPPED ---
+[2025-11-17 18:46:40] --- LOGGING STARTED ---
+[2025-11-17 18:46:40] MAIN: Starting Storage Server...
+[2025-11-17 18:46:40] MAIN: Initializing metadata hash table...
+[2025-11-17 18:46:40] Loading 3 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:46:40] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:46:40] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:46:40] Inserted metadata for: STREAM_BACKUO_TEST (owner: unknown, size: 54, words: 10, chars: 54)
+[2025-11-17 18:46:40] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:46:40] Inserted metadata for: test1.txt (owner: unknown, size: 25, words: 4, chars: 25)
+[2025-11-17 18:46:40] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:46:40] Inserted metadata for: test2.txt (owner: unknown, size: 0, words: 0, chars: 0)
+[2025-11-17 18:46:40] Loaded 3/3 metadata entries from ss_data/metadata.db
+[2025-11-17 18:46:40] MAIN: Loaded metadata for 3 files from disk
+[2025-11-17 18:46:40] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:46:40] MAIN: Found 3 local files. Registering...
+[2025-11-17 18:46:40] Updated metadata for: test2.txt
+[2025-11-17 18:46:40] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:46:40] Updated metadata for: test1.txt
+[2025-11-17 18:46:40] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:46:40] Updated metadata for: STREAM_BACKUO_TEST
+[2025-11-17 18:46:40] MAIN: Updated 'STREAM_BACKUO_TEST' in metadata table
+[2025-11-17 18:46:40] MAIN: Registration complete. This SS ID is 0
+[2025-11-17 18:46:40] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:46:40] RECOVERY: Starting sync from backup at 127.0.0.1:9002...
+[2025-11-17 18:46:40] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:46:40] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:46:40] MAIN: Listening for Replication on port 9002
+[2025-11-17 18:46:40] MAIN: Listening for Clients and NS on port 9001
+[2025-11-17 18:46:40] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:46:40] MAIN: All threads started. Server is running.
+[2025-11-17 18:46:40] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:46:52] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:46:52] READ: Starting read for file STREAM_BACKUO_TEST
+[2025-11-17 18:46:52] READ: Full path is ss_data/files/STREAM_BACKUO_TEST
+[2025-11-17 18:46:52] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:46:52] READ: Chunk 1 - read 54 bytes, is_final=1
+[2025-11-17 18:46:52] READ: Chunk 1 sent
+[2025-11-17 18:46:52] READ: Read complete for STREAM_BACKUO_TEST, sent 1 chunks
+[2025-11-17 18:46:52] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:46:55] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:46:55] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:46:55] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:46:55] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:46:55] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:46:55] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:46:55] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:46:55] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:46:55] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:46:55] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:46:55] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:46:55] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:47:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:47:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:47:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:47:16] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:47:17] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:19] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:19] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:19] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:19] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:19] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:19] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:19] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:19] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:19] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for test2.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:21] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:21] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:40] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:47:40] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:47:40] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:47:40] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:47:42] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:42] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:42] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:42] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:42] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:42] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:47:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:42] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:47:42] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:47:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:47:50] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:47:50] WRITE: Locked file test1.txt (sentence 0)
+[2025-11-17 18:47:56] Updated size for test1.txt: 78 bytes
+[2025-11-17 18:47:56] Updated counts for test1.txt: 5 words, 78 chars
+[2025-11-17 18:47:56] WRITE: Updated metadata for test1.txt (size: 78, words: 5, chars: 78)
+[2025-11-17 18:47:56] WRITE: Completed for test1.txt (sentence 0)
+[2025-11-17 18:47:56] REPL: Scheduling update for test1.txt
+[2025-11-17 18:47:56] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:47:56] REPL_IN: New incoming replication connection
+[2025-11-17 18:47:56] REPL: Successfully replicated test1.txt (78 bytes)
+[2025-11-17 18:47:56] REPL_IN: Receiving replica for test1.txt (78 bytes)
+[2025-11-17 18:47:56] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:47:56] REPL: ACK received for file test1.txt
+[2025-11-17 18:48:03] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:48:03] WRITE: Locked file test1.txt (sentence 0)
+[2025-11-17 18:48:04] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:48:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:48:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:48:04] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:48:31] Updated size for test1.txt: 119 bytes
+[2025-11-17 18:48:31] Updated counts for test1.txt: 13 words, 119 chars
+[2025-11-17 18:48:31] WRITE: Updated metadata for test1.txt (size: 119, words: 13, chars: 119)
+[2025-11-17 18:48:31] WRITE: Completed for test1.txt (sentence 0)
+[2025-11-17 18:48:31] REPL: Scheduling update for test1.txt
+[2025-11-17 18:48:31] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:48:31] REPL_IN: New incoming replication connection
+[2025-11-17 18:48:31] REPL: Successfully replicated test1.txt (119 bytes)
+[2025-11-17 18:48:31] REPL_IN: Receiving replica for test1.txt (119 bytes)
+[2025-11-17 18:48:31] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:48:31] REPL: ACK received for file test1.txt
+[2025-11-17 18:48:40] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:48:40] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:48:40] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:48:40] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:48:57] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:48:57] READ: Starting read for file test1.txt
+[2025-11-17 18:48:57] READ: Full path is ss_data/files/test1.txt
+[2025-11-17 18:48:57] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:48:57] READ: Chunk 1 - read 119 bytes, is_final=1
+[2025-11-17 18:48:57] READ: Chunk 1 sent
+[2025-11-17 18:48:57] READ: Read complete for test1.txt, sent 1 chunks
+[2025-11-17 18:48:57] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:00] REPL_LISTENER: Thread exiting
+[2025-11-17 18:49:00] CHECKPOINT: Thread exiting
+[2025-11-17 18:49:00] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:49:04] HEARTBEAT: Thread exiting
+[2025-11-17 18:49:04] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:49:04] MAIN: Performing final metadata save (3 entries)...
+[2025-11-17 18:49:04] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:49:04] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:49:04] MAIN: Final metadata save successful
+[2025-11-17 18:49:04] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:49:04] REPL: Worker thread shutting down.
+[2025-11-17 18:49:04] --- LOGGING STOPPED ---
+[2025-11-17 18:49:08] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:49:09] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:13] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:49:13] READ: Starting read for file test1.txt
+[2025-11-17 18:49:13] READ: Full path is ss_data/files/test1.txt
+[2025-11-17 18:49:13] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:49:13] READ: Chunk 1 - read 119 bytes, is_final=1
+[2025-11-17 18:49:13] READ: Chunk 1 sent
+[2025-11-17 18:49:13] READ: Read complete for test1.txt, sent 1 chunks
+[2025-11-17 18:49:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:18] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:49:18] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:49:18] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:18] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:49:18] INFO: Returning cached metadata for test1.txt (size: 25, words: 4, chars: 25)
+[2025-11-17 18:49:18] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:18] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:49:18] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:49:18] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:35] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:49:35] WRITE: Locked file test1.txt (sentence 0)
+[2025-11-17 18:49:39] Updated size for test1.txt: 123 bytes
+[2025-11-17 18:49:39] Updated counts for test1.txt: 14 words, 123 chars
+[2025-11-17 18:49:39] WRITE: Updated metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:49:39] WRITE: Completed for test1.txt (sentence 0)
+[2025-11-17 18:49:39] REPL: Scheduling update for test1.txt
+[2025-11-17 18:49:39] REPL: Connected to backup. Replicating update for test1.txt...
+[2025-11-17 18:49:39] REPL_IN: New incoming replication connection
+[2025-11-17 18:49:39] REPL_IN: Receiving replica for test1.txt (123 bytes)
+[2025-11-17 18:49:39] REPL: Successfully replicated test1.txt (123 bytes)
+[2025-11-17 18:49:39] REPL_IN: Finished receiving test1.txt
+[2025-11-17 18:49:39] REPL: ACK received for file test1.txt
+[2025-11-17 18:49:40] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:49:40] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:49:40] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:49:40] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:49:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:49:44] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:49:48] --- LOGGING STARTED ---
+[2025-11-17 18:49:48] MAIN: Starting Storage Server...
+[2025-11-17 18:49:48] MAIN: Initializing metadata hash table...
+[2025-11-17 18:49:48] Loading 3 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:49:48] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:49:48] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:49:48] Inserted metadata for: STREAM_BACKUO_TEST (owner: unknown, size: 54, words: 10, chars: 54)
+[2025-11-17 18:49:48] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:49:48] Inserted metadata for: test1.txt (owner: unknown, size: 123, words: 14, chars: 123)
+[2025-11-17 18:49:48] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:49:48] Inserted metadata for: test2.txt (owner: unknown, size: 0, words: 0, chars: 0)
+[2025-11-17 18:49:48] Loaded 3/3 metadata entries from ss_data/metadata.db
+[2025-11-17 18:49:48] MAIN: Loaded metadata for 3 files from disk
+[2025-11-17 18:49:48] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:49:48] MAIN: Found 3 local files. Registering...
+[2025-11-17 18:49:48] Updated metadata for: test2.txt
+[2025-11-17 18:49:48] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:49:48] Updated metadata for: test1.txt
+[2025-11-17 18:49:48] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:49:48] Updated metadata for: STREAM_BACKUO_TEST
+[2025-11-17 18:49:48] MAIN: Updated 'STREAM_BACKUO_TEST' in metadata table
+[2025-11-17 18:49:48] MAIN: Registration complete. This SS ID is 1
+[2025-11-17 18:49:48] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:49:48] RECOVERY: Starting sync from backup at 127.0.0.1:9004...
+[2025-11-17 18:49:48] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:49:48] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:49:48] MAIN: Listening for Clients and NS on port 9003
+[2025-11-17 18:49:48] MAIN: All threads started. Server is running.
+[2025-11-17 18:49:48] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:49:48] MAIN: Listening for Replication on port 9004
+[2025-11-17 18:49:48] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:50:05] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:05] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:50:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:05] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:05] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:50:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:05] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:05] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:50:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:05] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:05] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:50:05] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:40] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:50:40] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:50:40] Successfully saved 3 metadata entries (atomic snapshot)
+[2025-11-17 18:50:40] CHECKPOINT: Metadata saved successfully (3 entries)
+[2025-11-17 18:50:46] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:50:46] DEBUG: Lazily created inner table for outer bucket 935
+[2025-11-17 18:50:46] Inserted metadata for: last.txt (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:50:46] CREATE: File last.txt created by nov17_1
+[2025-11-17 18:50:46] REPL: Scheduling update for last.txt
+[2025-11-17 18:50:46] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:46] REPL: Connected to backup. Replicating update for last.txt...
+[2025-11-17 18:50:46] REPL_IN: New incoming replication connection
+[2025-11-17 18:50:46] REPL: Successfully replicated last.txt (0 bytes)
+[2025-11-17 18:50:46] REPL_IN: Receiving replica for last.txt (0 bytes)
+[2025-11-17 18:50:46] REPL_IN: Finished receiving last.txt
+[2025-11-17 18:50:46] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-17 18:50:46] REPL: ACK received for file last.txt
+[2025-11-17 18:50:46] DEBUG: Lazily created inner table for outer bucket 935
+[2025-11-17 18:50:46] Inserted metadata for: last.txt (owner: nov17_1, size: 0, words: 0, chars: 0)
+[2025-11-17 18:50:46] CREATE: File last.txt created by nov17_1
+[2025-11-17 18:50:46] REPL: Scheduling update for last.txt
+[2025-11-17 18:50:46] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:46] REPL: Connected to backup. Replicating update for last.txt...
+[2025-11-17 18:50:46] REPL_IN: New incoming replication connection
+[2025-11-17 18:50:46] REPL: Successfully replicated last.txt (0 bytes)
+[2025-11-17 18:50:46] REPL_IN: Receiving replica for last.txt (0 bytes)
+[2025-11-17 18:50:46] REPL_IN: Finished receiving last.txt
+[2025-11-17 18:50:46] REPL: ACK received for file last.txt
+[2025-11-17 18:50:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:50:48] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:50:48] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:50:48] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-17 18:50:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:49] INFO: Returning cached metadata for last.txt (size: 0, words: 0, chars: 0)
+[2025-11-17 18:50:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:49] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:50:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:49] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:50:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:49] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:50:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:50:49] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:50:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:50:59] REPL_LISTENER: Thread exiting
+[2025-11-17 18:51:00] HEARTBEAT: Thread exiting
+[2025-11-17 18:51:00] CHECKPOINT: Thread exiting
+[2025-11-17 18:51:00] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:51:00] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:51:00] MAIN: Performing final metadata save (4 entries)...
+[2025-11-17 18:51:00] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:51:00] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:51:00] MAIN: Final metadata save successful
+[2025-11-17 18:51:00] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:51:00] REPL: Worker thread shutting down.
+[2025-11-17 18:51:00] --- LOGGING STOPPED ---
+[2025-11-17 18:51:11] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:51:11] READ: Starting read for file last.txt
+[2025-11-17 18:51:11] READ: Full path is ss_data/files/last.txt
+[2025-11-17 18:51:11] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:51:11] READ: File is empty, sending empty final chunk
+[2025-11-17 18:51:11] READ: Read complete for last.txt, sent 0 chunks
+[2025-11-17 18:51:11] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:15] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-17 18:51:15] WRITE: Locked file last.txt (sentence 0)
+[2025-11-17 18:51:31] Updated size for last.txt: 54 bytes
+[2025-11-17 18:51:31] Updated counts for last.txt: 10 words, 54 chars
+[2025-11-17 18:51:31] WRITE: Updated metadata for last.txt (size: 54, words: 10, chars: 54)
+[2025-11-17 18:51:31] WRITE: Completed for last.txt (sentence 0)
+[2025-11-17 18:51:31] REPL: Scheduling update for last.txt
+[2025-11-17 18:51:31] REPL: Connected to backup. Replicating update for last.txt...
+[2025-11-17 18:51:31] REPL_IN: New incoming replication connection
+[2025-11-17 18:51:31] REPL: Successfully replicated last.txt (54 bytes)
+[2025-11-17 18:51:31] REPL_IN: Receiving replica for last.txt (54 bytes)
+[2025-11-17 18:51:31] REPL_IN: Finished receiving last.txt
+[2025-11-17 18:51:31] REPL: ACK received for file last.txt
+[2025-11-17 18:51:37] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:51:37] READ: Starting read for file last.txt
+[2025-11-17 18:51:37] READ: Full path is ss_data/files/last.txt
+[2025-11-17 18:51:37] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:51:37] READ: Chunk 1 - read 54 bytes, is_final=1
+[2025-11-17 18:51:37] READ: Chunk 1 sent
+[2025-11-17 18:51:37] READ: Read complete for last.txt, sent 1 chunks
+[2025-11-17 18:51:37] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:43] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:51:43] INFO: Returning cached metadata for last.txt (size: 54, words: 10, chars: 54)
+[2025-11-17 18:51:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:43] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:51:43] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:51:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:43] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:51:43] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:51:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:43] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:51:43] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:51:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:51:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:51:48] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:51:48] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:51:48] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-17 18:52:02] --- LOGGING STARTED ---
+[2025-11-17 18:52:02] MAIN: Starting Storage Server...
+[2025-11-17 18:52:02] MAIN: Initializing metadata hash table...
+[2025-11-17 18:52:02] Loading 4 metadata entries from ss_data/metadata.db...
+[2025-11-17 18:52:02] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-17 18:52:02] DEBUG: Lazily created inner table for outer bucket 100
+[2025-11-17 18:52:02] Inserted metadata for: STREAM_BACKUO_TEST (owner: unknown, size: 54, words: 10, chars: 54)
+[2025-11-17 18:52:02] DEBUG: Lazily created inner table for outer bucket 772
+[2025-11-17 18:52:02] Inserted metadata for: test1.txt (owner: unknown, size: 123, words: 14, chars: 123)
+[2025-11-17 18:52:02] DEBUG: Lazily created inner table for outer bucket 901
+[2025-11-17 18:52:02] Inserted metadata for: test2.txt (owner: unknown, size: 0, words: 0, chars: 0)
+[2025-11-17 18:52:02] DEBUG: Lazily created inner table for outer bucket 935
+[2025-11-17 18:52:02] Inserted metadata for: last.txt (owner: nov17_1, size: 54, words: 10, chars: 54)
+[2025-11-17 18:52:02] Loaded 4/4 metadata entries from ss_data/metadata.db
+[2025-11-17 18:52:02] MAIN: Loaded metadata for 4 files from disk
+[2025-11-17 18:52:02] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-17 18:52:02] MAIN: Found 4 local files. Registering...
+[2025-11-17 18:52:02] Updated metadata for: test2.txt
+[2025-11-17 18:52:02] MAIN: Updated 'test2.txt' in metadata table
+[2025-11-17 18:52:02] Updated metadata for: test1.txt
+[2025-11-17 18:52:02] MAIN: Updated 'test1.txt' in metadata table
+[2025-11-17 18:52:02] Updated metadata for: STREAM_BACKUO_TEST
+[2025-11-17 18:52:02] MAIN: Updated 'STREAM_BACKUO_TEST' in metadata table
+[2025-11-17 18:52:02] Updated metadata for: last.txt
+[2025-11-17 18:52:02] MAIN: Updated 'last.txt' in metadata table
+[2025-11-17 18:52:02] MAIN: Registration complete. This SS ID is 0
+[2025-11-17 18:52:02] MAIN: This is a recovery. Starting sync from backup...
+[2025-11-17 18:52:02] RECOVERY: Starting sync from backup at 127.0.0.1:9002...
+[2025-11-17 18:52:02] RECOVERY: Failed to connect to backup server. Starting with empty state.
+[2025-11-17 18:52:02] RECOVERY: In production, this would be a critical error requiring operator intervention.
+[2025-11-17 18:52:02] MAIN: Listening for Clients and NS on port 9001
+[2025-11-17 18:52:02] MAIN: All threads started. Server is running.
+[2025-11-17 18:52:02] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-17 18:52:02] MAIN: Listening for Replication on port 9002
+[2025-11-17 18:52:02] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-17 18:52:15] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:52:15] CHECKPOINT: Thread exiting
+[2025-11-17 18:52:16] REPL_LISTENER: Thread exiting
+[2025-11-17 18:52:18] HEARTBEAT: Thread exiting
+[2025-11-17 18:52:18] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:52:18] MAIN: Performing final metadata save (4 entries)...
+[2025-11-17 18:52:18] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:52:18] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:52:18] MAIN: Final metadata save successful
+[2025-11-17 18:52:18] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:52:18] REPL: Worker thread shutting down.
+[2025-11-17 18:52:18] --- LOGGING STOPPED ---
+[2025-11-17 18:52:24] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-17 18:52:24] READ: Starting read for file last.txt
+[2025-11-17 18:52:24] READ: Full path is ss_data/files/last.txt
+[2025-11-17 18:52:24] READ: File opened successfully, starting to read chunks
+[2025-11-17 18:52:24] READ: Chunk 1 - read 54 bytes, is_final=1
+[2025-11-17 18:52:24] READ: Chunk 1 sent
+[2025-11-17 18:52:24] READ: Read complete for last.txt, sent 1 chunks
+[2025-11-17 18:52:24] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:52:47] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-17 18:52:48] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:52:51] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:52:51] INFO: Returning cached metadata for last.txt (size: 54, words: 10, chars: 54)
+[2025-11-17 18:52:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:52:51] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:52:51] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:52:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:52:51] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:52:51] INFO: Returning cached metadata for test1.txt (size: 123, words: 14, chars: 123)
+[2025-11-17 18:52:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:52:51] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-17 18:52:51] INFO: Returning cached metadata for STREAM_BACKUO_TEST (size: 54, words: 10, chars: 54)
+[2025-11-17 18:52:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-17 18:53:02] CHECKPOINT: Saving metadata to disk...
+[2025-11-17 18:53:02] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:53:02] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:53:02] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-17 18:53:17] REPL_LISTENER: Thread exiting
+[2025-11-17 18:53:17] HEARTBEAT: Thread exiting
+[2025-11-17 18:53:17] CHECKPOINT: Thread exiting
+[2025-11-17 18:53:17] CLIENT_LISTENER: Thread exiting
+[2025-11-17 18:53:17] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-17 18:53:17] MAIN: Performing final metadata save (4 entries)...
+[2025-11-17 18:53:17] Saving metadata to ss_data/metadata.db (atomic snapshot)...
+[2025-11-17 18:53:17] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-17 18:53:17] MAIN: Final metadata save successful
+[2025-11-17 18:53:17] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-17 18:53:17] REPL: Worker thread shutting down.
+[2025-11-17 18:53:17] --- LOGGING STOPPED ---

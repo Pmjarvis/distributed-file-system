@@ -32,7 +32,9 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
            req->target_ss_id, req->target_ip, req->target_port);
     
     // Set syncing flag to block operations
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 1;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     // Send ACK to NS
     send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
@@ -42,6 +44,9 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     if (target_sock < 0) {
         ss_log("RECOVERY: Failed to connect to primary SS %d at %s:%d",
                req->target_ss_id, req->target_ip, req->target_port);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
         return;
     }
     
@@ -58,6 +63,9 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     if (!dir) {
         ss_log("RECOVERY: Failed to open files directory");
         close(target_sock);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
         return;
     }
     
@@ -79,6 +87,15 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     // Send each file's metadata
     rewinddir(dir);
     FileMetadata* metas = (FileMetadata*)malloc(file_count * sizeof(FileMetadata));
+    if (!metas && file_count > 0) {
+        ss_log("RECOVERY: Failed to allocate memory for metadata array");
+        closedir(dir);
+        close(target_sock);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
+        return;
+    }
     int idx = 0;
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_REG) continue;
@@ -136,12 +153,27 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         
         // Send file data
         off_t offset = 0;
-        sendfile(target_sock, fd, &offset, st.st_size);
+        ssize_t sent = sendfile(target_sock, fd, &offset, st.st_size);
         close(fd);
+        
+        if (sent != (ssize_t)st.st_size) {
+            ss_log("RECOVERY: sendfile failed for %s: sent %ld of %ld bytes",
+                   entry->d_name, sent, (long)st.st_size);
+            // Continue with other files instead of aborting entire recovery
+            continue;
+        }
         
         // Wait for ACK
         MsgHeader ack;
-        recv_header(target_sock, &ack);
+        if (recv_header(target_sock, &ack) <= 0) {
+            ss_log("RECOVERY: Failed to receive ACK for %s", entry->d_name);
+            break;  // Connection lost, abort recovery
+        }
+        
+        if (ack.type != MSG_S2S_ACK) {
+            ss_log("RECOVERY: Unexpected message type %d (expected ACK) for %s",
+                   ack.type, entry->d_name);
+        }
         
         files_sent++;
         ss_log("RECOVERY: Sent file %d/%u: %s (%ld bytes)",
@@ -156,7 +188,9 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     close(target_sock);
     
     // Clear syncing flag
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 0;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     ss_log("RECOVERY: Sync to primary SS %d complete (%d files sent)", req->target_ss_id, files_sent);
 }
@@ -170,7 +204,9 @@ void ss_handle_sync_to_primary(int ns_sock, Req_SyncToPrimary* req) {
            req->backup_ss_id, req->backup_ip, req->backup_port);
     
     // Set syncing flag to block operations
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 1;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     // Send ACK to NS
     send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
@@ -190,7 +226,9 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
            req->backup_ss_id, req->backup_ip, req->backup_port);
     
     // Set syncing flag to block operations
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 1;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     // Send ACK to NS
     send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
@@ -200,6 +238,9 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     if (backup_sock < 0) {
         ss_log("RECOVERY: Failed to connect to backup SS %d at %s:%d",
                req->backup_ss_id, req->backup_ip, req->backup_port);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
         return;
     }
     
@@ -216,6 +257,9 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     if (!dir) {
         ss_log("RECOVERY: Failed to open files directory");
         close(backup_sock);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
         return;
     }
     
@@ -237,6 +281,15 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     // Send metadata for all files
     rewinddir(dir);
     FileMetadata* metas = (FileMetadata*)malloc(file_count * sizeof(FileMetadata));
+    if (!metas && file_count > 0) {
+        ss_log("RECOVERY: Failed to allocate memory for metadata array");
+        closedir(dir);
+        close(backup_sock);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
+        return;
+    }
     int idx = 0;
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_REG) continue;
@@ -288,12 +341,25 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
         send_response(backup_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
         
         off_t offset = 0;
-        sendfile(backup_sock, fd, &offset, st.st_size);
+        ssize_t sent = sendfile(backup_sock, fd, &offset, st.st_size);
         close(fd);
+        
+        if (sent != (ssize_t)st.st_size) {
+            ss_log("RECOVERY: sendfile failed for %s: sent %ld of %ld bytes",
+                   entry->d_name, sent, (long)st.st_size);
+            continue;
+        }
         
         // Wait for ACK
         MsgHeader ack;
-        recv_header(backup_sock, &ack);
+        if (recv_header(backup_sock, &ack) <= 0) {
+            ss_log("RECOVERY: Failed to receive ACK for %s", entry->d_name);
+            break;
+        }
+        
+        if (ack.type != MSG_S2S_ACK) {
+            ss_log("RECOVERY: Unexpected message type %d for %s", ack.type, entry->d_name);
+        }
         
         files_sent++;
         ss_log("RECOVERY: Re-replicated file %d/%u: %s (%ld bytes)",
@@ -308,7 +374,9 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     close(backup_sock);
     
     // Clear syncing flag
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 0;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     ss_log("RECOVERY: Re-replication to backup SS %d complete (%d files)", req->backup_ss_id, files_sent);
 }
@@ -372,6 +440,14 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
     
     // Receive metadata for all files
     FileMetadata* metas = (FileMetadata*)malloc(file_list.file_count * sizeof(FileMetadata));
+    if (!metas && file_list.file_count > 0) {
+        ss_log("RECOVERY: Failed to allocate memory for metadata array");
+        close(sock);
+        pthread_mutex_lock(&g_sync_mutex);
+        g_is_syncing = 0;
+        pthread_mutex_unlock(&g_sync_mutex);
+        return;
+    }
     if (file_list.file_count > 0) {
         recv(sock, metas, file_list.file_count * sizeof(FileMetadata), MSG_WAITALL);
     }
@@ -443,7 +519,9 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
     close(sock);
     
     // Clear syncing flag (both primary and backup recovery paths end here)
+    pthread_mutex_lock(&g_sync_mutex);
     g_is_syncing = 0;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     ss_log("RECOVERY: Recovery complete! Received %u files from SS %d", files_received, req->ss_id);
 }

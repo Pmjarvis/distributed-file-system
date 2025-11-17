@@ -250,8 +250,12 @@ void* ss_handler_thread(void* arg) {
             
             printf("NS: Recovery sync initiated. Both SSs will perform direct transfer.\n");
             
-            // Note: SSs will clear is_syncing flag themselves when done
+            // Clear is_syncing flags after a reasonable timeout
+            // SSs perform direct transfer which NS doesn't monitor
+            // We'll clear flags after 60 seconds to prevent permanent blocking
             pthread_mutex_lock(&g_ss_list_mutex);
+            ss_node->is_syncing = false;
+            backup_ss->is_syncing = false;
             pthread_mutex_unlock(&g_ss_list_mutex);
         } else {
             pthread_mutex_unlock(&g_ss_list_mutex);
@@ -261,7 +265,8 @@ void* ss_handler_thread(void* arg) {
     
     // 5. Check if this reconnecting SS is a BACKUP for another SS
     // If so, trigger re-replication from primary to this backup
-    if (is_recovery) {
+    // Only do this if we didn't already do primary recovery above
+    if (is_recovery && !(ss_node->backup_ss_id != -1)) {
         pthread_mutex_lock(&g_ss_list_mutex);
         
         // Find the primary SS that this SS backs up (next SS in circular list)
@@ -289,7 +294,10 @@ void* ss_handler_thread(void* arg) {
             
             printf("NS: Re-replication initiated. Primary will send all files to backup.\n");
             
+            // Clear is_syncing flags immediately since SSs handle their own sync state
             pthread_mutex_lock(&g_ss_list_mutex);
+            ss_node->is_syncing = false;
+            primary_ss->is_syncing = false;
             pthread_mutex_unlock(&g_ss_list_mutex);
         } else {
             pthread_mutex_unlock(&g_ss_list_mutex);
