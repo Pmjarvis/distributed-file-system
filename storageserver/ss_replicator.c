@@ -15,11 +15,30 @@
 
 static pthread_t g_repl_thread;
 
+// Simple in-memory retry counter (not persisted). Could be replaced with a more robust structure.
+static int retry_counts[1024]; // Hash by filename simple modulo below; assumes small number of distinct files in flight
+
+static unsigned _hash_filename(const char* fn) {
+    unsigned h = 0; while (*fn) { h = (h * 131) + (unsigned char)*fn++; } return h;
+}
+
 static void _do_replication_update(const char* filename) {
     // FIX: Check if we have a valid backup assigned
     if (strlen(g_backup_ip) == 0 || g_backup_port == 0) {
         ss_log("REPL: No backup assigned, skipping replication for %s", filename);
         return;
+    }
+    
+    // CRITICAL FIX: Check if this is a backup file - don't replicate backups!
+    // This prevents backup-of-backup cascading
+    FileMetadataNode* check_meta = metadata_table_get(g_metadata_table, filename);
+    if (check_meta) {
+        if (check_meta->is_backup) {
+            ss_log("REPL: Skipping backup file %s (not replicating backups to prevent cascading)", filename);
+            free(check_meta);
+            return;
+        }
+        free(check_meta);
     }
     
     char filepath[MAX_PATH];
@@ -38,9 +57,18 @@ static void _do_replication_update(const char* filename) {
         return;
     }
 
-    int sock = connect_to_server(g_backup_ip, g_backup_port); // <-- This now compiles
+    int sock = connect_to_server(g_backup_ip, g_backup_port); // Remote backup target
     if (sock < 0) {
         ss_log("REPL: Could not connect to backup server at %s:%d", g_backup_ip, g_backup_port);
+        // Retry logic: requeue up to 5 attempts with simple backoff (handled by worker loop timing)
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        if (retry_counts[idx] < 5) {
+            retry_counts[idx]++;
+            ss_log("REPL: Re-queueing %s for retry attempt %d", filename, retry_counts[idx]);
+            repl_queue_push(&g_repl_queue, filename, MSG_S2S_REPLICATE_FILE);
+        } else {
+            ss_log("REPL: Giving up on %s after %d failed attempts", filename, retry_counts[idx]);
+        }
         close(fd);
         return;
     }
@@ -57,18 +85,23 @@ static void _do_replication_update(const char* filename) {
     req.file_size = file_stat.st_size;
     
     // FIX: Get owner from metadata table and include it
+    // CRITICAL: Metadata MUST exist for files being replicated
     FileMetadataNode* meta = metadata_table_get(g_metadata_table, filename);
-    if (meta) {
-        strncpy(req.owner, meta->owner, MAX_USERNAME - 1);
-        req.owner[MAX_USERNAME - 1] = '\0';
-        free(meta);
-        ss_log("REPL: Replicating %s (owner: %s)", filename, req.owner);
-    } else {
-        // Fallback if no metadata found
-        strncpy(req.owner, "unknown", MAX_USERNAME - 1);
-        req.owner[MAX_USERNAME - 1] = '\0';
-        ss_log("REPL: WARNING - No metadata found for %s, using 'unknown' as owner", filename);
+    if (!meta) {
+        // FATAL ERROR: File exists but has no metadata!
+        // This should NEVER happen if the code is working correctly.
+        ss_log("FATAL ERROR: File '%s' is being replicated but has NO metadata entry!", filename);
+        ss_log("FATAL ERROR: This indicates a serious bug - metadata should be inserted before replication");
+        ss_log("FATAL ERROR: Aborting replication for this file to prevent propagating bad data");
+        close(sock);
+        close(fd);
+        return;
     }
+    
+    strncpy(req.owner, meta->owner, MAX_USERNAME - 1);
+    req.owner[MAX_USERNAME - 1] = '\0';
+    free(meta);
+    ss_log("REPL: Replicating %s (owner: %s, size: %llu)", filename, req.owner, (unsigned long long)req.file_size);
     
     send_response(sock, MSG_S2S_REPLICATE_FILE, &req, sizeof(req));
     
@@ -103,7 +136,7 @@ static void _do_replication_delete(const char* filename) {
         return;
     }
     
-    int sock = connect_to_server(g_backup_ip, g_backup_port); // <-- This now compiles
+    int sock = connect_to_server(g_backup_ip, g_backup_port); // Remote backup target
     if (sock < 0) {
         ss_log("REPL: Could not connect to backup server for DELETE %s", filename);
         return;
@@ -218,20 +251,21 @@ void handle_replication_receive(int sock) {
         ss_log("REPL_IN: Finished receiving %s", req.filename);
         
         // FIX: Update metadata table with owner info from request
+        // Mark as BACKUP file (is_backup=true)
         time_t now = time(NULL);
         FileMetadataNode* existing = metadata_table_get(g_metadata_table, req.filename);
         if (existing) {
             // Update existing metadata - MUST update owner too!
             metadata_table_insert(g_metadata_table, req.filename, req.owner,
-                                req.file_size, 0, 0, now, now);
+                                req.file_size, 0, 0, now, now, true);
             free(existing);
-            ss_log("REPL_IN: Updated metadata for %s (owner: %s, size: %llu)", 
+            ss_log("REPL_IN: Updated metadata for %s (owner: %s, size: %llu, is_backup=true)", 
                    req.filename, req.owner, (unsigned long long)req.file_size);
         } else {
-            // Insert new metadata with owner info from request
+            // Insert new metadata with owner info from request - mark as backup
             metadata_table_insert(g_metadata_table, req.filename, req.owner,
-                                req.file_size, 0, 0, now, now);
-            ss_log("REPL_IN: Created metadata for %s (owner: %s)", req.filename, req.owner);
+                                req.file_size, 0, 0, now, now, true);
+            ss_log("REPL_IN: Created metadata for %s (owner: %s, is_backup=true)", req.filename, req.owner);
         }
         
     } else if (header.type == MSG_S2S_DELETE_FILE) {

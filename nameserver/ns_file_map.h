@@ -2,7 +2,7 @@
 #define NS_FILE_MAP_H
 
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include "../common/protocol.h"
 
@@ -68,7 +68,7 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
                           const char* owner);
 
 /**
- * @brief Searches for a file in the hash table
+ * @brief Searches for a file by owner and filename
  * @param table The hash table
  * @param owner The file owner username
  * @param filename The filename to search for
@@ -76,6 +76,17 @@ int file_map_table_insert(FileMapHashTable* table, const char* filename,
  * @note The returned pointer should NOT be freed by the caller
  */
 FileMapNode* file_map_table_search(FileMapHashTable* table, const char* owner, const char* filename);
+
+/**
+ * @brief Searches for a file by SS ID and filename (used during recovery)
+ * @param table The hash table
+ * @param ss_id The primary SS ID
+ * @param filename The filename to search for
+ * @return Pointer to the FileMapNode if found, NULL otherwise
+ * @note The returned pointer should NOT be freed by the caller
+ * @note This searches all owners for a file on a specific SS
+ */
+FileMapNode* file_map_table_search_by_ss_and_filename(FileMapHashTable* table, int ss_id, const char* filename);
 
 /**
  * @brief Deletes a file from the hash table

@@ -31,10 +31,12 @@ void* handle_connection(void* arg) {
         
         // This is a single-request connection. Process it.
         if (header.type == MSG_C2S_READ) {
+            ss_log("HANDLER: Routing to ss_handle_read() for message type %d", header.type);
             Req_FileOp req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_read(sock, &req);
         } else if (header.type == MSG_C2S_STREAM) {
+            ss_log("HANDLER: Routing to ss_handle_stream() for message type %d", header.type);
             Req_FileOp req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_stream(sock, &req);
@@ -90,6 +92,10 @@ void* handle_connection(void* arg) {
             Req_ReReplicate req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_re_replicate_all(sock, &req);
+        } else if (header.type == MSG_N2S_UPDATE_BACKUP) {
+            Req_UpdateBackup req;
+            recv_payload(sock, &req, header.payload_len);
+            ss_handle_update_backup(sock, &req);
         }
 
     // --- THIS IS A REPLICATION/RECOVERY CONNECTION (from another SS) ---
@@ -130,4 +136,28 @@ void handle_client_session(int client_sock, const char* client_ip) {
 void handle_ns_session(int ns_sock, const char* ns_ip) {
     ss_log("HANDLER: NS session started for %s (DEPRECATED)", ns_ip);
     //close(ns_sock);
+}
+
+// Handle backup assignment update from NS
+void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
+    ss_log("HANDLER: Received backup assignment update from NS");
+    
+    // Update global backup information
+    if (req->backup_ss_id != -1 && strlen(req->backup_ip) > 0) {
+        strncpy(g_backup_ip, req->backup_ip, 16);
+        g_backup_ip[15] = '\0';
+        g_backup_port = req->backup_port;
+        ss_log("HANDLER: Backup assignment updated - will replicate to %s:%d (SS ID %d)",
+               g_backup_ip, g_backup_port, req->backup_ss_id);
+    } else {
+        // No backup assigned
+        g_backup_ip[0] = '\0';
+        g_backup_port = 0;
+        ss_log("HANDLER: Backup assignment cleared - no backup assigned");
+    }
+    
+    // Send ACK back to NS
+    Res_Success ack;
+    snprintf(ack.msg, sizeof(ack.msg), "Backup assignment updated");
+    send_response(ns_sock, MSG_S2N_ACK_OK, &ack, sizeof(ack));
 }

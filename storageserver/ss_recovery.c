@@ -102,22 +102,22 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         
         // Get metadata from our table
         FileMetadataNode* node = metadata_table_get(g_metadata_table, entry->d_name);
-        if (node) {
-            // Copy fields from node to FileMetadata
-            strncpy(metas[idx].filename, node->filename, MAX_FILENAME);
-            strncpy(metas[idx].owner, node->owner, MAX_USERNAME);
-            metas[idx].size_bytes = node->file_size;
-            metas[idx].word_count = node->word_count;
-            metas[idx].char_count = node->char_count;
-            free(node);  // metadata_table_get returns a copy
-        } else {
-            // Fallback: create basic metadata
-            strncpy(metas[idx].filename, entry->d_name, MAX_FILENAME);
-            metas[idx].size_bytes = 0;
-            metas[idx].word_count = 0;
-            metas[idx].char_count = 0;
-            strncpy(metas[idx].owner, "unknown", MAX_USERNAME);
+        if (!node) {
+            // CRITICAL ERROR: File exists but has no metadata!
+            // During recovery, all files MUST have metadata entries.
+            ss_log("ERROR: Recovery found file '%s' without metadata entry - SKIPPING", entry->d_name);
+            ss_log("ERROR: This file will not be recovered. Metadata may be corrupted.");
+            continue; // Skip this file - don't include in recovery
         }
+        
+        // Copy fields from node to FileMetadata
+        strncpy(metas[idx].filename, node->filename, MAX_FILENAME);
+        strncpy(metas[idx].owner, node->owner, MAX_USERNAME);
+        metas[idx].size_bytes = node->file_size;
+        metas[idx].word_count = node->word_count;
+        metas[idx].char_count = node->char_count;
+        free(node);  // metadata_table_get returns a copy
+        
         idx++;
     }
     
@@ -151,13 +151,17 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         repl_req.file_size = st.st_size;
         
         // FIX: Include owner information from metadata
+        // CRITICAL: Metadata MUST exist during recovery
         FileMetadataNode* node_for_owner = metadata_table_get(g_metadata_table, entry->d_name);
-        if (node_for_owner) {
-            strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
-            free(node_for_owner);
-        } else {
-            strncpy(repl_req.owner, "unknown", MAX_USERNAME);
+        if (!node_for_owner) {
+            // FATAL ERROR: File exists but has no metadata during recovery!
+            ss_log("ERROR: Recovery - file '%s' has no metadata, SKIPPING", entry->d_name);
+            close(fd);
+            continue; // Skip this file
         }
+        
+        strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
+        free(node_for_owner);
         
         send_response(target_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
         
@@ -305,20 +309,19 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
         if (entry->d_type != DT_REG) continue;
         
         FileMetadataNode* node = metadata_table_get(g_metadata_table, entry->d_name);
-        if (node) {
-            strncpy(metas[idx].filename, node->filename, MAX_FILENAME);
-            strncpy(metas[idx].owner, node->owner, MAX_USERNAME);
-            metas[idx].size_bytes = node->file_size;
-            metas[idx].word_count = node->word_count;
-            metas[idx].char_count = node->char_count;
-            free(node);
-        } else {
-            strncpy(metas[idx].filename, entry->d_name, MAX_FILENAME);
-            metas[idx].size_bytes = 0;
-            metas[idx].word_count = 0;
-            metas[idx].char_count = 0;
-            strncpy(metas[idx].owner, "unknown", MAX_USERNAME);
+        if (!node) {
+            // CRITICAL ERROR: File exists but has no metadata during backup recovery!
+            ss_log("ERROR: Recovery to backup - file '%s' has no metadata, SKIPPING", entry->d_name);
+            continue; // Skip this file
         }
+        
+        strncpy(metas[idx].filename, node->filename, MAX_FILENAME);
+        strncpy(metas[idx].owner, node->owner, MAX_USERNAME);
+        metas[idx].size_bytes = node->file_size;
+        metas[idx].word_count = node->word_count;
+        metas[idx].char_count = node->char_count;
+        free(node);
+        
         idx++;
     }
     
@@ -350,13 +353,17 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
         repl_req.file_size = st.st_size;
         
         // FIX: Include owner information from metadata
+        // CRITICAL: Metadata MUST exist during recovery
         FileMetadataNode* node_for_owner = metadata_table_get(g_metadata_table, entry->d_name);
-        if (node_for_owner) {
-            strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
-            free(node_for_owner);
-        } else {
-            strncpy(repl_req.owner, "unknown", MAX_USERNAME);
+        if (!node_for_owner) {
+            // FATAL ERROR: File exists but has no metadata during backup recovery!
+            ss_log("ERROR: Recovery to backup - file '%s' has no metadata, SKIPPING", entry->d_name);
+            close(fd);
+            continue; // Skip this file
         }
+        
+        strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
+        free(node_for_owner);
         
         send_response(backup_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
         
@@ -405,12 +412,12 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
  * Handler: Incoming SS-to-SS recovery connection
  * This SS is receiving files from another SS (either as primary or backup)
  */
-void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
+void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
     ss_log("RECOVERY: Incoming recovery connection from SS %d (primary_recovery=%d)",
-           req->ss_id, req->is_primary_recovery);
+           start_req->ss_id, start_req->is_primary_recovery);
     
-    if (req->is_primary_recovery) {
-        ss_log("RECOVERY: We are PRIMARY recovering from backup SS %d", req->ss_id);
+    if (start_req->is_primary_recovery) {
+        ss_log("RECOVERY: We are PRIMARY recovering from backup SS %d", start_req->ss_id);
         
         // Clear our existing files first (we were down, backup has fresher data)
         DIR* dir = opendir(SS_FILES_DIR);
@@ -427,7 +434,7 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
             closedir(dir);
         }
     } else {
-        ss_log("RECOVERY: We are BACKUP receiving fresh replication from primary SS %d", req->ss_id);
+        ss_log("RECOVERY: We are BACKUP receiving fresh replication from primary SS %d", start_req->ss_id);
         
         // Clear old backup files
         DIR* dir = opendir(SS_FILES_DIR);
@@ -521,12 +528,15 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
         }
         fclose(f);
         
-        // Update our metadata table
+        // FIX: Update our metadata table
+        // If is_primary_recovery=true: WE are the primary recovering from backup, files are PRIMARY (is_backup=false)
+        // If is_primary_recovery=false: WE are the backup recovering from primary, files are BACKUPS (is_backup=true)
         FileMetadata* meta = &metas[files_received];
         time_t now = time(NULL);
+        bool is_backup_file = !start_req->is_primary_recovery;  // Opposite of is_primary_recovery flag
         metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
                               meta->size_bytes, meta->word_count, meta->char_count,
-                              now, now);
+                              now, now, is_backup_file);
         
         send_response(sock, MSG_S2S_ACK, NULL, 0);
         files_received++;
@@ -543,5 +553,5 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* req) {
     g_is_syncing = 0;
     pthread_mutex_unlock(&g_sync_mutex);
     
-    ss_log("RECOVERY: Recovery complete! Received %u files from SS %d", files_received, req->ss_id);
+    ss_log("RECOVERY: Recovery complete! Received %u files from SS %d", files_received, start_req->ss_id);
 }

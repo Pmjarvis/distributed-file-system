@@ -12,6 +12,9 @@ int send_response(int sock, MsgType type, const void* payload, uint32_t len) {
     header.type = type;
     header.payload_len = len;
 
+    // DEBUG: Log what we're sending
+    fprintf(stderr, "[DEBUG send_response] Sending message type %d with payload len %u\n", type, len);
+
     // 1. Send header
     if (send(sock, &header, sizeof(MsgHeader), 0) != sizeof(MsgHeader)) {
         perror("send header failed");
@@ -132,6 +135,48 @@ int setup_listener_socket(int port) {
         exit(EXIT_FAILURE);
     }
     
+    return server_fd;
+}
+
+// New function: Bind to specific IP address to allow multiple SS instances on different IPs
+int setup_listener_socket_on_ip(const char* ip, int port) {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1) {
+        perror("Socket creation failed");
+        return -1;
+    }
+    
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    
+    // Bind to specific IP address instead of INADDR_ANY
+    if (inet_pton(AF_INET, ip, &address.sin_addr) <= 0) {
+        fprintf(stderr, "Invalid IP address: %s\n", ip);
+        close(server_fd);
+        return -1;
+    }
+    
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+        perror("setsockopt failed");
+        close(server_fd);
+        return -1;
+    }
+    
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        fprintf(stderr, "Bind failed on %s:%d - %s\n", ip, port, strerror(errno));
+        close(server_fd);
+        return -1;
+    }
+    
+    if (listen(server_fd, 10) < 0) {
+        perror("Listen failed");
+        close(server_fd);
+        return -1;
+    }
+    
+    printf("Listening on %s:%d\n", ip, port);
     return server_fd;
 }
 

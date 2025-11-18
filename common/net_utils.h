@@ -22,7 +22,8 @@ int recv_header(int sock, MsgHeader* header);
 int recv_payload(int sock, void* payload, uint32_t len);
 
 // --- Socket setup ---
-int setup_listener_socket(int port);
+int setup_listener_socket(int port);  // Deprecated - binds to INADDR_ANY
+int setup_listener_socket_on_ip(const char* ip, int port);  // Bind to specific IP
 int connect_to_server(const char* ip, int port); // <-- FIX: ADDED THIS
 
 #endif // NET_UTILS_H

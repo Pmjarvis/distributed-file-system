@@ -23,5 +23,6 @@ void ss_handle_sync_from_backup(int sock, Req_SyncFromBackup* req);
 void ss_handle_sync_to_primary(int sock, Req_SyncToPrimary* req);
 void ss_handle_re_replicate_all(int sock, Req_ReReplicate* req);
 void ss_handle_recovery_connection(int sock, Req_StartRecovery* req);
+void ss_handle_update_backup(int sock, Req_UpdateBackup* req);
 
 #endif // SS_HANDLER_H

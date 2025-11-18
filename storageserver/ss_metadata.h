@@ -2,6 +2,7 @@
 #define SS_METADATA_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
 
@@ -47,7 +48,8 @@
 #define MAX_USERNAME 64
 #define OUTER_TABLE_SIZE 1024     // Outer hash table size
 #define INNER_TABLE_SIZE 64       // Inner hash table size (per bucket)
-#define METADATA_DB_PATH "ss_data/metadata.db"
+// METADATA_DB_PATH is now defined in ss_globals.h (dynamically set based on SS ID)
+
 
 // File metadata node (leaf node - stores actual metadata)
 typedef struct FileMetadataNode {
@@ -59,6 +61,8 @@ typedef struct FileMetadataNode {
     uint64_t char_count;       // Total characters
     time_t last_access;        // Last access timestamp
     time_t last_modified;      // Last modification timestamp
+    
+    bool is_backup;            // true if this file is a backup copy, false if primary
     
     struct FileMetadataNode* next;  // For chaining within inner hash table bucket
 } FileMetadataNode;
@@ -95,7 +99,7 @@ uint32_t metadata_hash(const char* filename);
 int metadata_table_insert(MetadataHashTable* table, const char* filename, 
                          const char* owner, uint64_t file_size,
                          uint64_t word_count, uint64_t char_count,
-                         time_t last_access, time_t last_modified);
+                         time_t last_access, time_t last_modified, bool is_backup);
 
 // Get metadata
 FileMetadataNode* metadata_table_get(MetadataHashTable* table, const char* filename);

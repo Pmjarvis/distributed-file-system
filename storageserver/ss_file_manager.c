@@ -58,58 +58,50 @@ static int _copy_file(const char* src_path, const char* dest_path) {
 // --- Metadata Utilities ---
 
 int ss_get_file_metadata(const char* filename, FileMetadata* meta) {
-    char filepath[MAX_PATH];
-    ss_get_path(SS_FILES_DIR, filename, filepath);
+    // FIX: Don't use stat() as it updates access time on some systems
+    // Use metadata from metadata table instead for VIEW -l
     
-    struct stat st;
-    if (stat(filepath, &st) != 0) {
+    FileMetadataNode* node = metadata_table_get(g_metadata_table, filename);
+    if (!node) {
+        // CRITICAL FIX: If file is not in metadata table, this is a BUG!
+        // All tracked files MUST have metadata entries.
+        // This can only happen if:
+        // 1. File was placed on disk manually (outside CREATE/WRITE)
+        // 2. Metadata table is corrupted
+        // 3. There's a race condition bug
+        
+        ss_log("ERROR: File '%s' exists but has NO metadata entry! This should never happen for tracked files.", filename);
+        ss_log("ERROR: Possible causes: manual file placement, corrupted metadata.db, or race condition bug");
+        
+        // Check if file actually exists on disk
+        char filepath[MAX_PATH];
+        ss_get_path(SS_FILES_DIR, filename, filepath);
+        
+        struct stat st;
+        if (stat(filepath, &st) != 0) {
+            // File doesn't exist on disk either
+            ss_log("ERROR: File '%s' doesn't exist on disk", filename);
+            return -1;
+        }
+        
+        // File exists on disk but not in metadata table - this is an ERROR state
+        // Return failure to signal that metadata is missing
+        ss_log("ERROR: File '%s' exists on disk but missing from metadata table", filename);
         return -1;
     }
     
-    // --- FIX: Use MAX_FILENAME ---
-    strncpy(meta->filename, filename, MAX_FILENAME - 1);
+    // Use cached metadata - does NOT update access time
+    strncpy(meta->filename, node->filename, MAX_FILENAME - 1);
     meta->filename[MAX_FILENAME - 1] = '\0';
-
-    meta->size_bytes = st.st_size;
-    meta->last_access_time = st.st_atime;
-    meta->last_modified_time = st.st_mtime;
+    strncpy(meta->owner, node->owner, MAX_USERNAME - 1);
+    meta->owner[MAX_USERNAME - 1] = '\0';
+    meta->size_bytes = node->file_size;
+    meta->word_count = node->word_count;
+    meta->char_count = node->char_count;
+    meta->last_access_time = node->last_access;
+    meta->last_modified_time = node->last_modified;
     
-    // FIX: Get owner from metadata table instead of hardcoding "unknown"
-    // The metadata table is populated during CREATE/WRITE/RECOVERY and has correct owner info
-    FileMetadataNode* node = metadata_table_get(g_metadata_table, filename);
-    if (node) {
-        strncpy(meta->owner, node->owner, MAX_USERNAME - 1);
-        meta->owner[MAX_USERNAME - 1] = '\0';
-        free(node);  // metadata_table_get returns a copy
-    } else {
-        // Fallback if metadata not found (shouldn't happen in normal operation)
-        strncpy(meta->owner, "unknown", MAX_USERNAME - 1);
-        meta->owner[MAX_USERNAME - 1] = '\0';
-    }
-
-    // Count words/chars
-    FILE* f = fopen(filepath, "r");
-    if (!f) return -1;
-    
-    meta->char_count = 0;
-    meta->word_count = 0;
-    int c;
-    bool in_word = false;
-    
-    while ((c = fgetc(f)) != EOF) {
-        meta->char_count++;
-        if (isspace(c)) {
-            if (in_word) {
-                in_word = false;
-            }
-        } else {
-            if (!in_word) {
-                in_word = true;
-                meta->word_count++;
-            }
-        }
-    }
-    fclose(f);
+    free(node);
     return 0;
 }
 
@@ -315,9 +307,9 @@ void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
     }
     fclose(f);
     
-    // Insert into metadata table
+    // FIX: Insert into metadata table with correct owner - PRIMARY file (not backup)
     metadata_table_insert(g_metadata_table, req->filename, req->username,
-                         0, 0, 0, time(NULL), time(NULL));
+                         0, 0, 0, time(NULL), time(NULL), false);
     
     ss_log("CREATE: File %s created by %s", req->filename, req->username);
     repl_schedule_update(req->filename); // Replicate empty file
@@ -394,8 +386,25 @@ void ss_handle_get_info(int ns_sock, Req_FileOp* req) {
         return;
     }
     
-    // Update last access time
-    metadata_table_update_access_time(g_metadata_table, req->filename);
+    // FIX: Check if this is a VIEW -l request from NS (username is empty)
+    // If username is provided and not owner, deny access
+    if (req->username[0] != '\0' && strcmp(req->username, node->owner) != 0) {
+        // Not owner - would need to check permissions table here
+        // For now, deny access to non-owners
+        ss_log("INFO: User %s is not owner of %s (owner: %s) - access denied", 
+               req->username, req->filename, node->owner);
+        free(node);
+        send_error_response_to_ns(ns_sock, "Access denied: you are not the owner");
+        return;
+    }
+    
+    if (req->username[0] != '\0') {
+        ss_log("INFO: User %s is owner of %s - access granted", req->username, req->filename);
+    } else {
+        ss_log("INFO: NS requesting metadata for %s (for VIEW -l)", req->filename);
+    }
+    
+    // Don't update access time for INFO (only for READ/WRITE/STREAM)
     
     // Build FileMetadata response from cached data
     FileMetadata meta;
@@ -408,6 +417,8 @@ void ss_handle_get_info(int ns_sock, Req_FileOp* req) {
     meta.char_count = node->char_count;
     meta.last_access_time = node->last_access;
     meta.last_modified_time = node->last_modified;
+    
+    free(node);
     
     ss_log("INFO: Returning cached metadata for %s (size: %lu, words: %lu, chars: %lu)",
            req->filename, meta.size_bytes, meta.word_count, meta.char_count);
@@ -439,6 +450,8 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
 // --- Client Request Handlers ---
 
 void ss_handle_read(int client_sock, Req_FileOp* req) {
+    ss_log("READ: Handler called for file '%s'", req->filename);
+    
     // Check if SS is currently syncing
     pthread_mutex_lock(&g_sync_mutex);
     int syncing = g_is_syncing;
@@ -511,6 +524,8 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
 }
 
 void ss_handle_stream(int client_sock, Req_FileOp* req) {
+    ss_log("STREAM: Handler called for file '%s'", req->filename);
+    
     // Check metadata table first
     if (!metadata_table_exists(g_metadata_table, req->filename)) {
         ss_log("STREAM: File not found in metadata table: %s", req->filename);

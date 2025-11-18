@@ -25,6 +25,7 @@ typedef struct StorageServer {
     
     int file_count;           // Number of files stored on this SS (for load balancing)
     int backup_ss_id;         // ID of the SS this node BACKS UP (next in circular list)
+    bool pending_full_sync;   // True if this SS must send a full sync to its backup
     
     struct StorageServer* next; // Points to next in circular linked list
 } StorageServer;

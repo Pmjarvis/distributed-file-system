@@ -15,6 +15,9 @@ extern int g_ss_id;
 // Backup SS's info
 extern char g_backup_ip[16];
 extern int g_backup_port;
+extern int g_repl_listen_port; // Local replication listener port
+// Local replication listener port (distinct from g_backup_port which is remote target)
+extern int g_repl_listen_port;
 
 // Global lock manager
 extern FileLockMap g_file_lock_map;
@@ -32,10 +35,18 @@ extern volatile int g_shutdown;
 extern volatile int g_is_syncing;
 extern pthread_mutex_t g_sync_mutex;  // Protects g_is_syncing
 
-// Data directories
-#define SS_ROOT_DIR "ss_data"
-#define SS_FILES_DIR "ss_data/files"
-#define SS_UNDO_DIR "ss_data/undo"
-#define SS_CHECKPOINT_DIR "ss_data/checkpoints"
+// Data directories (dynamically set based on SS ID)
+extern char g_ss_root_dir[256];
+extern char g_ss_files_dir[256];
+extern char g_ss_undo_dir[256];
+extern char g_ss_checkpoint_dir[256];
+extern char g_metadata_db_path[512];
+
+// Helper macros for backward compatibility
+#define SS_ROOT_DIR g_ss_root_dir
+#define SS_FILES_DIR g_ss_files_dir
+#define SS_UNDO_DIR g_ss_undo_dir
+#define SS_CHECKPOINT_DIR g_ss_checkpoint_dir
+#define METADATA_DB_PATH g_metadata_db_path
 
 #endif // SS_GLOBALS_H

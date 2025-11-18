@@ -151,7 +151,7 @@ void inner_table_free(InnerHashTable* table) {
 int inner_table_insert(InnerHashTable* table, const char* filename,
                       const char* owner, uint64_t file_size,
                       uint64_t word_count, uint64_t char_count,
-                      time_t last_access, time_t last_modified) {
+                      time_t last_access, time_t last_modified, bool is_backup) {
     if (!table || !filename) return -1;
     
     // NO LOCKING - caller holds outer bucket lock
@@ -173,6 +173,7 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
             curr->char_count = char_count;
             curr->last_access = last_access;
             curr->last_modified = last_modified;
+            curr->is_backup = is_backup;  // Update backup flag
             
             return 1; // Updated
         }
@@ -192,6 +193,9 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
         strncpy(new_node->owner, owner, MAX_USERNAME - 1);
         new_node->owner[MAX_USERNAME - 1] = '\0';
     } else {
+        // CRITICAL: Owner should NEVER be NULL for tracked files!
+        // This is a programming error if it happens
+        fprintf(stderr, "ERROR: metadata_table_insert called with NULL owner for file '%s'\n", filename);
         strcpy(new_node->owner, "unknown");
     }
     
@@ -200,6 +204,7 @@ int inner_table_insert(InnerHashTable* table, const char* filename,
     new_node->char_count = char_count;
     new_node->last_access = last_access;
     new_node->last_modified = last_modified;
+    new_node->is_backup = is_backup;  // Set backup flag
     
     // Insert at head of inner bucket
     new_node->next = table->buckets[index];
@@ -354,7 +359,7 @@ void metadata_table_free(MetadataHashTable* table) {
 int metadata_table_insert(MetadataHashTable* table, const char* filename,
                          const char* owner, uint64_t file_size,
                          uint64_t word_count, uint64_t char_count,
-                         time_t last_access, time_t last_modified) {
+                         time_t last_access, time_t last_modified, bool is_backup) {
     if (!table || !filename) return -1;
     
     uint32_t hash = metadata_hash_primary(filename);
@@ -378,7 +383,7 @@ int metadata_table_insert(MetadataHashTable* table, const char* filename,
     // Inner table exists, insert into it (caller holds lock)
     InnerHashTable* inner = table->buckets[outer_index];
     int result = inner_table_insert(inner, filename, owner, file_size,
-                                   word_count, char_count, last_access, last_modified);
+                                   word_count, char_count, last_access, last_modified, is_backup);
     
     // UNLOCK OUTER BUCKET
     pthread_mutex_unlock(&table->outer_bucket_locks[outer_index]);
@@ -389,8 +394,8 @@ int metadata_table_insert(MetadataHashTable* table, const char* filename,
         table->count++;
         pthread_mutex_unlock(&table->count_lock);
         
-        ss_log("Inserted metadata for: %s (owner: %s, size: %lu, words: %lu, chars: %lu)",
-               filename, owner ? owner : "unknown", file_size, word_count, char_count);
+        ss_log("Inserted metadata for: %s (owner: %s, size: %lu, is_backup: %d)",
+               filename, owner ? owner : "unknown", file_size, is_backup);
     } else if (result == 1) {
         ss_log("Updated metadata for: %s", filename);
     }
@@ -704,6 +709,10 @@ int metadata_table_save(MetadataHashTable* table, const char* filepath) {
                 fwrite(&node->last_modified, sizeof(time_t), 1, fp);
                 fwrite(&node->last_access, sizeof(time_t), 1, fp);
                 
+                // Write is_backup field
+                uint8_t is_backup_byte = node->is_backup ? 1 : 0;
+                fwrite(&is_backup_byte, sizeof(uint8_t), 1, fp);
+                
                 entries_written++;
                 node = node->next;
             }
@@ -819,6 +828,7 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
         // Read metadata fields
         uint64_t file_size, word_count, char_count;
         time_t last_modified, last_access;
+        uint8_t is_backup_byte = 0;  // Default to false for old metadata files
         
         if (fread(&file_size, sizeof(uint64_t), 1, fp) != 1 ||
             fread(&word_count, sizeof(uint64_t), 1, fp) != 1 ||
@@ -831,10 +841,14 @@ MetadataHashTable* metadata_table_load(const char* filepath) {
             break;
         }
         
+        // Try to read is_backup field (may not exist in old metadata files)
+        fread(&is_backup_byte, sizeof(uint8_t), 1, fp);
+        bool is_backup = (is_backup_byte != 0);
+        
         // Insert using public API (handles locking)
         int insert_result = metadata_table_insert(table, filename, owner, 
                                                  file_size, word_count, char_count, 
-                                                 last_access, last_modified);
+                                                 last_access, last_modified, is_backup);
         
         if (insert_result == 0 || insert_result == 1) {
             loaded++;

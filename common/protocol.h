@@ -101,6 +101,7 @@ typedef enum {
     MSG_N2S_SYNC_FROM_BACKUP, // Payload: Req_SyncFromBackup (tell backup to send all files to primary)
     MSG_N2S_SYNC_TO_PRIMARY,  // Payload: Req_SyncToPrimary (tell primary it needs recovery from backup)
     MSG_N2S_RE_REPLICATE_ALL, // Payload: Req_ReReplicate (tell primary to re-replicate all files to backup)
+    MSG_N2S_UPDATE_BACKUP,    // Payload: Req_UpdateBackup (notify SS of new backup assignment)
     
     // --- SS -> SS (Direct Recovery Connection) ---
     MSG_S2S_START_RECOVERY,   // Payload: Req_StartRecovery
@@ -270,6 +271,12 @@ typedef struct {
     char backup_ip[16];      // IP of backup SS
     int backup_port;         // Port of backup SS
 } Req_ReReplicate;
+
+typedef struct {
+    int backup_ss_id;        // ID of the SS this SS should back up (-1 if none)
+    char backup_ip[16];      // IP of backup SS (empty if no backup)
+    int backup_port;         // Port of backup SS (0 if no backup)
+} Req_UpdateBackup;
 
 // SS->SS Recovery
 typedef struct {

@@ -257,21 +257,15 @@ static void handle_create(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 2. SYNCHRONOUSLY tell BACKUP SS to create the file (if backup exists)
+    // 2. DO NOT send CREATE to backup SS - let primary SS replicate via normal path
+    // This prevents both SSs from thinking they're primary and avoids backup-of-backup issues
+    // The primary SS will automatically replicate the empty file to its backup
     if (backup_ss) {
-        printf("NS: Replicating CREATE to backup SS %d for file %s:%s\n", 
-               backup_ss_id, session->username, payload.filename);
-        int backup_res = ss_request_response(backup_ss, MSG_N2S_CREATE_FILE, &payload, sizeof(payload));
-        
-        if (backup_res != 0) {
-            fprintf(stderr, "NS: WARNING - Backup SS %d failed to create file %s:%s\n",
-                    backup_ss_id, session->username, payload.filename);
-            // Don't fail the entire operation if backup fails
-        } else {
-            printf("NS: Backup CREATE successful on SS %d\n", backup_ss_id);
-        }
+        printf("NS: File %s:%s created on primary SS %d (will be replicated to backup SS %d)\n", 
+               session->username, payload.filename, ss->ss_id, backup_ss_id);
     } else {
-        printf("NS: No backup SS available for file %s:%s\n", session->username, payload.filename);
+        printf("NS: File %s:%s created on primary SS %d (no backup available)\n",
+               session->username, payload.filename, ss->ss_id);
     }
 
     // 3. Update Access Control (set owner)

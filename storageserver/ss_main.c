@@ -29,11 +29,19 @@ int g_ss_id = -1;
 char g_backup_ip[16];
 int g_backup_port = -1;
 FileLockMap g_file_lock_map;
+int g_repl_listen_port = -1; // Local replication listener port (argv[5])
 ReplicationQueue g_repl_queue;
 MetadataHashTable* g_metadata_table = NULL;
 volatile int g_shutdown = 0;  // Graceful shutdown flag
 volatile int g_is_syncing = 0; // Recovery sync flag
 pthread_mutex_t g_sync_mutex = PTHREAD_MUTEX_INITIALIZER;  // Protects g_is_syncing
+
+// Data directories (set dynamically based on SS ID)
+char g_ss_root_dir[256];
+char g_ss_files_dir[256];
+char g_ss_undo_dir[256];
+char g_ss_checkpoint_dir[256];
+char g_metadata_db_path[512];
 // ---
 
 static void* client_listener_thread(void* arg);
@@ -94,10 +102,10 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
         
         // Check if already in metadata table
         if (!metadata_table_exists(g_metadata_table, meta->filename)) {
-            // Insert new entry
+            // Insert new entry - PRIMARY file (not backup)
             metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
                                 meta->size_bytes, meta->word_count, meta->char_count,
-                                meta->last_access_time, meta->last_modified_time);
+                                meta->last_access_time, meta->last_modified_time, false);
             ss_log("MAIN: Added '%s' to metadata table", meta->filename);
         } else {
             // Update existing entry (file may have changed on disk)
@@ -105,7 +113,8 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
             if (node) {
                 metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
                                     meta->size_bytes, meta->word_count, meta->char_count,
-                                    meta->last_access_time, meta->last_modified_time);
+                                    meta->last_access_time, meta->last_modified_time, node->is_backup);
+                free(node);
                 ss_log("MAIN: Updated '%s' in metadata table", meta->filename);
             }
         }
@@ -116,7 +125,7 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     reg.client_port = g_ss_client_port;
     // FIX: backup_ip should be THIS SS's IP (for replication listener), not target backup IP
     strncpy(reg.backup_ip, g_ss_ip, 16);  // Both ports are on the same SS!
-    reg.backup_port = g_backup_port;  // This is OUR replication listener port from argv[5]
+    reg.backup_port = g_repl_listen_port;  // Advertise LOCAL replication listener port
     reg.file_count = file_count;
     
     // 1. Send registration header + payload
@@ -177,18 +186,48 @@ int main(int argc, char* argv[]) {
     int ns_port = atoi(argv[2]);
     strncpy(g_ss_ip, argv[3], 16);
     g_ss_client_port = atoi(argv[4]);
-    g_backup_port = atoi(argv[5]); // This is *our* replication listener port
+    g_repl_listen_port = atoi(argv[5]); // Local replication listener port
     
     // Initialize g_backup_ip to empty - will be set by NS during registration
     memset(g_backup_ip, 0, 16);
-    
-    log_init("ss.log");
-    ss_log("MAIN: Starting Storage Server...");
     
     // Install signal handlers for graceful shutdown
     signal(SIGINT, sigint_handler);
     signal(SIGTERM, sigint_handler);
     signal(SIGPIPE, SIG_IGN);  // Ignore SIGPIPE (prevents crash on client disconnect)
+    
+    // Try to detect existing SS data directories to determine local SS ID
+    // Look for ss_data_X directories and find the first available one
+    int local_ss_id = 0;
+    char test_dir[256];
+    struct stat st;
+    
+    // Scan for existing directories
+    for (int i = 0; i < 100; i++) {
+        snprintf(test_dir, sizeof(test_dir), "ss_data_%d", i);
+        if (stat(test_dir, &st) == 0 && S_ISDIR(st.st_mode)) {
+            // Directory exists, this might be our SS if it has our IP/port info
+            local_ss_id = i + 1; // Try next one
+        } else {
+            // Directory doesn't exist, use this ID
+            local_ss_id = i;
+            break;
+        }
+    }
+    
+    // Initialize log file with local SS ID
+    char log_filename[64];
+    snprintf(log_filename, sizeof(log_filename), "ss_%d.log", local_ss_id);
+    log_init(log_filename);
+    ss_log("MAIN: Starting Storage Server...");
+    ss_log("MAIN: Using local data directory ID: %d", local_ss_id);
+    
+    // Initialize directory paths based on local ID
+    snprintf(g_ss_root_dir, sizeof(g_ss_root_dir), "ss_data_%d", local_ss_id);
+    snprintf(g_ss_files_dir, sizeof(g_ss_files_dir), "%s/files", g_ss_root_dir);
+    snprintf(g_ss_undo_dir, sizeof(g_ss_undo_dir), "%s/undo", g_ss_root_dir);
+    snprintf(g_ss_checkpoint_dir, sizeof(g_ss_checkpoint_dir), "%s/checkpoints", g_ss_root_dir);
+    snprintf(g_metadata_db_path, sizeof(g_metadata_db_path), "%s/metadata.db", g_ss_root_dir);
     
     ss_create_dirs();
     lock_map_init(&g_file_lock_map, 64);
@@ -261,12 +300,13 @@ int main(int argc, char* argv[]) {
 }
 
 static void* client_listener_thread(void* arg) {
-    int server_fd = setup_listener_socket(g_ss_client_port);
+    // FIX: Bind to specific IP address to avoid port conflicts with other SS instances
+    int server_fd = setup_listener_socket_on_ip(g_ss_ip, g_ss_client_port);
     if (server_fd < 0) {
-        ss_log("FATAL: Could not listen on client port %d", g_ss_client_port);
+        ss_log("FATAL: Could not listen on %s:%d", g_ss_ip, g_ss_client_port);
         exit(1);
     }
-    ss_log("MAIN: Listening for Clients and NS on port %d", g_ss_client_port);
+    ss_log("MAIN: Listening for Clients and NS on %s:%d", g_ss_ip, g_ss_client_port);
     
     while(!g_shutdown) {
         struct sockaddr_in client_addr;
@@ -315,12 +355,13 @@ static void* client_listener_thread(void* arg) {
 }
 
 static void* replication_listener_thread(void* arg) {
-    int server_fd = setup_listener_socket(g_backup_port);
+    // FIX: Bind to specific IP address to avoid port conflicts with other SS instances
+    int server_fd = setup_listener_socket_on_ip(g_ss_ip, g_repl_listen_port);
     if (server_fd < 0) {
-        ss_log("FATAL: Could not listen on replication port %d", g_backup_port);
+        ss_log("FATAL: Could not listen on %s:%d", g_ss_ip, g_repl_listen_port);
         exit(1);
     }
-    ss_log("MAIN: Listening for Replication on port %d", g_backup_port);
+    ss_log("MAIN: Listening for Replication on %s:%d", g_ss_ip, g_repl_listen_port);
 
     while(!g_shutdown) {
         // Set timeout on accept so we can check shutdown flag

@@ -1,0 +1,38 @@
+[2025-11-19 00:24:15] --- LOGGING STARTED ---
+[2025-11-19 00:24:15] MAIN: Starting Storage Server...
+[2025-11-19 00:24:15] MAIN: Using local data directory ID: 27
+[2025-11-19 00:24:15] MAIN: Initializing metadata hash table...
+[2025-11-19 00:24:15] No existing metadata file found at ss_data_27/metadata.db (starting fresh)
+[2025-11-19 00:24:15] MAIN: No existing metadata DB found, creating new table
+[2025-11-19 00:24:15] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-19 00:24:15] MAIN: Connected to Name Server. Scanning local files...
+[2025-11-19 00:24:15] MAIN: Found 0 local files. Registering...
+[2025-11-19 00:24:15] MAIN: Registration complete. This SS ID is 1
+[2025-11-19 00:24:15] MAIN: Will send replications to: 127.0.0.1:9002
+[2025-11-19 00:24:15] MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...
+[2025-11-19 00:24:15] MAIN: Listening for Clients and NS on 127.0.0.4:9003
+[2025-11-19 00:24:15] MAIN: All threads started. Server is running.
+[2025-11-19 00:24:15] MAIN: Press Ctrl+C for graceful shutdown.
+[2025-11-19 00:24:15] MAIN: Listening for Replication on 127.0.0.4:9004
+[2025-11-19 00:24:15] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-19 00:24:41] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-19 00:24:41] INFO: File not found in metadata table: kkk
+[2025-11-19 00:24:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 00:24:44] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 00:24:44] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 00:24:44] READ: Handler called for file 'kkk'
+[2025-11-19 00:24:44] READ: Starting read for file kkk
+[2025-11-19 00:24:44] READ: File not found in metadata table: kkk
+[2025-11-19 00:24:44] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 00:24:47] CHECKPOINT: Thread exiting
+[2025-11-19 00:24:47] CLIENT_LISTENER: Thread exiting
+[2025-11-19 00:24:48] REPL_LISTENER: Thread exiting
+[2025-11-19 00:24:50] HEARTBEAT: Thread exiting
+[2025-11-19 00:24:50] MAIN: All threads stopped. Performing final cleanup...
+[2025-11-19 00:24:50] MAIN: Performing final metadata save (0 entries)...
+[2025-11-19 00:24:50] Saving metadata to ss_data_27/metadata.db (atomic snapshot)...
+[2025-11-19 00:24:50] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-19 00:24:50] MAIN: Final metadata save successful
+[2025-11-19 00:24:50] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-19 00:24:50] REPL: Worker thread shutting down.
+[2025-11-19 00:24:50] --- LOGGING STOPPED ---

@@ -540,3 +540,34 @@ int file_map_table_delete_all_for_ss(FileMapHashTable* table, int ss_id) {
     
     return deleted_count;
 }
+
+// Search for a file by SS ID and filename (used during recovery when owner might be "unknown")
+FileMapNode* file_map_table_search_by_ss_and_filename(FileMapHashTable* table, int ss_id, const char* filename) {
+    if (!table || !filename) return NULL;
+    
+    // Lock all buckets since we need to search across all owners
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_lock(&table->bucket_locks[i]);
+    }
+    
+    FileMapNode* result = NULL;
+    
+    // Search through all entries
+    for (size_t i = 0; i < table->size; i++) {
+        FileMapNode* node = table->nodes[i];
+        if (node != NULL && node != &g_file_map_tombstone) {
+            if (node->primary_ss_id == ss_id && strcmp(node->filename, filename) == 0) {
+                // Found it!
+                result = node;
+                break;
+            }
+        }
+    }
+    
+    // Unlock all buckets
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_unlock(&table->bucket_locks[i]);
+    }
+    
+    return result;
+}

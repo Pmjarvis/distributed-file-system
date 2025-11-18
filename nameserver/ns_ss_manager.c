@@ -54,18 +54,6 @@ static StorageServer* get_prev_ss(StorageServer* ss) {
     return NULL;
 }
 
-// Helper: Make list circular by connecting tail to head
-static void make_circular() {
-    // Note: Assumes g_ss_list_mutex is HELD
-    if (!g_ss_list_head) return;
-    
-    StorageServer* tail = g_ss_list_head;
-    while (tail->next && tail->next != g_ss_list_head) {
-        tail = tail->next;
-    }
-    tail->next = g_ss_list_head;
-}
-
 // Helper: Get the SS that is backing up the given SS
 // In circular backup: if A backs up B, then B backs up C, etc.
 // So "who backs up A" = the next SS in the circle
@@ -76,25 +64,87 @@ static StorageServer* get_ss_backing_up(StorageServer* ss) {
 }
 
 // Helper: Update backup assignments for all SSs (each backs up prev in circular list)
-static void update_backup_assignments() {
+static void recompute_backup_assignments_locked() {
     // Note: Assumes g_ss_list_mutex is HELD
     if (!g_ss_list_head) return;
-    
+
     if (g_ss_count == 1) {
         // Single SS: no backup (or backs up itself - you can choose)
+        if (g_ss_list_head->backup_ss_id != -1) {
+            g_ss_list_head->pending_full_sync = false;
+        }
         g_ss_list_head->backup_ss_id = -1;
         printf("NS: Single SS - no backup assignment\n");
         return;
     }
-    
+
     StorageServer* curr = g_ss_list_head;
     do {
         StorageServer* prev = get_prev_ss(curr);
         if (prev) {
-            curr->backup_ss_id = prev->ss_id;
+            int new_backup = prev->ss_id;
+            if (curr->backup_ss_id != new_backup) {
+                curr->pending_full_sync = true;
+            }
+            curr->backup_ss_id = new_backup;
             printf("NS: SS %d backs up SS %d\n", curr->ss_id, prev->ss_id);
         }
         curr = curr->next;
+    } while (curr != g_ss_list_head);
+}
+
+static void notify_backup_assignments_locked(StorageServer* skip_ss) {
+    // Note: Assumes g_ss_list_mutex is HELD
+    if (!g_ss_list_head) return;
+
+    StorageServer* curr = g_ss_list_head;
+    do {
+        StorageServer* next = curr->next;
+
+        if (curr != skip_ss && curr->is_online && !curr->is_syncing) {
+            // Build update message
+            Req_UpdateBackup update;
+            update.backup_ss_id = curr->backup_ss_id;
+
+            if (curr->backup_ss_id != -1) {
+                StorageServer* backup_ss = get_ss_by_id(curr->backup_ss_id);
+                if (backup_ss) {
+                    strncpy(update.backup_ip, backup_ss->ip, 16);
+                    update.backup_port = backup_ss->backup_port;
+                } else {
+                    // Shouldn't happen, but handle gracefully
+                    strncpy(update.backup_ip, "", 16);
+                    update.backup_port = 0;
+                }
+            } else {
+                strncpy(update.backup_ip, "", 16);
+                update.backup_port = 0;
+            }
+
+            // Send update asynchronously (don't block)
+            printf("NS: Notifying SS %d about backup assignment change (backup_ss_id=%d)\n",
+                   curr->ss_id, curr->backup_ss_id);
+            send_response(curr->sock_fd, MSG_N2S_UPDATE_BACKUP, &update, sizeof(update));
+        }
+
+        if (curr->pending_full_sync) {
+            if (curr->backup_ss_id == -1) {
+                curr->pending_full_sync = false;
+            } else if (curr->is_online && !curr->is_syncing) {
+                StorageServer* backup_ss = get_ss_by_id(curr->backup_ss_id);
+                if (backup_ss && backup_ss->is_online) {
+                    Req_ReReplicate re_repl;
+                    re_repl.backup_ss_id = backup_ss->ss_id;
+                    strncpy(re_repl.backup_ip, backup_ss->ip, 16);
+                    re_repl.backup_port = backup_ss->backup_port;
+                    printf("NS: Requesting full re-replication from SS %d to backup SS %d\n",
+                           curr->ss_id, backup_ss->ss_id);
+                    send_response(curr->sock_fd, MSG_N2S_RE_REPLICATE_ALL, &re_repl, sizeof(re_repl));
+                    curr->pending_full_sync = false;
+                }
+            }
+        }
+        curr = next;
     } while (curr != g_ss_list_head);
 }
 
@@ -146,10 +196,11 @@ void* ss_handler_thread(void* arg) {
         ss_node->sock_fd = ss_sock;
         ss_node->client_port = reg_payload.client_port;
         ss_node->backup_port = reg_payload.backup_port;  // Update replication port
+    ss_node->pending_full_sync = false;
         g_ss_active_count++;
         
     } else {
-        // New SS - assign new ID
+        // New SS - prepare node but DON'T add to list yet (wait for successful file list recv)
         is_new_ss = true;
         int new_ss_id = g_ss_id_counter++;
         
@@ -168,7 +219,98 @@ void* ss_handler_thread(void* arg) {
         ss_node->last_heartbeat = time(NULL);
         ss_node->file_count = 0;
         ss_node->backup_ss_id = -1;
+    ss_node->pending_full_sync = false;
         
+        // NOTE: Don't add to linked list yet - wait until file list is successfully received
+    }
+    
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    
+    // NOTE: Do NOT clean up file map entries on recovery!
+    // primary_ss_id and backup_ss_id are FIXED at creation time and never change.
+    // We just need to update the entries to ensure they exist with correct owner.
+    
+    // Receive file list and add to global hash table
+    for (uint32_t i = 0; i < reg_payload.file_count; i++) {
+        FileMetadata meta;
+        if(recv_payload(ss_sock, &meta, sizeof(FileMetadata)) <= 0) {
+            fprintf(stderr, "SS: Failed to receive file list from %s. Closing.\n", ss_ip_str);
+            
+            // FIX: Cleanup - if this was a new SS, free the node and don't add to list
+            pthread_mutex_lock(&g_ss_list_mutex);
+            if (is_new_ss) {
+                printf("NS: Registration failed for new SS %d - cleaning up\n", ss_node->ss_id);
+                free(ss_node);
+                g_ss_id_counter--;  // Reclaim the ID
+            } else {
+                // Recovery SS - mark as offline
+                ss_node->is_online = false;
+                g_ss_active_count--;
+            }
+            pthread_mutex_unlock(&g_ss_list_mutex);
+            
+            close(ss_sock);
+            free(arg);
+            return NULL;
+        }
+        
+        // FIX: Check if this file already exists - search by filename only first
+        // Don't use meta.owner in search because it might be "unknown" from corrupted metadata
+        FileMapNode* existing = NULL;
+        
+        // Search through all entries to find this filename with this SS as primary
+        // (We can't rely on meta.owner being correct during recovery)
+        if (is_recovery) {
+            // On recovery, search all owners for this filename on this SS
+            existing = file_map_table_search_by_ss_and_filename(g_file_map_table, ss_node->ss_id, meta.filename);
+        } else {
+            // On new registration, use the owner from meta
+            existing = file_map_table_search(g_file_map_table, meta.owner, meta.filename);
+        }
+        
+        if (existing) {
+            // File already exists in file map
+            if (existing->primary_ss_id == ss_node->ss_id) {
+                // This SS is the designated primary
+                int backup_ss_id = ss_node->backup_ss_id;
+                
+                // CRITICAL FIX: On recovery, preserve the existing owner if meta.owner is "unknown"
+                const char* owner_to_use = existing->owner;  // Use existing owner by default
+                
+                if (!is_recovery || (strcmp(meta.owner, "unknown") != 0 && strlen(meta.owner) > 0)) {
+                    // Not recovery, or recovery with valid owner - use meta.owner
+                    owner_to_use = meta.owner;
+                }
+                
+                file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, owner_to_use);
+                printf("NS: SS %d (primary) re-registered file %s (owner: %s)\n", 
+                       ss_node->ss_id, meta.filename, owner_to_use);
+            } else {
+                // This SS is NOT the primary - it's a backup copy
+                printf("NS: SS %d has backup copy of %s (primary is SS %d)\n",
+                       ss_node->ss_id, meta.filename, existing->primary_ss_id);
+                // Don't update - primary_ss_id should never change
+            }
+        } else {
+            // New file not in file map - add it with this SS as primary
+            int backup_ss_id = ss_node->backup_ss_id;
+            
+            // CRITICAL FIX: Don't add files with owner="unknown" to file map!
+            if (strcmp(meta.owner, "unknown") == 0 || strlen(meta.owner) == 0) {
+                fprintf(stderr, "NS: WARNING - SS %d trying to register file '%s' with owner='unknown' - SKIPPING\n",
+                        ss_node->ss_id, meta.filename);
+                fprintf(stderr, "NS: This file was likely not created through proper CREATE command\n");
+                continue;  // Skip this file
+            }
+            
+            file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, meta.owner);
+            printf("NS: SS %d registered new file %s (owner: %s)\n", ss_node->ss_id, meta.filename, meta.owner);
+        }
+    }
+    
+    // FIX: NOW add new SS to linked list (file list successfully received)
+    pthread_mutex_lock(&g_ss_list_mutex);
+    if (is_new_ss) {
         // Add to circular linked list
         if (g_ss_list_head == NULL) {
             // First SS
@@ -184,47 +326,7 @@ void* ss_handler_thread(void* arg) {
         
         g_ss_count++;
         g_ss_active_count++;
-    }
-    
-    // NOTE: Do NOT clean up file map entries on recovery!
-    // primary_ss_id and backup_ss_id are FIXED at creation time and never change.
-    // We just need to update the entries to ensure they exist with correct owner.
-    
-    // Receive file list and add to global hash table
-    for (uint32_t i = 0; i < reg_payload.file_count; i++) {
-        FileMetadata meta;
-        if(recv_payload(ss_sock, &meta, sizeof(FileMetadata)) <= 0) {
-            fprintf(stderr, "SS: Failed to receive file list from %s. Closing.\n", ss_ip_str);
-            ss_node->is_online = false; // Mark as down
-            g_ss_active_count--;
-            pthread_mutex_unlock(&g_ss_list_mutex);
-            close(ss_sock);
-            free(arg);
-            return NULL;
-        }
-        
-        // FIX: Check if this file already exists
-        FileMapNode* existing = file_map_table_search(g_file_map_table, meta.owner, meta.filename);
-        
-        if (existing) {
-            // File already exists in file map
-            if (existing->primary_ss_id == ss_node->ss_id) {
-                // This SS is the designated primary - always update to ensure entry exists
-                int backup_ss_id = ss_node->backup_ss_id;
-                file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, meta.owner);
-                printf("NS: SS %d (primary) re-registered file %s\n", ss_node->ss_id, meta.filename);
-            } else {
-                // This SS is NOT the primary - it's a backup copy
-                printf("NS: SS %d has backup copy of %s (primary is SS %d)\n",
-                       ss_node->ss_id, meta.filename, existing->primary_ss_id);
-                // Don't update - primary_ss_id should never change
-            }
-        } else {
-            // New file not in file map - add it with this SS as primary
-            int backup_ss_id = ss_node->backup_ss_id;
-            file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, meta.owner);
-            printf("NS: SS %d registered new file %s\n", ss_node->ss_id, meta.filename);
-        }
+        printf("NS: Successfully added SS %d to active list\n", ss_node->ss_id);
     }
     
     // Update file_count based on files reported by SS
@@ -233,7 +335,7 @@ void* ss_handler_thread(void* arg) {
            ss_node->ss_id, reg_payload.file_count, ss_node->file_count);
     
     // Update backup assignments for all SSs (each backs up prev in circular list)
-    update_backup_assignments();
+    recompute_backup_assignments_locked();
     
     pthread_mutex_unlock(&g_ss_list_mutex);
     
@@ -266,6 +368,13 @@ void* ss_handler_thread(void* arg) {
     pthread_mutex_unlock(&g_ss_list_mutex);
     
     send_response(ss_sock, MSG_N2S_REGISTER_ACK, &ack, sizeof(ack));
+
+    // Inform other online SSs about updated backup assignments AFTER ACK to avoid
+    // interfering with the registration handshake. Skip notifying the newly
+    // registered SS because the ACK already contains its replication target info.
+    pthread_mutex_lock(&g_ss_list_mutex);
+    notify_backup_assignments_locked(is_new_ss ? ss_node : NULL);
+    pthread_mutex_unlock(&g_ss_list_mutex);
     
     // 4. Handle recovery synchronization via NS coordination
     if (is_recovery) {
@@ -283,32 +392,37 @@ void* ss_handler_thread(void* arg) {
             backup_source_ss->is_syncing = true;
             pthread_mutex_unlock(&g_ss_list_mutex);
             
-            // Send sync command to primary (receiving SS)
-            Req_SyncToPrimary sync_to_primary;
-            sync_to_primary.backup_ss_id = backup_source_ss->ss_id;
-            strncpy(sync_to_primary.backup_ip, backup_source_ss->ip, 16);
-            sync_to_primary.backup_port = backup_source_ss->backup_port;  // Use replication port!
-            send_response(ss_sock, MSG_N2S_SYNC_TO_PRIMARY, &sync_to_primary, sizeof(sync_to_primary));
-            
-            // Wait for ACK from primary
-            MsgHeader ack_hdr;
-            recv_header(ss_sock, &ack_hdr);
-            
-            // Send sync command to backup (sending SS)
+            // Send sync command to backup (sending SS) FIRST
+            // This is sent on backup_source_ss's own handler thread socket
             Req_SyncFromBackup sync_from_backup;
             sync_from_backup.target_ss_id = ss_node->ss_id;
             strncpy(sync_from_backup.target_ip, ss_node->ip, 16);
             sync_from_backup.target_port = ss_node->backup_port;  // Use replication port!
             send_response(backup_source_ss->sock_fd, MSG_N2S_SYNC_FROM_BACKUP, &sync_from_backup, sizeof(sync_from_backup));
             
-            // Wait for ACK from backup
-            recv_header(backup_source_ss->sock_fd, &ack_hdr);
+            // DON'T wait for ACK from backup - it will take a long time
+            // The backup will send ACK and then start transferring files
+            
+            // Send sync command to primary (receiving SS)
+            // This is sent on the reconnecting SS's socket (ss_sock)
+            Req_SyncToPrimary sync_to_primary;
+            sync_to_primary.backup_ss_id = backup_source_ss->ss_id;
+            strncpy(sync_to_primary.backup_ip, backup_source_ss->ip, 16);
+            sync_to_primary.backup_port = backup_source_ss->backup_port;  // Use replication port!
+            send_response(ss_sock, MSG_N2S_SYNC_TO_PRIMARY, &sync_to_primary, sizeof(sync_to_primary));
+            
+            // Wait for ACK from primary only (it's quick)
+            MsgHeader ack_hdr;
+            int ack_result = recv_header(ss_sock, &ack_hdr);
+            if (ack_result <= 0 || ack_hdr.type != MSG_S2N_ACK_OK) {
+                printf("NS: Warning - did not receive ACK from primary SS %d\n", ss_node->ss_id);
+            }
             
             printf("NS: Recovery sync initiated. Both SSs will perform direct transfer.\n");
             
             // Clear is_syncing flags after a reasonable timeout
             // SSs perform direct transfer which NS doesn't monitor
-            // We'll clear flags after 60 seconds to prevent permanent blocking
+            // We'll clear flags immediately since SSs handle their own sync state
             pthread_mutex_lock(&g_ss_list_mutex);
             ss_node->is_syncing = false;
             backup_source_ss->is_syncing = false;
@@ -765,20 +879,23 @@ static void format_file_list_callback(const FileMapNode* node, void* user_data) 
                 struct tm local_tm;
                 localtime_r(&meta.last_access_time, &local_tm);
                 strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", &local_tm);
-                snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | %d\n",
+                // FIX: Show both primary and backup SS IDs
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | SS_%d | Backup_SS_%d\n",
                          node->filename,
                          node->owner,
                          (unsigned long long)meta.size_bytes,
                          time_str,
-                         ss_id);  // Use actual SS ID (primary or backup)
+                         node->primary_ss_id,
+                         node->backup_ss_id);
             } else {
                 // If metadata fetch fails, show minimal info
-                snprintf(line, sizeof(line), "%-30s | %-10s | %-8s | %-20s | %d\n",
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8s | %-20s | SS_%d | Backup_SS_%d\n",
                          node->filename,
                          node->owner,
                          "N/A",
                          "N/A",
-                         node->primary_ss_id);
+                         node->primary_ss_id,
+                         node->backup_ss_id);
             }
         } else {
             snprintf(line, sizeof(line), "-> %s\n", node->filename);
