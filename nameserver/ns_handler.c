@@ -34,7 +34,8 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header);
 static bool is_owner(const char* username, const char* filename) {
     pthread_mutex_lock(&g_access_table_mutex);
     char* perms = user_ht_get_permission(g_access_table, username, filename);
-    bool owner = (perms && strstr(perms, "owner"));
+    // FIX: Check for 'o' character in permission string (format: "rwo")
+    bool owner = (perms && strchr(perms, 'o') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
     return owner;
 }
@@ -383,13 +384,15 @@ static void handle_info(UserSession* session, MsgHeader* header) {
     Req_FileOp payload;
     recv_payload(session->client_sock, &payload, header->payload_len);
 
-    // 1. Check permissions (must have WRITE access for INFO)
+    // 1. Check permissions (must have WRITE access OR be owner)
+    // FIX: Owner always has read+write with "rwo", so checking for 'w' covers owners too
     pthread_mutex_lock(&g_access_table_mutex);
     char* perms = user_ht_get_permission(g_access_table, session->username, payload.filename);
-    bool has_access = (perms && strstr(perms, "write"));
+    // FIX: Check for 'w' character in permission string (format: "rwo", "rw", "w")
+    bool has_access = (perms && strchr(perms, 'w') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
     
-    if (!has_access && !is_owner(session->username, payload.filename)) {
+    if (!has_access) {
         send_error_response_to_client(session->client_sock, "Access Denied: Write access required for INFO.");
         return;
     }
@@ -499,10 +502,11 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
     // 1. Check Read Access
     pthread_mutex_lock(&g_access_table_mutex);
     char* perms = user_ht_get_permission(g_access_table, session->username, payload.filename);
-    bool has_access = (perms && strstr(perms, "read"));
+    // FIX: Check for 'r' character in permission string (format: "rwo", "rw", "r")
+    bool has_access = (perms && strchr(perms, 'r') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
 
-    if (!has_access && !is_owner(session->username, payload.filename)) {
+    if (!has_access) {
         send_error_response_to_client(session->client_sock, "Access Denied: Read access required to execute.");
         return;
     }
