@@ -15,7 +15,6 @@ extern int g_ss_id;
 // Backup SS's info
 extern char g_backup_ip[16];
 extern int g_backup_port;
-extern int g_repl_listen_port; // Local replication listener port
 // Local replication listener port (distinct from g_backup_port which is remote target)
 extern int g_repl_listen_port;
 

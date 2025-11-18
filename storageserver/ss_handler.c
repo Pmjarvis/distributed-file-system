@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>   // For directory scanning during catch-up replication
+#ifndef DT_REG
+#define DT_REG 8
+#endif
 
 void* handle_connection(void* arg) {
     ConnectionArg* conn_arg = (ConnectionArg*)arg;
@@ -60,7 +64,12 @@ void* handle_connection(void* arg) {
         // NOTE: C2S_WRITE_DATA and C2S_WRITE_ETIRW are handled *inside* ss_handle_write_transaction
 
     // --- THIS IS THE NAME SERVER ---
-    } else if (header.type >= MSG_N2S_CREATE_FILE && header.type <= MSG_N2S_EXEC_GET_CONTENT) {
+    // Include both basic NS->SS file ops and extended recovery / replication control messages.
+    } else if ((header.type >= MSG_N2S_CREATE_FILE && header.type <= MSG_N2S_EXEC_GET_CONTENT) ||
+               header.type == MSG_N2S_SYNC_FROM_BACKUP ||
+               header.type == MSG_N2S_SYNC_TO_PRIMARY ||
+               header.type == MSG_N2S_RE_REPLICATE_ALL ||
+               header.type == MSG_N2S_UPDATE_BACKUP) {
         ss_log("HANDLER: New NAME SERVER connection from %s (Req: %d)", ip, header.type);
         
         // This is a single-request connection. Process it.
@@ -149,6 +158,30 @@ void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
         g_backup_port = req->backup_port;
         ss_log("HANDLER: Backup assignment updated - will replicate to %s:%d (SS ID %d)",
                g_backup_ip, g_backup_port, req->backup_ss_id);
+
+        // Trigger immediate full catch-up replication of existing PRIMARY files
+        // (Files created before we had a backup would have been skipped.)
+        ss_log("HANDLER: Initiating immediate catch-up replication for existing primary files");
+        DIR* dir = opendir(SS_FILES_DIR);
+        if (!dir) {
+            ss_log("HANDLER: Failed to open files directory '%s' for catch-up replication", SS_FILES_DIR);
+        } else {
+            struct dirent* entry;
+            int scheduled = 0;
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type != DT_REG) continue;
+                FileMetadataNode* node = metadata_table_get(g_metadata_table, entry->d_name);
+                if (node) {
+                    if (!node->is_backup) {
+                        repl_schedule_update(entry->d_name);
+                        scheduled++;
+                    }
+                    free(node);
+                }
+            }
+            closedir(dir);
+            ss_log("HANDLER: Catch-up replication scheduling complete (%d primary files queued)", scheduled);
+        }
     } else {
         // No backup assigned
         g_backup_ip[0] = '\0';
@@ -156,8 +189,6 @@ void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
         ss_log("HANDLER: Backup assignment cleared - no backup assigned");
     }
     
-    // Send ACK back to NS
-    Res_Success ack;
-    snprintf(ack.msg, sizeof(ack.msg), "Backup assignment updated");
-    send_response(ns_sock, MSG_S2N_ACK_OK, &ack, sizeof(ack));
+    // NOTE: No ACK sent back when called from NS control listener thread
+    // (NS sends this message asynchronously and doesn't wait for response)
 }

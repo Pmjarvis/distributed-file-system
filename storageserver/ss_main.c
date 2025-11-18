@@ -47,6 +47,7 @@ char g_metadata_db_path[512];
 static void* client_listener_thread(void* arg);
 static void* replication_listener_thread(void* arg);
 static void* ns_heartbeat_thread(void* arg);
+static void* ns_control_listener_thread(void* arg);  // NEW: Listen for NS control messages
 static void* checkpoint_thread(void* arg);
 
 // Signal handler for graceful shutdown
@@ -82,65 +83,32 @@ static void* checkpoint_thread(void* arg) {
     return NULL;
 }
 
+// Performs initial registration with the Name Server BEFORE we know our persistent
+// storage directory. We intentionally register with file_count = 0. After receiving
+// our assigned SS ID we initialize (or reuse) the persistent data directory
+// `ss_data_{g_ss_id}` and then load any existing metadata / files.
+static pthread_t g_client_tid, g_repl_tid, g_hb_tid, g_ns_control_tid, g_checkpoint_tid; // Thread IDs for proper joins
+
 static void _connect_and_register(const char* ns_ip, int ns_port) {
     g_ns_sock = connect_to_server(ns_ip, ns_port);
     if (g_ns_sock < 0) {
         ss_log("FATAL: Could not connect to Name Server at %s:%d", ns_ip, ns_port);
         exit(1);
     }
-    
-    ss_log("MAIN: Connected to Name Server. Scanning local files...");
-    
-    FileMetadata* file_list;
-    int file_count = ss_scan_files(&file_list);
-    
-    ss_log("MAIN: Found %d local files. Registering...", file_count);
-    
-    // Populate metadata table for each scanned file
-    for (int i = 0; i < file_count; i++) {
-        FileMetadata* meta = &file_list[i];
-        
-        // Check if already in metadata table
-        if (!metadata_table_exists(g_metadata_table, meta->filename)) {
-            // Insert new entry - PRIMARY file (not backup)
-            metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
-                                meta->size_bytes, meta->word_count, meta->char_count,
-                                meta->last_access_time, meta->last_modified_time, false);
-            ss_log("MAIN: Added '%s' to metadata table", meta->filename);
-        } else {
-            // Update existing entry (file may have changed on disk)
-            FileMetadataNode* node = metadata_table_get(g_metadata_table, meta->filename);
-            if (node) {
-                metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
-                                    meta->size_bytes, meta->word_count, meta->char_count,
-                                    meta->last_access_time, meta->last_modified_time, node->is_backup);
-                free(node);
-                ss_log("MAIN: Updated '%s' in metadata table", meta->filename);
-            }
-        }
-    }
-    
+    ss_log("MAIN: Connected to Name Server. Performing initial registration (no local files yet loaded)...");
+
     Req_SSRegister reg;
     strncpy(reg.ip, g_ss_ip, 16);
     reg.client_port = g_ss_client_port;
     // FIX: backup_ip should be THIS SS's IP (for replication listener), not target backup IP
     strncpy(reg.backup_ip, g_ss_ip, 16);  // Both ports are on the same SS!
     reg.backup_port = g_repl_listen_port;  // Advertise LOCAL replication listener port
-    reg.file_count = file_count;
+    reg.file_count = 0; // We will load files AFTER we learn our SS ID
     
     // 1. Send registration header + payload
     send_response(g_ns_sock, MSG_S2N_REGISTER, &reg, sizeof(reg));
     
-    // 2. Send file list
-    if (file_count > 0) {
-        if (send(g_ns_sock, file_list, file_count * sizeof(FileMetadata), 0) != file_count * sizeof(FileMetadata)) {
-            ss_log("FATAL: Failed to send file list to NS");
-            free(file_list);
-            close(g_ns_sock);
-            exit(1);
-        }
-    }
-    free(file_list);
+    // No file list payload (file_count == 0)
     
     // 3. Wait for ACK
     MsgHeader header;
@@ -155,6 +123,70 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     
     g_ss_id = ack.new_ss_id;
     ss_log("MAIN: Registration complete. This SS ID is %d", g_ss_id);
+
+    // Reinitialize log file to match persistent SS ID naming convention (ss_{ss_id}.log)
+    log_cleanup();
+    char final_log_filename[64];
+    snprintf(final_log_filename, sizeof(final_log_filename), "ss_%d.log", g_ss_id);
+    log_init(final_log_filename);
+    ss_log("MAIN: Persistent log file initialized for SS ID %d", g_ss_id);
+
+    // Initialize directory paths based on REAL SS ID (create only if first time)
+    snprintf(g_ss_root_dir, sizeof(g_ss_root_dir), "ss_data_%d", g_ss_id);
+    snprintf(g_ss_files_dir, sizeof(g_ss_files_dir), "%s/files", g_ss_root_dir);
+    snprintf(g_ss_undo_dir, sizeof(g_ss_undo_dir), "%s/undo", g_ss_root_dir);
+    snprintf(g_ss_checkpoint_dir, sizeof(g_ss_checkpoint_dir), "%s/checkpoints", g_ss_root_dir);
+    snprintf(g_metadata_db_path, sizeof(g_metadata_db_path), "%s/metadata.db", g_ss_root_dir);
+    ss_log("MAIN: Using persistent data directory: %s", g_ss_root_dir);
+
+    ss_create_dirs(); // Creates if missing; idempotent on restart
+
+    // Initialize / load metadata AFTER directory selection
+    ss_log("MAIN: Loading metadata hash table (post-registration)...");
+    g_metadata_table = metadata_table_load(METADATA_DB_PATH);
+    if (!g_metadata_table) {
+        ss_log("MAIN: No existing metadata DB found for SS ID %d, creating new table", g_ss_id);
+        g_metadata_table = metadata_table_init(OUTER_TABLE_SIZE);
+        if (!g_metadata_table) {
+            ss_log("FATAL: Failed to initialize metadata hash table");
+            exit(1);
+        }
+    } else {
+        ss_log("MAIN: Loaded metadata for %u files from disk", metadata_table_get_count(g_metadata_table));
+    }
+
+    // Start replication worker and listener threads EARLY so we don't miss
+    // immediate backup assignment / re-replication messages from NS.
+    repl_start_worker();
+
+    if (pthread_create(&g_client_tid, NULL, client_listener_thread, NULL) != 0) { ss_log("FATAL: Failed to create client listener thread"); exit(1); }
+    if (pthread_create(&g_repl_tid, NULL, replication_listener_thread, NULL) != 0) { ss_log("FATAL: Failed to create replication listener thread"); exit(1); }
+    if (pthread_create(&g_hb_tid, NULL, ns_heartbeat_thread, NULL) != 0) { ss_log("FATAL: Failed to create heartbeat thread"); exit(1); }
+    if (pthread_create(&g_ns_control_tid, NULL, ns_control_listener_thread, NULL) != 0) { ss_log("FATAL: Failed to create NS control listener thread"); exit(1); }
+    if (pthread_create(&g_checkpoint_tid, NULL, checkpoint_thread, NULL) != 0) { ss_log("FATAL: Failed to create checkpoint thread"); exit(1); }
+    ss_log("MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.");
+
+    // Now scan physical files to populate any missing metadata entries
+    FileMetadata* file_list_after;
+    int scan_count = ss_scan_files(&file_list_after);
+    if (scan_count > 0) {
+        int added = 0;
+        for (int i = 0; i < scan_count; i++) {
+            FileMetadata* meta = &file_list_after[i];
+            if (!metadata_table_exists(g_metadata_table, meta->filename)) {
+                metadata_table_insert(g_metadata_table, meta->filename, meta->owner,
+                                      meta->size_bytes, meta->word_count, meta->char_count,
+                                      meta->last_access_time, meta->last_modified_time, false);
+                added++;
+            }
+        }
+        ss_log("MAIN: File scan complete (%d existing files added post-startup)", added);
+        free(file_list_after);
+    } else {
+        ss_log("MAIN: File scan complete (no existing files found)");
+    }
+
+    // Threads will be joined in main() during shutdown. (No detach here.)
     
     // FIX: Use backup info from NS (where to SEND replications)
     if (ack.backup_of_ss_id != -1 && strlen(ack.backup_ss_ip) > 0) {
@@ -196,88 +228,25 @@ int main(int argc, char* argv[]) {
     signal(SIGTERM, sigint_handler);
     signal(SIGPIPE, SIG_IGN);  // Ignore SIGPIPE (prevents crash on client disconnect)
     
-    // Try to detect existing SS data directories to determine local SS ID
-    // Look for ss_data_X directories and find the first available one
-    int local_ss_id = 0;
-    char test_dir[256];
-    struct stat st;
-    
-    // Scan for existing directories
-    for (int i = 0; i < 100; i++) {
-        snprintf(test_dir, sizeof(test_dir), "ss_data_%d", i);
-        if (stat(test_dir, &st) == 0 && S_ISDIR(st.st_mode)) {
-            // Directory exists, this might be our SS if it has our IP/port info
-            local_ss_id = i + 1; // Try next one
-        } else {
-            // Directory doesn't exist, use this ID
-            local_ss_id = i;
-            break;
-        }
-    }
-    
-    // Initialize log file with local SS ID
-    char log_filename[64];
-    snprintf(log_filename, sizeof(log_filename), "ss_%d.log", local_ss_id);
-    log_init(log_filename);
+    // Temporary startup log (will be reinitialized after registration with real SS ID)
+    log_init("ss_startup.log");
     ss_log("MAIN: Starting Storage Server...");
-    ss_log("MAIN: Using local data directory ID: %d", local_ss_id);
-    
-    // Initialize directory paths based on local ID
-    snprintf(g_ss_root_dir, sizeof(g_ss_root_dir), "ss_data_%d", local_ss_id);
-    snprintf(g_ss_files_dir, sizeof(g_ss_files_dir), "%s/files", g_ss_root_dir);
-    snprintf(g_ss_undo_dir, sizeof(g_ss_undo_dir), "%s/undo", g_ss_root_dir);
-    snprintf(g_ss_checkpoint_dir, sizeof(g_ss_checkpoint_dir), "%s/checkpoints", g_ss_root_dir);
-    snprintf(g_metadata_db_path, sizeof(g_metadata_db_path), "%s/metadata.db", g_ss_root_dir);
-    
-    ss_create_dirs();
     lock_map_init(&g_file_lock_map, 64);
     
-    // Initialize metadata hash table
-    ss_log("MAIN: Initializing metadata hash table...");
-    g_metadata_table = metadata_table_load(METADATA_DB_PATH);
-    if (!g_metadata_table) {
-        ss_log("MAIN: No existing metadata DB found, creating new table");
-        g_metadata_table = metadata_table_init(OUTER_TABLE_SIZE);
-        if (!g_metadata_table) {
-            ss_log("FATAL: Failed to initialize metadata hash table");
-            exit(1);
-        }
-    } else {
-        ss_log("MAIN: Loaded metadata for %u files from disk", 
-               metadata_table_get_count(g_metadata_table));
-    }
-    
     _connect_and_register(ns_ip, ns_port);
-    
-    // Start replication worker
-    repl_start_worker();
-    
-    // Start threads
-    pthread_t client_tid, repl_tid, hb_tid, checkpoint_tid;
-    
-    if (pthread_create(&client_tid, NULL, client_listener_thread, NULL) != 0) {
-        ss_log("FATAL: Failed to create client listener thread"); exit(1);
+    ss_log("MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.");
+
+    // Main loop: wait until shutdown flag is set by signal handler
+    while(!g_shutdown) {
+        sleep(1); // Low overhead wait
     }
-    if (pthread_create(&repl_tid, NULL, replication_listener_thread, NULL) != 0) {
-        ss_log("FATAL: Failed to create replication listener thread"); exit(1);
-    }
-    if (pthread_create(&hb_tid, NULL, ns_heartbeat_thread, NULL) != 0) {
-        ss_log("FATAL: Failed to create heartbeat thread"); exit(1);
-    }
-    if (pthread_create(&checkpoint_tid, NULL, checkpoint_thread, NULL) != 0) {
-        ss_log("FATAL: Failed to create checkpoint thread"); exit(1);
-    }
-    
-    ss_log("MAIN: All threads started. Server is running.");
-    ss_log("MAIN: Press Ctrl+C for graceful shutdown.");
-    
-    // Wait for threads (they will exit when g_shutdown is set)
-    pthread_join(client_tid, NULL);
-    pthread_join(repl_tid, NULL);
-    pthread_join(hb_tid, NULL);
-    pthread_join(checkpoint_tid, NULL);
-    
-    ss_log("MAIN: All threads stopped. Performing final cleanup...");
+
+    ss_log("MAIN: Shutdown detected. Joining threads and performing final cleanup...");
+    pthread_join(g_client_tid, NULL);
+    pthread_join(g_repl_tid, NULL);
+    pthread_join(g_hb_tid, NULL);
+    pthread_join(g_ns_control_tid, NULL);
+    pthread_join(g_checkpoint_tid, NULL);
     
     // Save metadata table to disk (final save on shutdown)
     if (g_metadata_table) {
@@ -417,5 +386,70 @@ static void* ns_heartbeat_thread(void* arg) {
     }
     
     ss_log("HEARTBEAT: Thread exiting");
+    return NULL;
+}
+
+// NEW: Dedicated thread to listen for control messages from NS (UPDATE_BACKUP, RE_REPLICATE_ALL, etc.)
+static void* ns_control_listener_thread(void* arg) {
+    ss_log("NS_CONTROL: Listener thread started for NS control messages");
+    
+    // Set socket timeout so recv doesn't block forever (allows checking g_shutdown)
+    struct timeval tv;
+    tv.tv_sec = 1;  // 1 second timeout
+    tv.tv_usec = 0;
+    if (setsockopt(g_ns_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        ss_log("NS_CONTROL: Warning - failed to set socket timeout");
+    }
+    
+    while (!g_shutdown) {
+        MsgHeader header;
+        int recv_result = recv_header(g_ns_sock, &header);
+        
+        if (recv_result <= 0) {
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                // Timeout - check shutdown flag and continue
+                continue;
+            }
+            if (g_shutdown) break;  // Expected during shutdown
+            ss_log("NS_CONTROL: Lost connection to NS (recv returned %d, errno=%d)", recv_result, errno);
+            break;
+        }
+        
+        ss_log("NS_CONTROL: Received message type %d from NS", header.type);
+        
+        // Handle NS control messages
+        if (header.type == MSG_N2S_UPDATE_BACKUP) {
+            Req_UpdateBackup req;
+            recv_payload(g_ns_sock, &req, header.payload_len);
+            ss_handle_update_backup(g_ns_sock, &req);  // Don't send ACK back; NS doesn't expect it on this socket
+        } else if (header.type == MSG_N2S_RE_REPLICATE_ALL) {
+            Req_ReReplicate req;
+            recv_payload(g_ns_sock, &req, header.payload_len);
+            ss_handle_re_replicate_all(g_ns_sock, &req);
+        } else if (header.type == MSG_N2S_SYNC_FROM_BACKUP) {
+            Req_SyncFromBackup req;
+            recv_payload(g_ns_sock, &req, header.payload_len);
+            ss_handle_sync_from_backup(g_ns_sock, &req);
+        } else if (header.type == MSG_N2S_SYNC_TO_PRIMARY) {
+            Req_SyncToPrimary req;
+            recv_payload(g_ns_sock, &req, header.payload_len);
+            ss_handle_sync_to_primary(g_ns_sock, &req);
+        } else {
+            ss_log("NS_CONTROL: Unexpected message type %d from NS (ignoring)", header.type);
+            // Drain payload if any
+            if (header.payload_len > 0) {
+                char drain_buf[4096];
+                uint32_t remaining = header.payload_len;
+                while (remaining > 0 && !g_shutdown) {
+                    uint32_t chunk = (remaining > sizeof(drain_buf)) ? sizeof(drain_buf) : remaining;
+                    ssize_t n = recv(g_ns_sock, drain_buf, chunk, 0);
+                    if (n <= 0) break;
+                    remaining -= n;
+                }
+            }
+        }
+    }
+    
+    ss_log("NS_CONTROL: Listener thread exiting");
     return NULL;
 }
