@@ -3,6 +3,7 @@
 #include "ss_logger.h"
 #include "ss_file_manager.h"
 #include "ss_metadata.h"
+#include "ss_replicator.h"  // For repl_schedule_update
 #include "../common/net_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +37,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     g_is_syncing = 1;
     pthread_mutex_unlock(&g_sync_mutex);
     
-    // Send ACK to NS
-    send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
+    // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
     // Connect to target (primary) SS
     int target_sock = connect_to_server(req->target_ip, req->target_port);
@@ -222,8 +222,7 @@ void ss_handle_sync_to_primary(int ns_sock, Req_SyncToPrimary* req) {
     g_is_syncing = 1;
     pthread_mutex_unlock(&g_sync_mutex);
     
-    // Send ACK to NS
-    send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
+    // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
     // Note: We don't initiate connection - backup will connect to us
     // We just wait for incoming SS-to-SS recovery connection
@@ -234,178 +233,47 @@ void ss_handle_sync_to_primary(int ns_sock, Req_SyncToPrimary* req) {
 /**
  * Handler: NS tells this SS (primary) to re-replicate all files to backup
  * This happens when backup SS reconnects after being down
+ * 
+ * NOTE: This uses the regular replication mechanism (same as catch-up replication)
+ * NOT the recovery protocol (which is for SS-initiated recovery after failure)
  */
 void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     ss_log("RECOVERY: NS requests re-replication of all files to backup SS %d (%s:%d)",
            req->backup_ss_id, req->backup_ip, req->backup_port);
     
-    // Set syncing flag to block operations
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 1;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
-    // Send ACK to NS
-    send_response(ns_sock, MSG_S2N_ACK_OK, NULL, 0);
+    // Update backup target (same as MSG_N2S_UPDATE_BACKUP does)
+    strncpy(g_backup_ip, req->backup_ip, sizeof(g_backup_ip));
+    g_backup_ip[15] = '\0';
+    g_backup_port = req->backup_port;
     
-    // Connect to backup SS
-    int backup_sock = connect_to_server(req->backup_ip, req->backup_port);
-    if (backup_sock < 0) {
-        ss_log("RECOVERY: Failed to connect to backup SS %d at %s:%d",
-               req->backup_ss_id, req->backup_ip, req->backup_port);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
-        return;
-    }
+    ss_log("RECOVERY: Initiating immediate re-replication for existing primary files");
     
-    ss_log("RECOVERY: Connected to backup SS %d", req->backup_ss_id);
-    
-    // Send START_RECOVERY message
-    Req_StartRecovery start_req;
-    start_req.ss_id = g_ss_id;
-    start_req.is_primary_recovery = false;  // Backup is recovering from us (primary)
-    send_response(backup_sock, MSG_S2S_START_RECOVERY, &start_req, sizeof(start_req));
-    
-    // Get list of all files
+    // Scan existing files and schedule replication (same as catch-up replication)
     DIR* dir = opendir(SS_FILES_DIR);
     if (!dir) {
-        ss_log("RECOVERY: Failed to open files directory");
-        close(backup_sock);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
+        ss_log("RECOVERY: Failed to open files directory '%s' for re-replication", SS_FILES_DIR);
         return;
     }
     
-    // Count files
-    uint32_t file_count = 0;
     struct dirent* entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) file_count++;
-    }
-    rewinddir(dir);
-    
-    ss_log("RECOVERY: Re-replicating %u files to backup SS", file_count);
-    
-    // Send file list
-    Req_FileList file_list;
-    file_list.file_count = file_count;
-    send_response(backup_sock, MSG_S2S_FILE_LIST, &file_list, sizeof(file_list));
-    
-    // Send metadata for all files
-    rewinddir(dir);
-    FileMetadata* metas = (FileMetadata*)malloc(file_count * sizeof(FileMetadata));
-    if (!metas && file_count > 0) {
-        ss_log("RECOVERY: Failed to allocate memory for metadata array");
-        closedir(dir);
-        close(backup_sock);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
-        return;
-    }
-    int idx = 0;
+    int scheduled = 0;
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_REG) continue;
-        
         FileMetadataNode* node = metadata_table_get(g_metadata_table, entry->d_name);
-        if (!node) {
-            // CRITICAL ERROR: File exists but has no metadata during backup recovery!
-            ss_log("ERROR: Recovery to backup - file '%s' has no metadata, SKIPPING", entry->d_name);
-            continue; // Skip this file
+        if (node) {
+            if (!node->is_backup) {  // Only replicate primary files
+                ss_log("REPL: Scheduling update for %s", node->filename);
+                repl_schedule_update(entry->d_name);
+                scheduled++;
+            }
+            free(node);
         }
-        
-        strncpy(metas[idx].filename, node->filename, MAX_FILENAME);
-        strncpy(metas[idx].owner, node->owner, MAX_USERNAME);
-        metas[idx].size_bytes = node->file_size;
-        metas[idx].word_count = node->word_count;
-        metas[idx].char_count = node->char_count;
-        free(node);
-        
-        idx++;
     }
-    
-    if (file_count > 0) {
-        send(backup_sock, metas, file_count * sizeof(FileMetadata), 0);
-    }
-    
-    // Send each file
-    rewinddir(dir);
-    int files_sent = 0;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_REG) continue;
-        
-        char filepath[MAX_PATH];
-        snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, entry->d_name);
-        
-        int fd = open(filepath, O_RDONLY);
-        if (fd < 0) {
-            ss_log("RECOVERY: Failed to open file %s", entry->d_name);
-            continue;
-        }
-        
-        struct stat st;
-        fstat(fd, &st);
-        
-        // Send file
-        Req_Replicate repl_req;
-        strncpy(repl_req.filename, entry->d_name, MAX_FILENAME);
-        repl_req.file_size = st.st_size;
-        
-        // FIX: Include owner information from metadata
-        // CRITICAL: Metadata MUST exist during recovery
-        FileMetadataNode* node_for_owner = metadata_table_get(g_metadata_table, entry->d_name);
-        if (!node_for_owner) {
-            // FATAL ERROR: File exists but has no metadata during backup recovery!
-            ss_log("ERROR: Recovery to backup - file '%s' has no metadata, SKIPPING", entry->d_name);
-            close(fd);
-            continue; // Skip this file
-        }
-        
-        strncpy(repl_req.owner, node_for_owner->owner, MAX_USERNAME);
-        free(node_for_owner);
-        
-        send_response(backup_sock, MSG_S2S_REPLICATE_FILE, &repl_req, sizeof(repl_req));
-        
-        off_t offset = 0;
-        ssize_t sent = sendfile(backup_sock, fd, &offset, st.st_size);
-        close(fd);
-        
-        if (sent != (ssize_t)st.st_size) {
-            ss_log("RECOVERY: sendfile failed for %s: sent %ld of %ld bytes",
-                   entry->d_name, sent, (long)st.st_size);
-            continue;
-        }
-        
-        // Wait for ACK
-        MsgHeader ack;
-        if (recv_header(backup_sock, &ack) <= 0) {
-            ss_log("RECOVERY: Failed to receive ACK for %s", entry->d_name);
-            break;
-        }
-        
-        if (ack.type != MSG_S2S_ACK) {
-            ss_log("RECOVERY: Unexpected message type %d for %s", ack.type, entry->d_name);
-        }
-        
-        files_sent++;
-        ss_log("RECOVERY: Re-replicated file %d/%u: %s (%ld bytes)",
-               files_sent, file_count, entry->d_name, st.st_size);
-    }
-    
     closedir(dir);
-    free(metas);
     
-    // Send completion
-    send_response(backup_sock, MSG_S2S_RECOVERY_COMPLETE, NULL, 0);
-    close(backup_sock);
-    
-    // Clear syncing flag
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 0;
-    pthread_mutex_unlock(&g_sync_mutex);
-    
-    ss_log("RECOVERY: Re-replication to backup SS %d complete (%d files)", req->backup_ss_id, files_sent);
+    ss_log("RECOVERY: Re-replication scheduling complete (%d primary files queued)", scheduled);
 }
 
 /**

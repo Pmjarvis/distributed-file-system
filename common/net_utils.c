@@ -86,7 +86,10 @@ static int recv_all(int sock, void* buffer, size_t len) {
         ssize_t res = recv(sock, buf + bytes_received, len - bytes_received, 0);
         if (res < 0) {
             if (errno == EINTR) continue;
-            perror("recv failed");
+            // Don't log timeout errors (expected behavior with SO_RCVTIMEO)
+            if (errno != EWOULDBLOCK && errno != EAGAIN) {
+                perror("recv failed");
+            }
             return -1;
         }
         if (res == 0) {
