@@ -1,371 +1,257 @@
-[2025-11-19 01:54:45] --- LOGGING STARTED ---
-[2025-11-19 01:54:45] MAIN: Persistent log file initialized for SS ID 0
-[2025-11-19 01:54:45] MAIN: Using persistent data directory: ss_data_0
-[2025-11-19 01:54:45] MAIN: Loading metadata hash table (post-registration)...
-[2025-11-19 01:54:45] Loading 8 metadata entries from ss_data_0/metadata.db...
-[2025-11-19 01:54:45] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 89
-[2025-11-19 01:54:45] Inserted metadata for: jj (owner: userk, size: 18, is_backup: 0)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 123
-[2025-11-19 01:54:45] Inserted metadata for: kk (owner: bun, size: 0, is_backup: 1)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 124
-[2025-11-19 01:54:45] Inserted metadata for: kl (owner: bun, size: 11, is_backup: 0)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 523
-[2025-11-19 01:54:45] Inserted metadata for: f (owner: user, size: 0, is_backup: 1)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 527
-[2025-11-19 01:54:45] Inserted metadata for: j (owner: userk, size: 0, is_backup: 1)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 599
-[2025-11-19 01:54:45] Inserted metadata for: fff (owner: kai', size: 33, is_backup: 1)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 956
-[2025-11-19 01:54:45] Inserted metadata for: lef (owner: kaij, size: 21, is_backup: 1)
-[2025-11-19 01:54:45] DEBUG: Lazily created inner table for outer bucket 977
-[2025-11-19 01:54:45] Inserted metadata for: ff (owner: user, size: 11, is_backup: 0)
-[2025-11-19 01:54:45] Loaded 8/8 metadata entries from ss_data_0/metadata.db
-[2025-11-19 01:54:45] MAIN: Loaded metadata for 8 files from disk
-[2025-11-19 01:54:45] MAIN: Listening for Clients and NS on 127.0.0.1:9001
-[2025-11-19 01:54:45] NS_CONTROL: Listener thread started for NS control messages
-[2025-11-19 01:54:45] MAIN: Listening for Replication on 127.0.0.1:9002
-[2025-11-19 01:54:45] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
-[2025-11-19 01:54:45] CHECKPOINT: Thread started (interval: 60 seconds)
-[2025-11-19 01:54:45] ERROR: File 'leff' exists but has NO metadata entry! This should never happen for tracked files.
-[2025-11-19 01:54:45] ERROR: Possible causes: manual file placement, corrupted metadata.db, or race condition bug
-[2025-11-19 01:54:45] ERROR: File 'leff' exists on disk but missing from metadata table
-[2025-11-19 01:54:45] MAIN: File scan complete (0 existing files added post-startup)
-[2025-11-19 01:54:45] MAIN: No replication target assigned (single SS or no backup available)
-[2025-11-19 01:54:45] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
-[2025-11-19 01:54:58] NS_CONTROL: Received message type 61 from NS
-[2025-11-19 01:54:58] HANDLER: Received backup assignment update from NS
-[2025-11-19 01:54:58] HANDLER: Backup assignment updated - will replicate to 127.0.0.4:9004 (SS ID 1)
-[2025-11-19 01:54:58] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-19 01:54:58] REPL: Scheduling update for kl
-[2025-11-19 01:54:58] REPL: Scheduling update for ff
-[2025-11-19 01:54:58] REPL: Scheduling update for jj
-[2025-11-19 01:54:58] HANDLER: Catch-up replication scheduling complete (3 primary files queued)
-[2025-11-19 01:54:58] NS_CONTROL: Received message type 60 from NS
-[2025-11-19 01:54:58] RECOVERY: NS requests re-replication of all files to backup SS 1 (127.0.0.4:9004)
-[2025-11-19 01:54:58] RECOVERY: Failed to connect to backup SS 1 at 127.0.0.4:9004
-[2025-11-19 01:54:58] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 01:54:58] REPL: Re-queueing kl for retry attempt 1
-[2025-11-19 01:54:58] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 01:54:58] REPL: Re-queueing ff for retry attempt 1
-[2025-11-19 01:54:58] REPL: Connected to backup. Replicating update for jj...
-[2025-11-19 01:54:58] REPL: Replicating jj (owner: userk, size: 18)
-[2025-11-19 01:54:58] REPL: Successfully replicated jj (18 bytes)
-[2025-11-19 01:54:58] REPL_IN: New incoming replication connection
-[2025-11-19 01:54:58] REPL: ACK received for file jj
-[2025-11-19 01:54:58] REPL: Connected to backup. Replicating update for kl...
-[2025-11-19 01:54:58] REPL: Replicating kl (owner: bun, size: 11)
-[2025-11-19 01:54:58] REPL: Successfully replicated kl (11 bytes)
-[2025-11-19 01:54:58] REPL: ACK received for file kl
-[2025-11-19 01:54:58] REPL: Connected to backup. Replicating update for ff...
-[2025-11-19 01:54:58] REPL: Replicating ff (owner: user, size: 11)
-[2025-11-19 01:54:58] REPL: Successfully replicated ff (11 bytes)
-[2025-11-19 01:54:58] REPL: ACK received for file ff
-[2025-11-19 01:55:08] MAIN: Shutdown detected. Joining threads and performing final cleanup...
-[2025-11-19 01:55:08] NS_CONTROL: Listener thread exiting
-[2025-11-19 01:55:08] REPL_LISTENER: Thread exiting
-[2025-11-19 01:55:08] CHECKPOINT: Thread exiting
-[2025-11-19 01:55:09] CLIENT_LISTENER: Thread exiting
-[2025-11-19 01:55:10] HEARTBEAT: Thread exiting
-[2025-11-19 01:55:10] MAIN: Performing final metadata save (8 entries)...
-[2025-11-19 01:55:10] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-19 01:55:10] Successfully saved 8 metadata entries (atomic snapshot)
-[2025-11-19 01:55:10] MAIN: Final metadata save successful
-[2025-11-19 01:55:10] Nested metadata hash table freed (1024 locks destroyed)
-[2025-11-19 01:55:10] REPL: Worker thread shutting down.
-[2025-11-19 01:55:10] --- LOGGING STOPPED ---
-[2025-11-19 02:05:56] --- LOGGING STARTED ---
-[2025-11-19 02:05:56] MAIN: Persistent log file initialized for SS ID 0
-[2025-11-19 02:05:56] MAIN: Using persistent data directory: ss_data_0
-[2025-11-19 02:05:56] MAIN: Loading metadata hash table (post-registration)...
-[2025-11-19 02:05:56] Loading 8 metadata entries from ss_data_0/metadata.db...
-[2025-11-19 02:05:56] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 89
-[2025-11-19 02:05:56] Inserted metadata for: jj (owner: userk, size: 18, is_backup: 0)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 123
-[2025-11-19 02:05:56] Inserted metadata for: kk (owner: bun, size: 0, is_backup: 1)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 124
-[2025-11-19 02:05:56] Inserted metadata for: kl (owner: bun, size: 11, is_backup: 0)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 523
-[2025-11-19 02:05:56] Inserted metadata for: f (owner: user, size: 0, is_backup: 1)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 527
-[2025-11-19 02:05:56] Inserted metadata for: j (owner: userk, size: 0, is_backup: 1)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 599
-[2025-11-19 02:05:56] Inserted metadata for: fff (owner: kai', size: 33, is_backup: 1)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 956
-[2025-11-19 02:05:56] Inserted metadata for: lef (owner: kaij, size: 21, is_backup: 1)
-[2025-11-19 02:05:56] DEBUG: Lazily created inner table for outer bucket 977
-[2025-11-19 02:05:56] Inserted metadata for: ff (owner: user, size: 11, is_backup: 0)
-[2025-11-19 02:05:56] Loaded 8/8 metadata entries from ss_data_0/metadata.db
-[2025-11-19 02:05:56] MAIN: Loaded metadata for 8 files from disk
-[2025-11-19 02:05:56] MAIN: Listening for Replication on 127.0.0.1:9002
-[2025-11-19 02:05:56] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
-[2025-11-19 02:05:56] CHECKPOINT: Thread started (interval: 60 seconds)
-[2025-11-19 02:05:56] NS_CONTROL: Listener thread started for NS control messages
-[2025-11-19 02:05:56] MAIN: Listening for Clients and NS on 127.0.0.1:9001
-[2025-11-19 02:05:56] ERROR: File 'leff' exists but has NO metadata entry! This should never happen for tracked files.
-[2025-11-19 02:05:56] ERROR: Possible causes: manual file placement, corrupted metadata.db, or race condition bug
-[2025-11-19 02:05:56] ERROR: File 'leff' exists on disk but missing from metadata table
-[2025-11-19 02:05:56] MAIN: File scan complete (0 existing files added post-startup)
-[2025-11-19 02:05:56] MAIN: No replication target assigned (single SS or no backup available)
-[2025-11-19 02:05:56] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
-[2025-11-19 02:06:02] NS_CONTROL: Received message type 61 from NS
-[2025-11-19 02:06:02] HANDLER: Received backup assignment update from NS
-[2025-11-19 02:06:02] HANDLER: Backup assignment updated - will replicate to 127.0.0.4:9004 (SS ID 1)
-[2025-11-19 02:06:02] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-19 02:06:02] REPL: Scheduling update for kl
-[2025-11-19 02:06:02] REPL: Scheduling update for ff
-[2025-11-19 02:06:02] REPL: Scheduling update for jj
-[2025-11-19 02:06:02] HANDLER: Catch-up replication scheduling complete (3 primary files queued)
-[2025-11-19 02:06:02] NS_CONTROL: Received message type 60 from NS
-[2025-11-19 02:06:02] RECOVERY: NS requests re-replication of all files to backup SS 1 (127.0.0.4:9004)
-[2025-11-19 02:06:02] RECOVERY: Initiating immediate re-replication for existing primary files
-[2025-11-19 02:06:02] REPL: Scheduling update for kl
-[2025-11-19 02:06:02] REPL: Scheduling update for kl
-[2025-11-19 02:06:02] REPL: Scheduling update for ff
-[2025-11-19 02:06:02] REPL: Scheduling update for ff
-[2025-11-19 02:06:02] REPL: Scheduling update for jj
-[2025-11-19 02:06:02] REPL: Scheduling update for jj
-[2025-11-19 02:06:02] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:06:02] RECOVERY: Re-replication scheduling complete (3 primary files queued)
-[2025-11-19 02:06:02] REPL: Re-queueing kl for retry attempt 1
-[2025-11-19 02:06:02] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:06:02] REPL: Re-queueing ff for retry attempt 1
-[2025-11-19 02:06:02] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:06:02] REPL: Re-queueing jj for retry attempt 1
-[2025-11-19 02:06:02] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:06:02] REPL: Re-queueing kl for retry attempt 2
-[2025-11-19 02:06:02] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:06:02] REPL: Re-queueing ff for retry attempt 2
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for jj...
-[2025-11-19 02:06:02] REPL: Replicating jj (owner: userk, size: 18)
-[2025-11-19 02:06:02] REPL: Successfully replicated jj (18 bytes)
-[2025-11-19 02:06:02] REPL: ACK received for file jj
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for kl...
-[2025-11-19 02:06:02] REPL: Replicating kl (owner: bun, size: 11)
-[2025-11-19 02:06:02] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:02] REPL: Successfully replicated kl (11 bytes)
-[2025-11-19 02:06:02] REPL_IN: Receiving replica for kk (0 bytes)
-[2025-11-19 02:06:02] REPL_IN: Finished receiving kk
-[2025-11-19 02:06:02] Updated metadata for: kk
-[2025-11-19 02:06:02] REPL_IN: Updated metadata for kk (owner: bun, size: 0, is_backup=true)
-[2025-11-19 02:06:02] REPL: ACK received for file kl
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for ff...
-[2025-11-19 02:06:02] REPL: Replicating ff (owner: user, size: 11)
-[2025-11-19 02:06:02] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:02] REPL_IN: Receiving replica for lef (21 bytes)
-[2025-11-19 02:06:02] REPL: Successfully replicated ff (11 bytes)
-[2025-11-19 02:06:02] REPL: ACK received for file ff
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for jj...
-[2025-11-19 02:06:02] REPL: Replicating jj (owner: userk, size: 18)
-[2025-11-19 02:06:02] REPL: Successfully replicated jj (18 bytes)
-[2025-11-19 02:06:02] REPL_IN: Finished receiving lef
-[2025-11-19 02:06:02] Updated metadata for: lef
-[2025-11-19 02:06:02] REPL_IN: Updated metadata for lef (owner: kaij, size: 21, is_backup=true)
-[2025-11-19 02:06:02] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:02] REPL_IN: Receiving replica for j (0 bytes)
-[2025-11-19 02:06:02] REPL_IN: Finished receiving j
-[2025-11-19 02:06:02] Updated metadata for: j
-[2025-11-19 02:06:02] REPL_IN: Updated metadata for j (owner: userk, size: 0, is_backup=true)
-[2025-11-19 02:06:02] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:02] REPL_IN: Receiving replica for f (0 bytes)
-[2025-11-19 02:06:02] REPL_IN: Finished receiving f
-[2025-11-19 02:06:02] Updated metadata for: f
-[2025-11-19 02:06:02] REPL_IN: Updated metadata for f (owner: user, size: 0, is_backup=true)
-[2025-11-19 02:06:02] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:02] REPL_IN: Receiving replica for fff (33 bytes)
-[2025-11-19 02:06:02] REPL_IN: Finished receiving fff
-[2025-11-19 02:06:02] Updated metadata for: fff
-[2025-11-19 02:06:02] REPL_IN: Updated metadata for fff (owner: kai', size: 33, is_backup=true)
-[2025-11-19 02:06:02] REPL: ACK received for file jj
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for kl...
-[2025-11-19 02:06:02] REPL: Replicating kl (owner: bun, size: 11)
-[2025-11-19 02:06:02] REPL: Successfully replicated kl (11 bytes)
-[2025-11-19 02:06:02] REPL: ACK received for file kl
-[2025-11-19 02:06:02] REPL: Connected to backup. Replicating update for ff...
-[2025-11-19 02:06:02] REPL: Replicating ff (owner: user, size: 11)
-[2025-11-19 02:06:02] REPL: Successfully replicated ff (11 bytes)
-[2025-11-19 02:06:02] REPL: ACK received for file ff
-[2025-11-19 02:06:41] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:41] REPL_IN: Receiving replica for a (0 bytes)
-[2025-11-19 02:06:41] REPL_IN: Finished receiving a
-[2025-11-19 02:06:41] DEBUG: Lazily created inner table for outer bucket 518
-[2025-11-19 02:06:41] Inserted metadata for: a (owner: kadjasijd, size: 0, is_backup: 1)
-[2025-11-19 02:06:41] REPL_IN: Created metadata for a (owner: kadjasijd, is_backup=true)
-[2025-11-19 02:06:42] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-19 02:06:42] DEBUG: Lazily created inner table for outer bucket 519
-[2025-11-19 02:06:42] Inserted metadata for: b (owner: kadjasijd, size: 0, is_backup: 0)
-[2025-11-19 02:06:42] CREATE: File b created by kadjasijd
-[2025-11-19 02:06:42] REPL: Scheduling update for b
-[2025-11-19 02:06:42] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:06:42] REPL: Connected to backup. Replicating update for b...
-[2025-11-19 02:06:42] REPL: Replicating b (owner: kadjasijd, size: 0)
-[2025-11-19 02:06:42] REPL: Successfully replicated b (0 bytes)
-[2025-11-19 02:06:42] REPL: ACK received for file b
-[2025-11-19 02:06:43] REPL_IN: New incoming replication connection
-[2025-11-19 02:06:43] REPL_IN: Receiving replica for c (0 bytes)
-[2025-11-19 02:06:43] REPL_IN: Finished receiving c
-[2025-11-19 02:06:43] DEBUG: Lazily created inner table for outer bucket 520
-[2025-11-19 02:06:43] Inserted metadata for: c (owner: kadjasijd, size: 0, is_backup: 1)
-[2025-11-19 02:06:43] REPL_IN: Created metadata for c (owner: kadjasijd, is_backup=true)
-[2025-11-19 02:06:46] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
-[2025-11-19 02:06:46] DEBUG: Lazily created inner table for outer bucket 521
-[2025-11-19 02:06:46] Inserted metadata for: d (owner: kadjasijd, size: 0, is_backup: 0)
-[2025-11-19 02:06:46] CREATE: File d created by kadjasijd
-[2025-11-19 02:06:46] REPL: Scheduling update for d
-[2025-11-19 02:06:46] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:06:46] REPL: Connected to backup. Replicating update for d...
-[2025-11-19 02:06:46] REPL: Replicating d (owner: kadjasijd, size: 0)
-[2025-11-19 02:06:46] REPL: Successfully replicated d (0 bytes)
-[2025-11-19 02:06:46] REPL: ACK received for file d
-[2025-11-19 02:06:48] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:06:48] INFO: NS requesting metadata for d (for VIEW -l)
-[2025-11-19 02:06:48] INFO: Returning cached metadata for d (size: 0, words: 0, chars: 0)
-[2025-11-19 02:06:48] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:06:48] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:06:48] INFO: NS requesting metadata for b (for VIEW -l)
-[2025-11-19 02:06:48] INFO: Returning cached metadata for b (size: 0, words: 0, chars: 0)
-[2025-11-19 02:06:48] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:06:56] CHECKPOINT: Saving metadata to disk...
-[2025-11-19 02:06:56] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-19 02:06:56] Successfully saved 12 metadata entries (atomic snapshot)
-[2025-11-19 02:06:56] CHECKPOINT: Metadata saved successfully (12 entries)
-[2025-11-19 02:07:12] REPL_IN: New incoming replication connection
-[2025-11-19 02:07:12] REPL_IN: Receiving replica for c (27 bytes)
-[2025-11-19 02:07:12] REPL_IN: Finished receiving c
-[2025-11-19 02:07:12] Updated metadata for: c
-[2025-11-19 02:07:12] REPL_IN: Updated metadata for c (owner: kadjasijd, size: 27, is_backup=true)
-[2025-11-19 02:07:37] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
-[2025-11-19 02:07:37] WRITE: Locked file d (sentence 0)
-[2025-11-19 02:07:42] Updated size for d: 52 bytes
-[2025-11-19 02:07:42] Updated counts for d: 1 words, 52 chars
-[2025-11-19 02:07:42] WRITE: Updated metadata for d (size: 52, words: 1, chars: 52)
-[2025-11-19 02:07:42] WRITE: Completed for d (sentence 0)
-[2025-11-19 02:07:42] REPL: Scheduling update for d
-[2025-11-19 02:07:42] REPL: Connected to backup. Replicating update for d...
-[2025-11-19 02:07:42] REPL: Replicating d (owner: kadjasijd, size: 52)
-[2025-11-19 02:07:42] REPL: Successfully replicated d (52 bytes)
-[2025-11-19 02:07:42] REPL: ACK received for file d
-[2025-11-19 02:07:54] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:07:54] INFO: NS requesting metadata for c (for VIEW -l)
-[2025-11-19 02:07:54] INFO: Returning cached metadata for c (size: 27, words: 0, chars: 0)
-[2025-11-19 02:07:54] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:07:54] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:07:54] INFO: NS requesting metadata for a (for VIEW -l)
-[2025-11-19 02:07:54] INFO: Returning cached metadata for a (size: 0, words: 0, chars: 0)
-[2025-11-19 02:07:54] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:07:54] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:07:54] INFO: NS requesting metadata for d (for VIEW -l)
-[2025-11-19 02:07:54] INFO: Returning cached metadata for d (size: 52, words: 1, chars: 52)
-[2025-11-19 02:07:54] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:07:54] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
-[2025-11-19 02:07:54] INFO: NS requesting metadata for b (for VIEW -l)
-[2025-11-19 02:07:54] INFO: Returning cached metadata for b (size: 0, words: 0, chars: 0)
-[2025-11-19 02:07:54] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:07:56] CHECKPOINT: Saving metadata to disk...
-[2025-11-19 02:07:56] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-19 02:07:56] Successfully saved 12 metadata entries (atomic snapshot)
-[2025-11-19 02:07:56] CHECKPOINT: Metadata saved successfully (12 entries)
-[2025-11-19 02:08:12] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
-[2025-11-19 02:08:12] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-19 02:08:12] READ: Handler called for file 'c'
-[2025-11-19 02:08:12] READ: Starting read for file c
-[2025-11-19 02:08:12] READ: Full path is ss_data_0/files/c
-[2025-11-19 02:08:12] READ: File opened successfully, starting to read chunks
-[2025-11-19 02:08:12] READ: Chunk 1 - read 27 bytes, is_final=1
-[2025-11-19 02:08:12] READ: Chunk 1 sent
-[2025-11-19 02:08:12] READ: Read complete for c, sent 1 chunks
-[2025-11-19 02:08:12] HANDLER: Closing connection from 127.0.0.1
-[2025-11-19 02:08:14] NS_CONTROL: Received message type 61 from NS
-[2025-11-19 02:08:14] HANDLER: Received backup assignment update from NS
-[2025-11-19 02:08:14] HANDLER: Backup assignment updated - will replicate to 127.0.0.4:9004 (SS ID 1)
-[2025-11-19 02:08:14] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-19 02:08:14] REPL: Scheduling update for kl
-[2025-11-19 02:08:14] REPL: Scheduling update for d
-[2025-11-19 02:08:14] REPL: Scheduling update for b
-[2025-11-19 02:08:14] REPL: Scheduling update for ff
-[2025-11-19 02:08:14] REPL: Scheduling update for jj
-[2025-11-19 02:08:14] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
-[2025-11-19 02:08:14] NS_CONTROL: Received message type 58 from NS
-[2025-11-19 02:08:14] RECOVERY: NS requests sync FROM backup TO primary SS 1 (127.0.0.4:9004)
-[2025-11-19 02:08:14] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:08:14] REPL: Re-queueing kl for retry attempt 3
-[2025-11-19 02:08:14] RECOVERY: Failed to connect to primary SS 1 at 127.0.0.4:9004
-[2025-11-19 02:08:14] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:08:14] REPL: Re-queueing d for retry attempt 1
-[2025-11-19 02:08:14] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:08:14] REPL: Re-queueing b for retry attempt 1
-[2025-11-19 02:08:14] REPL: Could not connect to backup server at 127.0.0.4:9004
-[2025-11-19 02:08:14] REPL: Re-queueing ff for retry attempt 3
-[2025-11-19 02:08:14] REPL: Connected to backup. Replicating update for jj...
-[2025-11-19 02:08:14] REPL: Replicating jj (owner: userk, size: 18)
-[2025-11-19 02:08:14] REPL: Successfully replicated jj (18 bytes)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL: ACK received for file jj
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for kk (0 bytes)
-[2025-11-19 02:08:14] REPL_IN: Finished receiving kk
-[2025-11-19 02:08:14] REPL: Connected to backup. Replicating update for kl...
-[2025-11-19 02:08:14] REPL: Replicating kl (owner: bun, size: 11)
-[2025-11-19 02:08:14] Updated metadata for: kk
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for kk (owner: bun, size: 0, is_backup=true)
-[2025-11-19 02:08:14] REPL: Successfully replicated kl (11 bytes)
-[2025-11-19 02:08:14] REPL: ACK received for file kl
-[2025-11-19 02:08:14] REPL: Connected to backup. Replicating update for d...
-[2025-11-19 02:08:14] REPL: Replicating d (owner: kadjasijd, size: 52)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL: Successfully replicated d (52 bytes)
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for lef (21 bytes)
-[2025-11-19 02:08:14] REPL: ACK received for file d
-[2025-11-19 02:08:14] REPL_IN: Finished receiving lef
-[2025-11-19 02:08:14] Updated metadata for: lef
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for lef (owner: kaij, size: 21, is_backup=true)
-[2025-11-19 02:08:14] REPL: Connected to backup. Replicating update for b...
-[2025-11-19 02:08:14] REPL: Replicating b (owner: kadjasijd, size: 0)
-[2025-11-19 02:08:14] REPL: Successfully replicated b (0 bytes)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for j (0 bytes)
-[2025-11-19 02:08:14] REPL: ACK received for file b
-[2025-11-19 02:08:14] REPL_IN: Finished receiving j
-[2025-11-19 02:08:14] Updated metadata for: j
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for j (owner: userk, size: 0, is_backup=true)
-[2025-11-19 02:08:14] REPL: Connected to backup. Replicating update for ff...
-[2025-11-19 02:08:14] REPL: Replicating ff (owner: user, size: 11)
-[2025-11-19 02:08:14] REPL: Successfully replicated ff (11 bytes)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for f (0 bytes)
-[2025-11-19 02:08:14] REPL_IN: Finished receiving f
-[2025-11-19 02:08:14] Updated metadata for: f
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for f (owner: user, size: 0, is_backup=true)
-[2025-11-19 02:08:14] REPL: ACK received for file ff
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for a (0 bytes)
-[2025-11-19 02:08:14] REPL_IN: Finished receiving a
-[2025-11-19 02:08:14] Updated metadata for: a
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for a (owner: kadjasijd, size: 0, is_backup=true)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for c (27 bytes)
-[2025-11-19 02:08:14] REPL_IN: Finished receiving c
-[2025-11-19 02:08:14] Updated metadata for: c
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for c (owner: kadjasijd, size: 27, is_backup=true)
-[2025-11-19 02:08:14] REPL_IN: New incoming replication connection
-[2025-11-19 02:08:14] REPL_IN: Receiving replica for fff (33 bytes)
-[2025-11-19 02:08:14] REPL_IN: Finished receiving fff
-[2025-11-19 02:08:14] Updated metadata for: fff
-[2025-11-19 02:08:14] REPL_IN: Updated metadata for fff (owner: kai', size: 33, is_backup=true)
-[2025-11-19 02:08:56] CHECKPOINT: Saving metadata to disk...
-[2025-11-19 02:08:56] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-19 02:08:56] Successfully saved 12 metadata entries (atomic snapshot)
-[2025-11-19 02:08:56] CHECKPOINT: Metadata saved successfully (12 entries)
-[2025-11-19 02:09:39] MAIN: Shutdown detected. Joining threads and performing final cleanup...
-[2025-11-19 02:09:40] NS_CONTROL: Listener thread exiting
-[2025-11-19 02:09:40] CLIENT_LISTENER: Thread exiting
-[2025-11-19 02:09:40] REPL_LISTENER: Thread exiting
-[2025-11-19 02:09:40] CHECKPOINT: Thread exiting
-[2025-11-19 02:09:41] HEARTBEAT: Thread exiting
-[2025-11-19 02:09:41] MAIN: Performing final metadata save (12 entries)...
-[2025-11-19 02:09:41] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-19 02:09:41] Successfully saved 12 metadata entries (atomic snapshot)
-[2025-11-19 02:09:41] MAIN: Final metadata save successful
-[2025-11-19 02:09:41] Nested metadata hash table freed (1024 locks destroyed)
-[2025-11-19 02:09:41] REPL: Worker thread shutting down.
-[2025-11-19 02:09:41] --- LOGGING STOPPED ---
+[2025-11-19 17:18:16] --- LOGGING STARTED ---
+[2025-11-19 17:18:16] MAIN: Persistent log file initialized for SS ID 0
+[2025-11-19 17:18:16] MAIN: Using persistent data directory: ss_data_0
+[2025-11-19 17:18:16] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-19 17:18:16] Loading 1 metadata entries from ss_data_0/metadata.db...
+[2025-11-19 17:18:16] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-19 17:18:16] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-19 17:18:16] Inserted metadata for: file (owner: pat, size: 27, is_backup: 0)
+[2025-11-19 17:18:16] Loaded 1/1 metadata entries from ss_data_0/metadata.db
+[2025-11-19 17:18:16] MAIN: Loaded metadata for 1 files from disk
+[2025-11-19 17:18:16] MAIN: Listening for Clients and NS on 127.0.0.1:9001
+[2025-11-19 17:18:16] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-19 17:18:16] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-19 17:18:16] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-19 17:18:16] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-19 17:18:16] MAIN: No replication target assigned (single SS or no backup available)
+[2025-11-19 17:18:16] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-19 17:18:16] MAIN: Listening for Replication on 127.0.0.1:9002
+[2025-11-19 17:18:23] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-19 17:18:23] Updated metadata for: file
+[2025-11-19 17:18:23] CREATE: File file created by pat
+[2025-11-19 17:18:23] REPL: Scheduling update for file
+[2025-11-19 17:18:23] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:18:23] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:18:32] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-19 17:18:32] WRITE: Locked file file (sentence 0)
+[2025-11-19 17:18:39] Updated size for file: 15 bytes
+[2025-11-19 17:18:39] Updated counts for file: 1 words, 15 chars
+[2025-11-19 17:18:39] WRITE: Updated metadata for file (size: 15, words: 1, chars: 15)
+[2025-11-19 17:18:39] WRITE: Completed for file (sentence 0)
+[2025-11-19 17:18:39] REPL: Scheduling update for file
+[2025-11-19 17:18:39] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:18:45] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:18:45] CHECKPOINT: Created checkpoint ss_data_0/checkpoints/file_v1
+[2025-11-19 17:18:45] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:18:52] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:18:52] LISTCHECKPOINTS: Listed checkpoints for file
+[2025-11-19 17:18:52] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:19:08] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-19 17:19:08] WRITE: Locked file file (sentence 0)
+[2025-11-19 17:19:14] Updated size for file: 31 bytes
+[2025-11-19 17:19:14] Updated counts for file: 2 words, 31 chars
+[2025-11-19 17:19:14] WRITE: Updated metadata for file (size: 31, words: 2, chars: 31)
+[2025-11-19 17:19:14] WRITE: Completed for file (sentence 0)
+[2025-11-19 17:19:14] REPL: Scheduling update for file
+[2025-11-19 17:19:14] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:19:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:19:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:19:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:19:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:19:23] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:19:23] CHECKPOINT: Created checkpoint ss_data_0/checkpoints/file_v2
+[2025-11-19 17:19:23] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:19:28] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:19:28] LISTCHECKPOINTS: Listed checkpoints for file
+[2025-11-19 17:19:28] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:19:38] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:19:38] Updated size for file: 15 bytes
+[2025-11-19 17:19:38] Updated counts for file: 1 words, 15 chars
+[2025-11-19 17:19:38] REVERT: Updated metadata for file (size: 15, words: 1, chars: 15)
+[2025-11-19 17:19:38] REVERT: Reverted ss_data_0/files/file to checkpoint v1
+[2025-11-19 17:19:38] REPL: Scheduling update for file
+[2025-11-19 17:19:38] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:19:38] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:19:41] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:19:41] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:19:41] READ: Handler called for file 'file'
+[2025-11-19 17:19:41] READ: Starting read for file file
+[2025-11-19 17:19:41] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:19:41] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:19:41] READ: Chunk 1 - read 15 bytes, is_final=1
+[2025-11-19 17:19:41] READ: Chunk 1 sent
+[2025-11-19 17:19:41] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:19:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:19:51] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:19:51] LISTCHECKPOINTS: Listed checkpoints for file
+[2025-11-19 17:19:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:20:07] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:20:07] VIEWCHECKPOINT: Sent checkpoint v1
+[2025-11-19 17:20:07] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:20:16] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:20:16] VIEWCHECKPOINT: Sent checkpoint v2
+[2025-11-19 17:20:16] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:20:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:20:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:20:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:20:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:20:28] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:20:28] VIEWCHECKPOINT: Sent checkpoint v1
+[2025-11-19 17:20:28] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:20:33] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:20:33] VIEWCHECKPOINT: Sent checkpoint v1
+[2025-11-19 17:20:33] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:20:39] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:20:39] VIEWCHECKPOINT: Sent checkpoint v2
+[2025-11-19 17:20:39] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:21:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:21:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:21:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:21:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:21:54] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:21:54] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:21:54] READ: Handler called for file 'file'
+[2025-11-19 17:21:54] READ: Starting read for file file
+[2025-11-19 17:21:54] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:21:54] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:21:54] READ: Chunk 1 - read 15 bytes, is_final=1
+[2025-11-19 17:21:54] READ: Chunk 1 sent
+[2025-11-19 17:21:54] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:21:54] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:01] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:01] Updated size for file: 31 bytes
+[2025-11-19 17:22:01] Updated counts for file: 2 words, 31 chars
+[2025-11-19 17:22:01] REVERT: Updated metadata for file (size: 31, words: 2, chars: 31)
+[2025-11-19 17:22:01] REVERT: Reverted ss_data_0/files/file to checkpoint v2
+[2025-11-19 17:22:01] REPL: Scheduling update for file
+[2025-11-19 17:22:01] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:22:01] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:04] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:22:04] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:22:04] READ: Handler called for file 'file'
+[2025-11-19 17:22:04] READ: Starting read for file file
+[2025-11-19 17:22:04] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:22:04] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:22:04] READ: Chunk 1 - read 31 bytes, is_final=1
+[2025-11-19 17:22:04] READ: Chunk 1 sent
+[2025-11-19 17:22:04] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:22:04] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:10] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:10] Updated size for file: 15 bytes
+[2025-11-19 17:22:10] Updated counts for file: 1 words, 15 chars
+[2025-11-19 17:22:10] REVERT: Updated metadata for file (size: 15, words: 1, chars: 15)
+[2025-11-19 17:22:10] REVERT: Reverted ss_data_0/files/file to checkpoint v1
+[2025-11-19 17:22:10] REPL: Scheduling update for file
+[2025-11-19 17:22:10] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:10] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:22:13] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:22:13] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:22:13] READ: Handler called for file 'file'
+[2025-11-19 17:22:13] READ: Starting read for file file
+[2025-11-19 17:22:13] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:22:13] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:22:13] READ: Chunk 1 - read 15 bytes, is_final=1
+[2025-11-19 17:22:13] READ: Chunk 1 sent
+[2025-11-19 17:22:13] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:22:13] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:15] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:15] Updated size for file: 31 bytes
+[2025-11-19 17:22:15] Updated counts for file: 2 words, 31 chars
+[2025-11-19 17:22:15] REVERT: Updated metadata for file (size: 31, words: 2, chars: 31)
+[2025-11-19 17:22:15] REVERT: Reverted ss_data_0/files/file to checkpoint v2
+[2025-11-19 17:22:15] REPL: Scheduling update for file
+[2025-11-19 17:22:15] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:15] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:22:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:22:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:22:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:22:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:22:18] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:22:18] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:22:18] READ: Handler called for file 'file'
+[2025-11-19 17:22:18] READ: Starting read for file file
+[2025-11-19 17:22:18] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:22:18] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:22:18] READ: Chunk 1 - read 31 bytes, is_final=1
+[2025-11-19 17:22:18] READ: Chunk 1 sent
+[2025-11-19 17:22:18] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:22:18] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:21] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:21] Updated size for file: 31 bytes
+[2025-11-19 17:22:21] Updated counts for file: 2 words, 31 chars
+[2025-11-19 17:22:21] REVERT: Updated metadata for file (size: 31, words: 2, chars: 31)
+[2025-11-19 17:22:21] REVERT: Reverted ss_data_0/files/file to checkpoint v2
+[2025-11-19 17:22:21] REPL: Scheduling update for file
+[2025-11-19 17:22:21] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:22:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:29] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-19 17:22:29] WRITE: Locked file file (sentence 0)
+[2025-11-19 17:22:34] Updated size for file: 47 bytes
+[2025-11-19 17:22:34] Updated counts for file: 3 words, 47 chars
+[2025-11-19 17:22:34] WRITE: Updated metadata for file (size: 47, words: 3, chars: 47)
+[2025-11-19 17:22:34] WRITE: Completed for file (sentence 0)
+[2025-11-19 17:22:34] REPL: Scheduling update for file
+[2025-11-19 17:22:34] REPL: No backup assigned, skipping replication for file
+[2025-11-19 17:22:37] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:22:37] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:22:37] READ: Handler called for file 'file'
+[2025-11-19 17:22:37] READ: Starting read for file file
+[2025-11-19 17:22:37] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:22:37] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:22:37] READ: Chunk 1 - read 47 bytes, is_final=1
+[2025-11-19 17:22:37] READ: Chunk 1 sent
+[2025-11-19 17:22:37] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:22:37] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:41] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:41] CHECKPOINT: Created checkpoint ss_data_0/checkpoints/file_v3
+[2025-11-19 17:22:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:45] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-19 17:22:45] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-19 17:22:45] READ: Handler called for file 'file'
+[2025-11-19 17:22:45] READ: Starting read for file file
+[2025-11-19 17:22:45] READ: Full path is ss_data_0/files/file
+[2025-11-19 17:22:45] READ: File opened successfully, starting to read chunks
+[2025-11-19 17:22:45] READ: Chunk 1 - read 47 bytes, is_final=1
+[2025-11-19 17:22:45] READ: Chunk 1 sent
+[2025-11-19 17:22:45] READ: Read complete for file, sent 1 chunks
+[2025-11-19 17:22:45] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:48] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:48] CHECKPOINT: Created checkpoint ss_data_0/checkpoints/file_v2
+[2025-11-19 17:22:48] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:22:56] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 46)
+[2025-11-19 17:22:56] LISTCHECKPOINTS: Listed checkpoints for file
+[2025-11-19 17:22:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-19 17:23:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:23:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:23:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:23:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:24:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:24:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:24:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:24:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:25:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:25:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:25:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:25:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:26:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:26:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:26:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:26:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:27:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:27:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:27:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:27:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:28:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:28:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:28:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:28:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:29:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:29:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:29:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:29:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:30:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:30:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:30:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:30:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:31:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:31:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:31:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:31:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:32:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:32:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:32:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:32:16] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-19 17:33:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-19 17:33:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-19 17:33:16] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-19 17:33:16] CHECKPOINT: Metadata saved successfully (1 entries)

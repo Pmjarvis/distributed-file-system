@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <time.h>
 #include "ns_handler.h"
 #include "ns_globals.h"
 #include "../common/protocol.h"
@@ -518,33 +520,105 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 3. Get content from SS
-    // --- FIX: Removed unused variable ---
-    // int ss_sock = socket(AF_INET, SOCK_STREAM, 0);
+    // 3. Get file content from SS by connecting and requesting it
+    int ss_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (ss_sock < 0) {
+        send_error_response_to_client(session->client_sock, "Failed to create socket for SS connection.");
+        return;
+    }
     
-    // Placeholder for content
-    Res_Exec exec_content;
-    snprintf(exec_content.output, MAX_PAYLOAD, "echo 'Hello from %s' \n ls -l", payload.filename);
-
-    // 4. Execute content
+    struct sockaddr_in ss_addr;
+    ss_addr.sin_family = AF_INET;
+    ss_addr.sin_port = htons(ss->client_port);
+    inet_pton(AF_INET, ss->ip, &ss_addr.sin_addr);
+    
+    if (connect(ss_sock, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) < 0) {
+        close(ss_sock);
+        send_error_response_to_client(session->client_sock, "Failed to connect to Storage Server for EXEC.");
+        return;
+    }
+    
+    // Send GET_CONTENT request to SS (reusing MSG_N2S_EXEC_GET_CONTENT message type)
+    strncpy(payload.username, session->username, MAX_USERNAME);
+    send_response(ss_sock, MSG_N2S_EXEC_GET_CONTENT, &payload, sizeof(payload));
+    
+    // Receive content from SS
+    MsgHeader content_header;
+    if (recv_header(ss_sock, &content_header) <= 0) {
+        close(ss_sock);
+        send_error_response_to_client(session->client_sock, "Failed to receive content from Storage Server.");
+        return;
+    }
+    
+    if (content_header.type == MSG_S2N_ACK_FAIL) {
+        Res_Error err_payload;
+        recv_payload(ss_sock, &err_payload, content_header.payload_len);
+        close(ss_sock);
+        send_error_response_to_client(session->client_sock, err_payload.msg);
+        return;
+    }
+    
+    if (content_header.type != MSG_S2N_EXEC_CONTENT) {
+        close(ss_sock);
+        send_error_response_to_client(session->client_sock, "Unexpected response from Storage Server.");
+        return;
+    }
+    
+    Res_Exec file_content;
+    recv_payload(ss_sock, &file_content, content_header.payload_len);
+    close(ss_sock);
+    
+    printf("DEBUG EXEC: Received content from SS: '%s'\n", file_content.output);
+    
+    // 4. Execute the file content as a bash script on NS
+    // Write content to a temporary file, then execute with bash
     char buffer[1024];
     Res_Exec response;
     memset(response.output, 0, MAX_PAYLOAD);
     
-    FILE* pipe = popen(exec_content.output, "r");
-    if (!pipe) {
-        send_error_response_to_client(session->client_sock, "Failed to execute command on server.");
+    // Create temporary script file
+    char temp_script[256];
+    snprintf(temp_script, sizeof(temp_script), "/tmp/nfs_exec_%d_%ld.sh", 
+             getpid(), time(NULL));
+    
+    FILE* script_file = fopen(temp_script, "w");
+    if (!script_file) {
+        send_error_response_to_client(session->client_sock, "Failed to create temporary script file.");
         return;
     }
     
+    fprintf(script_file, "%s", file_content.output);
+    fclose(script_file);
+    
+    // Make script executable and run it
+    chmod(temp_script, 0700);
+    
+    char exec_cmd[512];
+    snprintf(exec_cmd, sizeof(exec_cmd), "/bin/bash %s 2>&1", temp_script);
+    
+    printf("DEBUG EXEC: Executing bash script: %s\n", temp_script);
+    FILE* pipe = popen(exec_cmd, "r");
+    if (!pipe) {
+        unlink(temp_script);
+        send_error_response_to_client(session->client_sock, "Failed to execute bash script.");
+        return;
+    }
+    
+    // Collect output from command execution
     while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
-        if (strlen(response.output) + strlen(buffer) < MAX_PAYLOAD) {
+        if (strlen(response.output) + strlen(buffer) < MAX_PAYLOAD - 1) {
             strcat(response.output, buffer);
         }
     }
-    pclose(pipe);
+    int pclose_status = pclose(pipe);
     
-    // 4. Send output to client
+    // Clean up temporary file
+    unlink(temp_script);
+    
+    printf("DEBUG EXEC: Command exit status: %d, output length: %zu\n", pclose_status, strlen(response.output));
+    printf("DEBUG EXEC: Output: '%s'\n", response.output);
+    
+    // 5. Send execution output to client
     send_response(session->client_sock, MSG_N2C_EXEC_RES, &response, sizeof(response));
 }
 
@@ -614,9 +688,12 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
     printf("DEBUG: handle_ss_redirect called, type=%d\n", header->type);
     Req_FileOp payload;
     if (header->type == MSG_C2N_CHECKPOINT_REQ) {
-        Req_Checkpoint chk_payload;
-        recv_payload(session->client_sock, &chk_payload, header->payload_len);
-        strncpy(payload.filename, chk_payload.filename, MAX_FILENAME - 1); // Copy filename for access check
+        // For CHECKPOINT routing, the client sends Req_FileOp to NS to resolve SS location.
+        // We only need the filename here (tag/command are sent later directly to SS).
+        // Previously, we incorrectly read Req_Checkpoint here, corrupting the filename
+        // and causing Access Denied for legitimate owners. Read Req_FileOp instead.
+        printf("DEBUG: Receiving CHECKPOINT routing payload (Req_FileOp) of size %u\n", header->payload_len);
+        recv_payload(session->client_sock, &payload, header->payload_len);
         payload.filename[MAX_FILENAME - 1] = '\0';
     } else {
         printf("DEBUG: Receiving payload of size %u\n", header->payload_len);

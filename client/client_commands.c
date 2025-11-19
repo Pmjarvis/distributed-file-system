@@ -533,10 +533,9 @@ void do_checkpoint_cmd(char* args, const char* command) {
                 Res_FileContent chunk;
                 memset(&chunk, 0, sizeof(chunk));
                 recv_payload(ss_sock, &chunk, header.payload_len);
-                
-                size_t data_len = header.payload_len - sizeof(chunk.is_final_chunk);
-                if (data_len > MAX_PAYLOAD) data_len = MAX_PAYLOAD;
-                
+                // Use server-provided chunk.data_len instead of guessing from payload_len
+                size_t data_len = chunk.data_len;
+                if (data_len > MAX_PAYLOAD) data_len = MAX_PAYLOAD; // Safety clamp
                 fwrite(chunk.data, 1, data_len, stdout);
                 
                 if (chunk.is_final_chunk) break;

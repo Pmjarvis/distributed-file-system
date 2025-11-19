@@ -1,0 +1,90 @@
+WRITE <filename> <sentence_number>  # Locks the sentence for other users (if no file write access, should return appropriate here)
+<word_index> <content> # Updates the sentence at <word_index> with <content>
+.
+.
+.
+<word_index> <content> # User can update the sentence multiple times
+ETIRW # Relieves the sentence lock, allowing other users to finally write
+
+Follow below specifications for implementation:
+===========================================================
+1. After each subquery of write, i.e. "<word_index> <content>", the word indices for the next subquery will correspond to the updated word indices that we will get after processing the current subquery.
+Example:
+-----------------------
+Client: READ mouse.txt
+Im just a mouse. I dont like T-T PNS
+
+Client: WRITE mouse.txt 0                     # Inserting multiple times into a sentence
+Client: 3 deeply mistaken hollow lil gei-fwen # New sentence : Im just a deeply mistaken hollow lil gei-fwen mouse.
+Client: 6 pocket-sized                        # New sentence : Im just a deeply mistaken hollow pocket-sized lil gei-fwen mouse.
+Client: ETIRW
+Write Successful!
+------------------------
+the word "pocket-sized" was placed at index 6 of the sentence "Im just a deeply mistaken hollow lil gei-fwen mouse." (we follow 0-indexing)
+
+===========================================================
+
+2. The sentence number to write to, given by the CLIENT in the WRITE command, can only be 
+the index of current sentence or lower (we follow 0-indexing for sentence index also).
+Example:
+------------------------------------------
+Client: READ mouse.txt
+Im just a mouse.
+
+Client: WRITE mouse.txt 1  # In essence, appending to the file
+Client: 1 I dont like PNS
+Client: ETIRW
+Write Successful!
+
+Client: READ mouse.txt
+Im just a mouse. I dont like PNS
+
+Client WRITE mouse.txt 2  # Caveat, note the lack of delimiter after last sentence. There are only 2 sentences.
+ERROR: Sentence index out of range.  # Similarly for word indexes (negative or > number of words + 1, should result in errors). 
+-----------------------------------------------------------
+Note: Negative word indices are invalid. Any word index > number of words + 1 is also invalid.
+Note: the word indices entered in each subquery are independent of word indices entered in previous subqueries, as long as they are not invalid (according to the previous note).
+
+===============================================================================
+
+3. In a subquery, when we add content that contains delimiters, only the word_index changes for the subsequent sub querries (of the same WRITE command), not the sentence index, so it is like adding normal content. It does not matter whether the content contains delimiters or not.
+But note that any delimiter character: '?' or '.' or '!' is counted as a word of its own.
+After the WRITE command is finished (i.e. ETIRW is processed), the sentence indices have to be calculated accordingly. 
+If there is no word between two delimiter characters, the delimiter character accounts for one whole sentence.
+
+Example 1:
+File contents are "..."
+This will be processed as:
+Sentence 0: word_index_0="."
+Sentence 1: word_index_0="."
+Sentence 2: word_index_0="."
+
+Example 2:
+File contents are "Hey. I am Natasha!!! Who are you??"
+This will be processed as:
+Sentence 0: word_index_0="Hey", word_index_1="."
+Sentence 1: word_index_0="I", word_index_1="am", word_index_2="Natasha", word_index_3="!"
+Sentence 2: word_index_0="!"
+Sentence 3: word_index_0="!"
+Sentence 4: word_index_0="Who", word_index_1="are", word_index_2="you", word_index_3="?"
+Sentence 5: word_index_0="?"
+
+===============================================================
+
+4. Refer to the following example
+------------------------------------------
+Example:
+Client: READ mouse.txt
+Im just a deeply mistaken hollow pocket-sized lil gei-fwen mouse. I dont like T-T PNS
+
+Client: WRITE mouse.txt 1       # Inserting a sentence delimiter
+Client: 5 and AAD. aaaah        # New sentences : [I dont like T-T PNS and AAD.]* [aaaah]         ---Subsequent word_indices will still refer to the sentence_index given at the start of the WRITE command i.e. 1, ---we used [] to denote a sentence and '*' to mark the end so we can explain it to you
+Client: 0 But,                  # New sentences : [But, I dont like T-T PNS and AAD.]* [aaaah]
+Client: ETIRW
+Write Successful!
+
+Client: READ mouse.txt
+Im just a deeply mistaken hollow pocket-sized lil gei-fwen mouse. But, I dont like T-T PNS and AAD. aaaah
+-----------------------------------------
+Recalculate sentence_indices only after the entire WRITE command.
+Use sentence wise locking.

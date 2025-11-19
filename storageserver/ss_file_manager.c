@@ -438,10 +438,13 @@ void ss_handle_get_content_for_exec(int ns_sock, Req_FileOp* req) {
         return;
     }
     
+    ss_log("EXEC: Read file %s, size=%ld bytes, content='%s'", req->filename, file_size, content);
+    
     Res_Exec res;
     strncpy(res.output, content, MAX_PAYLOAD - 1);
     res.output[MAX_PAYLOAD - 1] = '\0';
     
+    ss_log("EXEC: Sending content to NS: '%s'", res.output);
     send_response(ns_sock, MSG_S2N_EXEC_CONTENT, &res, sizeof(res));
     free(content);
 }
@@ -649,6 +652,13 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
     snprintf(checkpath, sizeof(checkpath), "%s/%s_%s", SS_CHECKPOINT_DIR, req->filename, req->tag);
 
     if (strcmp(req->command, "CHECKPOINT") == 0) {
+        // Enforce uniqueness: do not overwrite existing checkpoint tag for this file
+        if (access(checkpath, F_OK) == 0) {
+            ss_log("CHECKPOINT: Tag already exists for %s -> %s", req->filename, checkpath);
+            send_error_response_to_client(client_sock, "Checkpoint tag already exists");
+            return;
+        }
+
         pthread_rwlock_rdlock(&lock->file_lock);
         if (_copy_file(filepath, checkpath) != 0) {
             pthread_rwlock_unlock(&lock->file_lock);

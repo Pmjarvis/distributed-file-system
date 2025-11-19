@@ -217,16 +217,18 @@ void ss_handle_sync_to_primary(int ns_sock, Req_SyncToPrimary* req) {
     ss_log("RECOVERY: NS requests sync TO primary (us) FROM backup SS %d (%s:%d)",
            req->backup_ss_id, req->backup_ip, req->backup_port);
     
-    // Set syncing flag to block operations
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 1;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // NOTE: We do NOT set g_is_syncing here!
+    // This is a passive wait - the backup SS will connect to us when ready.
+    // When the recovery connection arrives, ss_handle_recovery_connection will:
+    // 1. Set g_is_syncing = 1
+    // 2. Receive and restore files
+    // 3. Clear g_is_syncing = 0
+    // This avoids blocking operations if the backup never connects.
     
     // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
     // Note: We don't initiate connection - backup will connect to us
     // We just wait for incoming SS-to-SS recovery connection
-    // The g_is_syncing flag will be cleared by ss_handle_recovery_connection
     ss_log("RECOVERY: Waiting for backup SS %d to initiate recovery connection", req->backup_ss_id);
 }
 
@@ -283,6 +285,11 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
 void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
     ss_log("RECOVERY: Incoming recovery connection from SS %d (primary_recovery=%d)",
            start_req->ss_id, start_req->is_primary_recovery);
+    
+    // Set syncing flag NOW to block operations during recovery
+    pthread_mutex_lock(&g_sync_mutex);
+    g_is_syncing = 1;
+    pthread_mutex_unlock(&g_sync_mutex);
     
     if (start_req->is_primary_recovery) {
         ss_log("RECOVERY: We are PRIMARY recovering from backup SS %d", start_req->ss_id);
