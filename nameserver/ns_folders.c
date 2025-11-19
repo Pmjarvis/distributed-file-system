@@ -235,11 +235,16 @@ Node* openTreeFolder(Node* current_directory, const char* foldername, bool creat
 
 // --- 7. OPENPARENT ---
 Node* openTreeParentDirectory(Node* current_directory) {
-    if (current_directory->parent == NULL) { // In ROOT
-        return NULL;
+    // Can't go up if we're already in ROOT
+    if (current_directory->type == NODE_ROOT) {
+        return NULL; // Already in ROOT, can't go up further
     }
-    if (current_directory->parent->type == NODE_ROOT) {
-        return NULL; // Parent is ROOT
+    
+    // Parent should always exist (at minimum, ROOT is the parent)
+    if (current_directory->parent == NULL) {
+        return NULL; // Should never happen in a well-formed tree
     }
-    return current_directory->parent; // Success
+    
+    // Return parent (could be ROOT or another folder)
+    return current_directory->parent;
 }

@@ -22,6 +22,10 @@ StorageServer* get_ss_by_id(int id);
 // Finds the *online* SS (primary or backup) responsible for a file
 StorageServer* find_ss_for_file(const char* owner, const char* filename);
 
+// Finds SS for checkpoint operations - tries primary first, then backup if primary is down
+// Returns NULL if both primary and backup are offline
+StorageServer* find_ss_for_checkpoint(const char* owner, const char* filename);
+
 // Finds the primary SS where a new file should be created
 StorageServer* get_ss_for_new_file(const char* filename);
 

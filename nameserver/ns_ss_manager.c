@@ -626,6 +626,47 @@ StorageServer* find_ss_for_file(const char* owner, const char* filename) {
     return NULL;
 }
 
+StorageServer* find_ss_for_checkpoint(const char* owner, const char* filename) {
+    // For checkpoint operations: Try primary first, then backup if primary is down
+    // Checkpoints are NOT replicated, so we need to check where they exist
+    
+    // 1. Look up file in hash table
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, owner, filename);
+    
+    if (!file_node) {
+        // File not found in hash table
+        return NULL;
+    }
+    
+    int primary_ss_id = file_node->primary_ss_id;
+    int backup_ss_id = file_node->backup_ss_id;
+    
+    // 2. Try primary SS first
+    pthread_mutex_lock(&g_ss_list_mutex);
+    StorageServer* primary_ss = get_ss_by_id(primary_ss_id);
+    
+    if (primary_ss && primary_ss->is_online) {
+        pthread_mutex_unlock(&g_ss_list_mutex);
+        // Primary is online - use it (checkpoints are created on primary)
+        return primary_ss;
+    }
+    
+    // 3. Primary is down, try backup SS
+    StorageServer* backup_ss = NULL;
+    if (backup_ss_id != -1) {
+        backup_ss = get_ss_by_id(backup_ss_id);
+        if (backup_ss && backup_ss->is_online) {
+            pthread_mutex_unlock(&g_ss_list_mutex);
+            // Backup is online - checkpoints may have been created there
+            return backup_ss;
+        }
+    }
+    
+    // 4. Both are down
+    pthread_mutex_unlock(&g_ss_list_mutex);
+    return NULL;
+}
+
 StorageServer* get_ss_for_new_file(const char* filename) {
     // Use round-robin load balancing: select SS with fewest files
     pthread_mutex_lock(&g_ss_list_mutex);

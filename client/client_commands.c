@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 // --- Login ---
 
@@ -133,9 +134,9 @@ void do_access(char* args, MsgType type) {
     memset(&req, 0, sizeof(req));
     
     char* saveptr;
-    char* flag = strtok_r(args, " ", &saveptr);
-    char* filename = strtok_r(NULL, " ", &saveptr);
-    char* username = strtok_r(NULL, "", &saveptr);
+    char* flag = strtok_r(args, " \t\n", &saveptr);
+    char* filename = strtok_r(NULL, " \t\n", &saveptr);
+    char* username = strtok_r(NULL, " \t\n", &saveptr);
     
     if (!flag || !filename || !username) {
         if (type == MSG_C2N_ACCESS_ADD)

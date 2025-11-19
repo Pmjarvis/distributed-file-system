@@ -571,3 +571,34 @@ FileMapNode* file_map_table_search_by_ss_and_filename(FileMapHashTable* table, i
     
     return result;
 }
+
+char* file_map_table_find_owner(FileMapHashTable* table, const char* filename) {
+    if (!table || !filename) return NULL;
+    
+    // Lock all buckets since we need to search across all owners
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_lock(&table->bucket_locks[i]);
+    }
+    
+    char* owner_copy = NULL;
+    
+    // Search through all entries
+    for (size_t i = 0; i < table->size; i++) {
+        FileMapNode* node = table->nodes[i];
+        if (node != NULL && node != &g_file_map_tombstone) {
+            if (strcmp(node->filename, filename) == 0) {
+                // Found it! Make a copy of the owner name
+                owner_copy = strdup(node->owner);
+                break;
+            }
+        }
+    }
+    
+    // Unlock all buckets
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_unlock(&table->bucket_locks[i]);
+    }
+    
+    return owner_copy; // Caller must free this
+}
+

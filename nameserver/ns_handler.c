@@ -399,22 +399,33 @@ static void handle_info(UserSession* session, MsgHeader* header) {
         return;
     }
 
-    // 2. Find file (scoped to current user's files)
-    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
-    if (!ss) {
+    // 2. Find the actual owner of the file
+    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    if (!file_owner) {
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
         return;
     }
     
-    // 3. Get fresh metadata from SS
+    // 3. Find file using the actual owner
+    StorageServer* ss = find_ss_for_file(file_owner, payload.filename);
+    if (!ss) {
+        free(file_owner);
+        send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
+        return;
+    }
+    
+    // 4. Get fresh metadata from SS
     FileMetadata meta;
-    if (get_file_metadata_from_ss(session->username, payload.filename, &meta) != 0) {
+    if (get_file_metadata_from_ss(file_owner, payload.filename, &meta) != 0) {
+        free(file_owner);
         send_error_response_to_client(session->client_sock, "Failed to get file metadata from Storage Server.");
         return;
     }
     
-    // 4. Get owner from hash table (has internal locking) - should be current user
-    FileMapNode* file_node = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    // 5. Get owner from hash table (has internal locking)
+    FileMapNode* file_node = file_map_table_search(g_file_map_table, file_owner, payload.filename);
+    free(file_owner); // Done with the owner string
+    
     if (!file_node) {
         send_error_response_to_client(session->client_sock, "File mapping not found on NS.");
         return;
@@ -513,8 +524,17 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
         return;
     }
 
-    // 2. Find SS (scoped to current user's file)
-    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
+    // 2. Find the actual owner of the file
+    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    if (!file_owner) {
+        send_error_response_to_client(session->client_sock, "File not found or SS is offline.");
+        return;
+    }
+    
+    // 3. Find SS using the actual owner
+    StorageServer* ss = find_ss_for_file(file_owner, payload.filename);
+    free(file_owner); // Done with owner string
+    
     if (!ss) {
         send_error_response_to_client(session->client_sock, "File not found or SS is offline.");
         return;
@@ -738,9 +758,27 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    // 2. Find Storage Server (scoped to current user's file)
-    printf("DEBUG: Finding SS for file '%s' (owner: %s)\n", payload.filename, session->username);
-    StorageServer* ss = find_ss_for_file(session->username, payload.filename);
+    // 2. Find the actual owner of the file
+    printf("DEBUG: Finding owner for file '%s'\n", payload.filename);
+    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    if (!file_owner) {
+        printf("DEBUG: File not found in file map\n");
+        send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
+        return;
+    }
+    
+    // 3. Find Storage Server using the actual file owner
+    // For checkpoint operations, use special routing that tries primary then backup
+    StorageServer* ss = NULL;
+    if (header->type == MSG_C2N_CHECKPOINT_REQ) {
+        printf("DEBUG: Finding SS for CHECKPOINT on file '%s' (owner: %s)\n", payload.filename, file_owner);
+        ss = find_ss_for_checkpoint(file_owner, payload.filename);
+    } else {
+        printf("DEBUG: Finding SS for file '%s' (owner: %s)\n", payload.filename, file_owner);
+        ss = find_ss_for_file(file_owner, payload.filename);
+    }
+    free(file_owner); // Free the owner string we got from file_map_table_find_owner
+    
     if (!ss) {
         printf("DEBUG: SS not found, sending error\n");
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");

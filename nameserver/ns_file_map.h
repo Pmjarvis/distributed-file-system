@@ -89,6 +89,16 @@ FileMapNode* file_map_table_search(FileMapHashTable* table, const char* owner, c
 FileMapNode* file_map_table_search_by_ss_and_filename(FileMapHashTable* table, int ss_id, const char* filename);
 
 /**
+ * @brief Finds the owner of a file by filename
+ * @param table The hash table
+ * @param filename The filename to search for
+ * @return A copy of the owner's username (caller must free), or NULL if not found
+ * @note This searches across all owners to find who owns the file
+ * @note The returned string MUST be freed by the caller using free()
+ */
+char* file_map_table_find_owner(FileMapHashTable* table, const char* filename);
+
+/**
  * @brief Deletes a file from the hash table
  * @param table The hash table
  * @param owner The file owner username

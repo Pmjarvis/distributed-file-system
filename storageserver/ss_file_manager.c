@@ -215,25 +215,51 @@ void ss_free_sentences(char** sentences, int num_sentences) {
 }
 
 char** ss_split_words(const char* sentence, int* num_words) {
+    // Split words treating delimiters (. ! ?) as separate words per spec
     int capacity = 16;
     char** words = (char**)malloc(capacity * sizeof(char*));
     *num_words = 0;
     
-    char* copy = strdup(sentence);
-    char* saveptr;
-    char* token = strtok_r(copy, " \t\n", &saveptr);
+    const char* ptr = sentence;
+    char word_buffer[1024];
+    int word_len = 0;
     
-    while (token) {
-        if (*num_words == capacity) {
-            capacity *= 2;
-            words = (char**)realloc(words, capacity * sizeof(char*));
+    while (*ptr) {
+        // Skip leading whitespace
+        while (*ptr && isspace(*ptr)) ptr++;
+        if (!*ptr) break;
+        
+        // Check if current char is a delimiter
+        if (*ptr == '.' || *ptr == '!' || *ptr == '?') {
+            // Delimiter is its own word
+            if (*num_words == capacity) {
+                capacity *= 2;
+                words = (char**)realloc(words, capacity * sizeof(char*));
+            }
+            char delim[2] = {*ptr, '\0'};
+            words[*num_words] = strdup(delim);
+            (*num_words)++;
+            ptr++;
+            continue;
         }
-        words[*num_words] = strdup(token);
-        (*num_words)++;
-        token = strtok_r(NULL, " \t\n", &saveptr);
+        
+        // Read a regular word until whitespace or delimiter
+        word_len = 0;
+        while (*ptr && !isspace(*ptr) && *ptr != '.' && *ptr != '!' && *ptr != '?') {
+            word_buffer[word_len++] = *ptr++;
+        }
+        
+        if (word_len > 0) {
+            word_buffer[word_len] = '\0';
+            if (*num_words == capacity) {
+                capacity *= 2;
+                words = (char**)realloc(words, capacity * sizeof(char*));
+            }
+            words[*num_words] = strdup(word_buffer);
+            (*num_words)++;
+        }
     }
     
-    free(copy);
     return words;
 }
 
@@ -248,11 +274,19 @@ void ss_free_words(char** words, int num_words) {
 char* ss_join_words(char** words, int num_words) {
     if (num_words == 0) return strdup("");
     
+    // Calculate total length accounting for spaces
+    // Don't add space before delimiters (. ! ?)
     long total_len = 0;
     for (int i = 0; i < num_words; i++) {
         total_len += strlen(words[i]);
+        if (i < num_words - 1) {
+            // Add space before next word unless next word is a delimiter
+            if (!(strlen(words[i + 1]) == 1 && 
+                  (words[i + 1][0] == '.' || words[i + 1][0] == '!' || words[i + 1][0] == '?'))) {
+                total_len++; // Space
+            }
+        }
     }
-    total_len += (num_words - 1); // Spaces
     
     char* sentence = (char*)malloc(total_len + 1);
     sentence[0] = '\0';
@@ -260,7 +294,11 @@ char* ss_join_words(char** words, int num_words) {
     for (int i = 0; i < num_words; i++) {
         strcat(sentence, words[i]);
         if (i < num_words - 1) {
-            strcat(sentence, " ");
+            // Add space before next word unless next word is a delimiter
+            if (!(strlen(words[i + 1]) == 1 && 
+                  (words[i + 1][0] == '.' || words[i + 1][0] == '!' || words[i + 1][0] == '?'))) {
+                strcat(sentence, " ");
+            }
         }
     }
     return sentence;
@@ -822,20 +860,6 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
     }
 }
 
-// --- Write Transaction Data Structure ---
-typedef struct {
-    int index;
-    char* content;
-} WriteChange;
-
-// Comparator for qsort
-static int compare_changes(const void* a, const void* b) {
-    WriteChange* changeA = (WriteChange*)a;
-    WriteChange* changeB = (WriteChange*)b;
-    // Sort in *descending* order of index
-    return (changeB->index - changeA->index);
-}
-
 // --- Complex Write Transaction ---
 void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     // Check if SS is currently syncing
@@ -893,72 +917,136 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     char** sentences = ss_split_sentences(file_content ? file_content : "", &num_sentences);
     if (file_content) free(file_content);
 
-    if (req->sentence_num >= num_sentences && num_sentences > 0) {
-        ss_log("WRITE: Sentence index %d out of range (max %d)", req->sentence_num, num_sentences - 1);
-        // ... free, unlock, error ...
-        send_error_response_to_client(client_sock, "Sentence index out of range");
+    // Validate sentence index:
+    // - Negative indices are invalid
+    // - Indices 0..(num_sentences-1) are always valid (editing existing sentences)
+    // - Index num_sentences (appending) is ONLY valid if last sentence ends with delimiter
+    if (req->sentence_num < 0) {
+        ss_log("WRITE: Sentence index %d is negative", req->sentence_num);
+        char err_msg[256];
+        snprintf(err_msg, sizeof(err_msg), "ERROR: Sentence index %d is invalid (negative not allowed)", req->sentence_num);
+        send_error_response_to_client(client_sock, err_msg);
         ss_free_sentences(sentences, num_sentences);
         pthread_rwlock_unlock(&lock->file_lock);
         pthread_mutex_unlock(sentence_lock);
         return;
     }
     
+    if (req->sentence_num > num_sentences) {
+        ss_log("WRITE: Sentence index %d out of range (max: %d)", req->sentence_num, num_sentences);
+        char err_msg[256];
+        snprintf(err_msg, sizeof(err_msg), "ERROR: Sentence index %d out of range (file has %d sentence%s, valid indices: 0-%d)", 
+                 req->sentence_num, num_sentences, num_sentences == 1 ? "" : "s", num_sentences > 0 ? num_sentences - 1 : 0);
+        send_error_response_to_client(client_sock, err_msg);
+        ss_free_sentences(sentences, num_sentences);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        return;
+    }
+    
+    if (req->sentence_num == num_sentences) {
+        // Appending new sentence - only valid if last sentence ends with delimiter
+        if (num_sentences == 0) {
+            // Empty file - sentence 0 is valid for appending
+            ss_log("WRITE: Appending sentence 0 to empty file");
+        } else {
+            // Check if last sentence ends with delimiter
+            const char* last_sentence = sentences[num_sentences - 1];
+            size_t len = strlen(last_sentence);
+            if (len == 0 || (last_sentence[len-1] != '.' && last_sentence[len-1] != '!' && last_sentence[len-1] != '?')) {
+                ss_log("WRITE: Cannot append sentence %d - last sentence does not end with delimiter", req->sentence_num);
+                send_error_response_to_client(client_sock, "ERROR: Cannot append new sentence - last sentence is incomplete (missing delimiter . ! or ?)");
+                ss_free_sentences(sentences, num_sentences);
+                pthread_rwlock_unlock(&lock->file_lock);
+                pthread_mutex_unlock(sentence_lock);
+                return;
+            }
+            ss_log("WRITE: Appending sentence %d (last sentence ends with delimiter)", req->sentence_num);
+        }
+    }
+    
     // We are OK to proceed, tell client
     send_response(client_sock, MSG_S2C_WRITE_OK, NULL, 0);
 
-    // 5. Receive all write changes from client
-    int changes_capacity = 8;
-    int changes_count = 0;
-    WriteChange* changes = (WriteChange*)malloc(changes_capacity * sizeof(WriteChange));
+    // 5. Initialize working sentence
+    // If appending (sentence_num == num_sentences), start with empty sentence
+    int num_words = 0;
+    char** words = NULL;
     
+    if (req->sentence_num < num_sentences) {
+        // Editing existing sentence
+        words = ss_split_words(sentences[req->sentence_num], &num_words);
+    } else {
+        // Appending new sentence (sentence_num == num_sentences)
+        words = (char**)malloc(16 * sizeof(char*));
+        num_words = 0;
+    }
+
+    // 6. Receive and apply changes incrementally (one at a time)
+    // Per spec: each subquery updates indices for the next one
     MsgHeader header;
+    
     while (recv_header(client_sock, &header) > 0) {
         if (header.type == MSG_C2S_WRITE_DATA) {
-            if (changes_count == changes_capacity) {
-                changes_capacity *= 2;
-                changes = (WriteChange*)realloc(changes, changes_capacity * sizeof(WriteChange));
-            }
             Req_Write_Data data;
             recv_payload(client_sock, &data, header.payload_len);
             
-            changes[changes_count].index = data.word_index;
-            changes[changes_count].content = strdup(data.content);
-            changes_count++;
+            // Validate word index per spec:
+            // - Negative indices are invalid
+            // - Indices > num_words are invalid (can insert at num_words but not beyond)
+            if (data.word_index < 0) {
+                ss_log("WRITE: Invalid word index %d (negative) - IGNORING subquery", data.word_index);
+                fprintf(stderr, "[WARNING] Invalid word index %d - skipping this subquery. Current sentence has %d words (valid indices: 0-%d)\n", 
+                        data.word_index, num_words, num_words);
+                continue; // Skip this subquery, continue accepting more
+            }
+            if (data.word_index > num_words) {
+                ss_log("WRITE: Invalid word index %d (max: %d) - IGNORING subquery", data.word_index, num_words);
+                fprintf(stderr, "[WARNING] Invalid word index %d - skipping this subquery. Current sentence has %d words (valid indices: 0-%d)\n", 
+                        data.word_index, num_words, num_words);
+                continue; // Skip this subquery, continue accepting more
+            }
+            
+            // Split the content into individual words (handling delimiters)
+            int content_num_words;
+            char** content_words = ss_split_words(data.content, &content_num_words);
+            
+            // Insert all content words at the specified index
+            // Allocate space for new words
+            words = (char**)realloc(words, (num_words + content_num_words) * sizeof(char*));
+            
+            // Shift existing words to make room
+            memmove(&words[data.word_index + content_num_words], 
+                    &words[data.word_index], 
+                    (num_words - data.word_index) * sizeof(char*));
+            
+            // Insert new words
+            for (int j = 0; j < content_num_words; j++) {
+                words[data.word_index + j] = content_words[j]; // Transfer ownership
+            }
+            num_words += content_num_words;
+            
+            // Free only the array, not the strings (ownership transferred)
+            free(content_words);
             
         } else if (header.type == MSG_C2S_WRITE_ETIRW) {
             break; // End of transaction
         }
     }
 
-    // 6. Apply changes (sort by index descending)
-    qsort(changes, changes_count, sizeof(WriteChange), compare_changes);
-
-    int num_words;
-    char* sentence_str = (num_sentences > 0) ? sentences[req->sentence_num] : strdup("");
-    char** words = ss_split_words(sentence_str, &num_words);
-    
-    for (int i = 0; i < changes_count; i++) {
-        int idx = changes[i].index;
-        if (idx > num_words) idx = num_words; // Append
-        if (idx < 0) idx = 0; // Prepend
-        
-        // "Insert" word by reallocing and shifting
-        words = (char**)realloc(words, (num_words + 1) * sizeof(char*));
-        memmove(&words[idx + 1], &words[idx], (num_words - idx) * sizeof(char*));
-        words[idx] = strdup(changes[i].content);
-        num_words++;
-    }
-
-    // 7. Re-join words, update sentences array
+    // 7. Re-join words into the modified sentence
     char* new_sentence = ss_join_words(words, num_words);
-    if (num_sentences > 0) {
+    
+    // Update or append to sentences array
+    if (req->sentence_num < num_sentences) {
+        // Replace existing sentence
         free(sentences[req->sentence_num]);
         sentences[req->sentence_num] = new_sentence;
     } else {
-        // File was empty, this is the first sentence
-        sentences = (char**)realloc(sentences, 1 * sizeof(char*));
-        sentences[0] = new_sentence;
-        num_sentences = 1;
+        // Append new sentence (sentence_num == num_sentences)
+        sentences = (char**)realloc(sentences, (num_sentences + 1) * sizeof(char*));
+        sentences[num_sentences] = new_sentence;
+        num_sentences++;
     }
 
     // 8. Re-join sentences and write back to file
@@ -994,8 +1082,6 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     free(new_file_content);
     ss_free_words(words, num_words);
     ss_free_sentences(sentences, num_sentences);
-    for (int i = 0; i < changes_count; i++) free(changes[i].content);
-    free(changes);
 
     // 10. Release locks and send response
     pthread_rwlock_unlock(&lock->file_lock);
