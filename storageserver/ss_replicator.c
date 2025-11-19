@@ -23,8 +23,15 @@ static unsigned _hash_filename(const char* fn) {
 }
 
 static void _do_replication_update(const char* filename) {
-    // FIX: Check if we have a valid backup assigned
-    if (strlen(g_backup_ip) == 0 || g_backup_port == 0) {
+    // FIX: Check if we have a valid backup assigned (with mutex protection)
+    pthread_mutex_lock(&g_backup_config_mutex);
+    int backup_port = g_backup_port;
+    char backup_ip[16];
+    strncpy(backup_ip, g_backup_ip, 16);
+    backup_ip[15] = '\0';
+    pthread_mutex_unlock(&g_backup_config_mutex);
+    
+    if (strlen(backup_ip) == 0 || backup_port == 0) {
         ss_log("REPL: No backup assigned, skipping replication for %s", filename);
         return;
     }
@@ -57,9 +64,9 @@ static void _do_replication_update(const char* filename) {
         return;
     }
 
-    int sock = connect_to_server(g_backup_ip, g_backup_port); // Remote backup target
+    int sock = connect_to_server(backup_ip, backup_port); // Remote backup target
     if (sock < 0) {
-        ss_log("REPL: Could not connect to backup server at %s:%d", g_backup_ip, g_backup_port);
+        ss_log("REPL: Could not connect to backup server at %s:%d", backup_ip, backup_port);
         // Retry logic: requeue up to 5 attempts with simple backoff (handled by worker loop timing)
         unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
         if (retry_counts[idx] < 5) {
@@ -231,9 +238,17 @@ void handle_replication_receive(int sock) {
         
         ss_log("REPL_IN: Receiving replica for %s (%llu bytes)", req.filename, (unsigned long long)req.file_size);
         
+        // CRITICAL FIX: Acquire file lock before writing to prevent corruption
+        // This prevents concurrent READ/CHECKPOINT/WRITE from accessing the file
+        // while replication is overwriting it
+        FileLock* lock = lock_map_get(&g_file_lock_map, req.filename);
+        pthread_rwlock_wrlock(&lock->file_lock);
+        ss_log("REPL_IN: Acquired write lock for %s", req.filename);
+        
         FILE* f = fopen(filepath, "wb");
         if (!f) {
             perror("REPL_IN: Failed to open file for writing");
+            pthread_rwlock_unlock(&lock->file_lock);
             close(sock);
             return;
         }
@@ -268,6 +283,10 @@ void handle_replication_receive(int sock) {
             ss_log("REPL_IN: Created metadata for %s (owner: %s, is_backup=true)", req.filename, req.owner);
         }
         
+        // Release file lock after metadata update
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("REPL_IN: Released write lock for %s", req.filename);
+        
     } else if (header.type == MSG_S2S_DELETE_FILE) {
         Req_FileOp req;
         if (recv_payload(sock, &req, sizeof(req)) <= 0) {
@@ -277,6 +296,12 @@ void handle_replication_receive(int sock) {
         snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, req.filename);
         
         ss_log("REPL_IN: Receiving delete for %s", req.filename);
+        
+        // CRITICAL FIX: Acquire file lock before deleting to prevent corruption
+        FileLock* lock = lock_map_get(&g_file_lock_map, req.filename);
+        pthread_rwlock_wrlock(&lock->file_lock);
+        ss_log("REPL_IN: Acquired write lock for delete %s", req.filename);
+        
         if (unlink(filepath) != 0) {
             ss_log("REPL_IN: Failed to delete %s: %s", req.filename, strerror(errno));
         }
@@ -284,6 +309,10 @@ void handle_replication_receive(int sock) {
         // FIX: Also delete from metadata table
         metadata_table_remove(g_metadata_table, req.filename);
         ss_log("REPL_IN: Deleted metadata for %s", req.filename);
+        
+        // Release file lock after deletion
+        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("REPL_IN: Released write lock for %s", req.filename);
     }
     
     send_response(sock, MSG_S2S_ACK, NULL, 0); // Send ACK

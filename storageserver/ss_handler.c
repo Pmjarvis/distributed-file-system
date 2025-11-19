@@ -151,13 +151,16 @@ void handle_ns_session(int ns_sock, const char* ns_ip) {
 void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
     ss_log("HANDLER: Received backup assignment update from NS");
     
-    // Update global backup information
+    // Update global backup information (with mutex protection)
+    pthread_mutex_lock(&g_backup_config_mutex);
     if (req->backup_ss_id != -1 && strlen(req->backup_ip) > 0) {
         strncpy(g_backup_ip, req->backup_ip, 16);
         g_backup_ip[15] = '\0';
         g_backup_port = req->backup_port;
+        pthread_mutex_unlock(&g_backup_config_mutex);
+        
         ss_log("HANDLER: Backup assignment updated - will replicate to %s:%d (SS ID %d)",
-               g_backup_ip, g_backup_port, req->backup_ss_id);
+               req->backup_ip, req->backup_port, req->backup_ss_id);
 
         // Trigger immediate full catch-up replication of existing PRIMARY files
         // (Files created before we had a backup would have been skipped.)
@@ -186,6 +189,7 @@ void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
         // No backup assigned
         g_backup_ip[0] = '\0';
         g_backup_port = 0;
+        pthread_mutex_unlock(&g_backup_config_mutex);
         ss_log("HANDLER: Backup assignment cleared - no backup assigned");
     }
     

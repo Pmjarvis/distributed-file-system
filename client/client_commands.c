@@ -456,11 +456,44 @@ void do_write(char* args) {
         data.word_index = atoi(idx_str);
         strncpy(data.content, content, MAX_PAYLOAD - 5);
         
-        send_request(ss_sock, MSG_C2S_WRITE_DATA, &data, sizeof(data));
+        if (send_request(ss_sock, MSG_C2S_WRITE_DATA, &data, sizeof(data)) < 0) {
+            fprintf(stderr, "ERROR: Lost connection to storage server during WRITE transaction.\n");
+            fprintf(stderr, "Transaction aborted - no changes were saved.\n");
+            close(ss_sock);
+            return;
+        }
+        
+        // Check for immediate error response from server (e.g., invalid word_index)
+        // Use MSG_PEEK to check without consuming the message
+        MsgHeader peek_header;
+        ssize_t peek_result = recv(ss_sock, &peek_header, sizeof(peek_header), MSG_PEEK | MSG_DONTWAIT);
+        
+        if (peek_result > 0) {
+            // There's a message waiting - check if it's an error
+            if (peek_header.type == MSG_S2C_GENERIC_FAIL) {
+                // Server sent an error for this subquery
+                MsgHeader actual_header;
+                if (recv_header(ss_sock, &actual_header) > 0) {
+                    handle_generic_response(ss_sock, &actual_header);
+                }
+                // Continue accepting more subqueries (server continues transaction)
+                continue;
+            }
+        } else if (peek_result == 0) {
+            // Connection closed by server
+            fprintf(stderr, "ERROR: Storage server disconnected during WRITE transaction.\n");
+            fprintf(stderr, "Transaction aborted - no changes were saved.\n");
+            close(ss_sock);
+            return;
+        }
+        // If peek_result < 0, it's just EAGAIN/EWOULDBLOCK (no message yet) - continue normally
     }
     
     // 4. Wait for final confirmation
-    handle_generic_response(ss_sock, NULL);
+    int result = handle_generic_response(ss_sock, NULL);
+    if (result < 0) {
+        fprintf(stderr, "WRITE transaction failed - no changes were saved.\n");
+    }
     close(ss_sock);
 }
 

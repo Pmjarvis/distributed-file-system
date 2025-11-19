@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include "client_net.h"
 #include "client_commands.h"
 #include "../common/protocol.h"
@@ -17,6 +18,9 @@ static void print_prompt() {
 }
 
 int main(int argc, char* argv[]) {
+    // Ignore SIGPIPE - handle broken pipes via send() errors instead of process termination
+    signal(SIGPIPE, SIG_IGN);
+    
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <ns_ip> <ns_port>\n", argv[0]);
         exit(EXIT_FAILURE);

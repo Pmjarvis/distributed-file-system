@@ -28,6 +28,7 @@ int g_ss_client_port = -1;
 int g_ss_id = -1;
 char g_backup_ip[16];
 int g_backup_port = -1;
+pthread_mutex_t g_backup_config_mutex = PTHREAD_MUTEX_INITIALIZER;  // Protects g_backup_ip and g_backup_port
 FileLockMap g_file_lock_map;
 int g_repl_listen_port = -1; // Local replication listener port (argv[5])
 ReplicationQueue g_repl_queue;
@@ -41,6 +42,7 @@ char g_ss_root_dir[256];
 char g_ss_files_dir[256];
 char g_ss_undo_dir[256];
 char g_ss_checkpoint_dir[256];
+char g_ss_swap_dir[256];  // For WRITE operation swapfiles
 char g_metadata_db_path[512];
 // ---
 
@@ -136,6 +138,7 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     snprintf(g_ss_files_dir, sizeof(g_ss_files_dir), "%s/files", g_ss_root_dir);
     snprintf(g_ss_undo_dir, sizeof(g_ss_undo_dir), "%s/undo", g_ss_root_dir);
     snprintf(g_ss_checkpoint_dir, sizeof(g_ss_checkpoint_dir), "%s/checkpoints", g_ss_root_dir);
+    snprintf(g_ss_swap_dir, sizeof(g_ss_swap_dir), "%s/swap", g_ss_root_dir);
     snprintf(g_metadata_db_path, sizeof(g_metadata_db_path), "%s/metadata.db", g_ss_root_dir);
     ss_log("MAIN: Using persistent data directory: %s", g_ss_root_dir);
 
@@ -188,15 +191,18 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
 
     // Threads will be joined in main() during shutdown. (No detach here.)
     
-    // FIX: Use backup info from NS (where to SEND replications)
+    // FIX: Use backup info from NS (where to SEND replications) - with mutex protection
+    pthread_mutex_lock(&g_backup_config_mutex);
     if (ack.backup_of_ss_id != -1 && strlen(ack.backup_ss_ip) > 0) {
         strncpy(g_backup_ip, ack.backup_ss_ip, 16);
         g_backup_port = ack.backup_ss_port;
-        ss_log("MAIN: Will send replications to: %s:%d", g_backup_ip, g_backup_port);
+        pthread_mutex_unlock(&g_backup_config_mutex);
+        ss_log("MAIN: Will send replications to: %s:%d", ack.backup_ss_ip, ack.backup_ss_port);
     } else {
         // No backup assigned
         memset(g_backup_ip, 0, 16);
         g_backup_port = 0;
+        pthread_mutex_unlock(&g_backup_config_mutex);
         ss_log("MAIN: No replication target assigned (single SS or no backup available)");
     }
     

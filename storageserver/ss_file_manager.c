@@ -25,6 +25,7 @@ void ss_create_dirs() {
     mkdir(SS_FILES_DIR, 0755);
     mkdir(SS_UNDO_DIR, 0755);
     mkdir(SS_CHECKPOINT_DIR, 0755);
+    mkdir(SS_SWAP_DIR, 0755);  // For WRITE operation swapfiles
 }
 
 static int _copy_file(const char* src_path, const char* dest_path) {
@@ -323,16 +324,9 @@ char* ss_join_sentences(char** sentences, int num_sentences) {
 // --- NS Request Handlers ---
 
 void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
-    // Check if SS is currently syncing
-    pthread_mutex_lock(&g_sync_mutex);
-    int syncing = g_is_syncing;
-    pthread_mutex_unlock(&g_sync_mutex);
-    
-    if (syncing) {
-        ss_log("CREATE: Blocked - storage server is currently syncing");
-        send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
-        return;
-    }
+    // NOTE: Removed global g_is_syncing check
+    // Recovery now uses fine-grained file locks, so files not being recovered
+    // can still be created/accessed normally during recovery
     
     char filepath[MAX_PATH];
     ss_get_path(SS_FILES_DIR, req->filename, filepath);
@@ -349,25 +343,46 @@ void ss_handle_create_file(int ns_sock, Req_FileOp* req) {
     metadata_table_insert(g_metadata_table, req->filename, req->username,
                          0, 0, 0, time(NULL), time(NULL), false);
     
+    // Persist metadata immediately after CREATE
+    metadata_table_save(g_metadata_table, METADATA_DB_PATH);
+    
     ss_log("CREATE: File %s created by %s", req->filename, req->username);
     repl_schedule_update(req->filename); // Replicate empty file
     send_success_response_to_ns(ns_sock, "File created");
 }
 
 void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
-    // Check if SS is currently syncing
-    pthread_mutex_lock(&g_sync_mutex);
-    int syncing = g_is_syncing;
-    pthread_mutex_unlock(&g_sync_mutex);
-    
-    if (syncing) {
-        ss_log("DELETE: Blocked - storage server is currently syncing");
-        send_error_response_to_ns(ns_sock, "Storage server is currently syncing. Please try again later.");
-        return;
-    }
+    // NOTE: Removed global g_is_syncing check
+    // Recovery now uses fine-grained file locks, so files not being recovered
+    // can still be deleted normally during recovery
     
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_rwlock_wrlock(&lock->file_lock);
+    
+    // Check for active WRITE operations (swapfiles exist)
+    DIR* swap_dir = opendir(SS_SWAP_DIR);
+    if (swap_dir) {
+        struct dirent* entry;
+        char swap_prefix[MAX_FILENAME + 10];
+        snprintf(swap_prefix, sizeof(swap_prefix), "%s_swap_", req->filename);
+        size_t prefix_len = strlen(swap_prefix);
+        int has_swapfiles = 0;
+        
+        while ((entry = readdir(swap_dir)) != NULL) {
+            if (entry->d_type == DT_REG && strncmp(entry->d_name, swap_prefix, prefix_len) == 0) {
+                has_swapfiles = 1;
+                break;
+            }
+        }
+        closedir(swap_dir);
+        
+        if (has_swapfiles) {
+            ss_log("DELETE: Cannot delete %s - WRITE operation in progress (swapfiles exist)", req->filename);
+            pthread_rwlock_unlock(&lock->file_lock);
+            send_error_response_to_ns(ns_sock, "Cannot delete file - WRITE operation in progress");
+            return;
+        }
+    }
     
     char filepath[MAX_PATH];
     char undopath[MAX_PATH];
@@ -409,6 +424,9 @@ void ss_handle_delete_file(int ns_sock, Req_FileOp* req) {
     
     // Remove from metadata table
     metadata_table_remove(g_metadata_table, req->filename);
+    
+    // Persist metadata immediately after DELETE
+    metadata_table_save(g_metadata_table, METADATA_DB_PATH);
     
     ss_log("DELETE: File %s deleted", req->filename);
     repl_schedule_delete(req->filename);
@@ -494,15 +512,9 @@ void ss_handle_read(int client_sock, Req_FileOp* req) {
     ss_log("READ: Handler called for file '%s'", req->filename);
     
     // Check if SS is currently syncing
-    pthread_mutex_lock(&g_sync_mutex);
-    int syncing = g_is_syncing;
-    pthread_mutex_unlock(&g_sync_mutex);
-    
-    if (syncing) {
-        ss_log("READ: Blocked - storage server is currently syncing");
-        send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
-        return;
-    }
+    // NOTE: Removed global g_is_syncing check
+    // Recovery now uses fine-grained file locks, so files not being recovered
+    // can still be read normally during recovery
     
     ss_log("READ: Starting read for file %s", req->filename);
     
@@ -675,6 +687,9 @@ void ss_handle_undo(int client_sock, Req_FileOp* req) {
         }
     }
     
+    // Persist metadata immediately after UNDO
+    metadata_table_save(g_metadata_table, METADATA_DB_PATH);
+    
     pthread_rwlock_unlock(&lock->file_lock);
     
     ss_log("UNDO: File %s reverted", req->filename);
@@ -751,6 +766,9 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
                 free(content);
             }
         }
+        
+        // Persist metadata immediately after REVERT
+        metadata_table_save(g_metadata_table, METADATA_DB_PATH);
         
         pthread_rwlock_unlock(&lock->file_lock);
         ss_log("REVERT: Reverted %s to checkpoint %s", filepath, req->tag);
@@ -862,16 +880,9 @@ void ss_handle_checkpoint(int client_sock, Req_Checkpoint* req) {
 
 // --- Complex Write Transaction ---
 void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
-    // Check if SS is currently syncing
-    pthread_mutex_lock(&g_sync_mutex);
-    int syncing = g_is_syncing;
-    pthread_mutex_unlock(&g_sync_mutex);
-    
-    if (syncing) {
-        ss_log("WRITE: Blocked - storage server is currently syncing");
-        send_error_response_to_client(client_sock, "Storage server is currently syncing. Please try again later.");
-        return;
-    }
+    // NOTE: Removed global g_is_syncing check
+    // Recovery now uses fine-grained file locks, so files not being recovered
+    // can still be written normally during recovery
     
     FileLock* lock = lock_map_get(&g_file_lock_map, req->filename);
     pthread_mutex_t* sentence_lock = lock_map_get_sentence_lock(lock, req->sentence_num);
@@ -883,33 +894,37 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
         return;
     }
 
-    // 2. We have the sentence lock. Now get the file write lock.
-    pthread_rwlock_wrlock(&lock->file_lock);
-    
-    ss_log("WRITE: Locked file %s (sentence %d)", req->filename, req->sentence_num);
-
-    char filepath[MAX_PATH], undopath[MAX_PATH];
+    // 2. Create swapfile for isolation (readers see pre-WRITE state)
+    char filepath[MAX_PATH], swappath[MAX_PATH], undopath[MAX_PATH];
     ss_get_path(SS_FILES_DIR, req->filename, filepath);
+    snprintf(swappath, sizeof(swappath), "%s/%s_swap_%d", SS_SWAP_DIR, req->filename, req->sentence_num);
     ss_get_path(SS_UNDO_DIR, req->filename, undopath);
+    
+    if (_copy_file(filepath, swappath) != 0) {
+        ss_log("WRITE: Failed to create swapfile for %s", req->filename);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not create swapfile)");
+        return;
+    }
+    ss_log("WRITE: Created swapfile %s (sentence %d)", req->filename, req->sentence_num);
 
-    // 3. Make undo backup
-    if (_copy_file(filepath, undopath) != 0) {
+    // 3. Make undo backup from swapfile
+    if (_copy_file(swappath, undopath) != 0) {
         ss_log("WRITE: Failed to create undo copy for %s", req->filename);
-        pthread_rwlock_unlock(&lock->file_lock);
+        unlink(swappath);  // Clean up swapfile
         pthread_mutex_unlock(sentence_lock);
         send_error_response_to_client(client_sock, "Write failed (could not create undo)");
         return;
     }
 
-    // 4. Read file and split into sentences
+    // 4. Read swapfile and split into sentences
     long file_size;
-    char* file_content = ss_read_file_to_memory(filepath, &file_size);
+    char* file_content = ss_read_file_to_memory(swappath, &file_size);
     if (!file_content && file_size > 0) {
-        ss_log("WRITE: Failed to read file %s", req->filename);
-        // ... unlock and error ...
-        pthread_rwlock_unlock(&lock->file_lock);
+        ss_log("WRITE: Failed to read swapfile %s", swappath);
+        unlink(swappath);  // Clean up swapfile
         pthread_mutex_unlock(sentence_lock);
-        send_error_response_to_client(client_sock, "Write failed (could not read file)");
+        send_error_response_to_client(client_sock, "Write failed (could not read swapfile)");
         return;
     }
     
@@ -927,7 +942,7 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
         snprintf(err_msg, sizeof(err_msg), "ERROR: Sentence index %d is invalid (negative not allowed)", req->sentence_num);
         send_error_response_to_client(client_sock, err_msg);
         ss_free_sentences(sentences, num_sentences);
-        pthread_rwlock_unlock(&lock->file_lock);
+        unlink(swappath);  // Clean up swapfile
         pthread_mutex_unlock(sentence_lock);
         return;
     }
@@ -939,7 +954,7 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
                  req->sentence_num, num_sentences, num_sentences == 1 ? "" : "s", num_sentences > 0 ? num_sentences - 1 : 0);
         send_error_response_to_client(client_sock, err_msg);
         ss_free_sentences(sentences, num_sentences);
-        pthread_rwlock_unlock(&lock->file_lock);
+        unlink(swappath);  // Clean up swapfile
         pthread_mutex_unlock(sentence_lock);
         return;
     }
@@ -957,7 +972,7 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
                 ss_log("WRITE: Cannot append sentence %d - last sentence does not end with delimiter", req->sentence_num);
                 send_error_response_to_client(client_sock, "ERROR: Cannot append new sentence - last sentence is incomplete (missing delimiter . ! or ?)");
                 ss_free_sentences(sentences, num_sentences);
-                pthread_rwlock_unlock(&lock->file_lock);
+                unlink(swappath);  // Clean up swapfile
                 pthread_mutex_unlock(sentence_lock);
                 return;
             }
@@ -985,26 +1000,29 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     // 6. Receive and apply changes incrementally (one at a time)
     // Per spec: each subquery updates indices for the next one
     MsgHeader header;
+    int connection_lost = 0;
     
     while (recv_header(client_sock, &header) > 0) {
         if (header.type == MSG_C2S_WRITE_DATA) {
             Req_Write_Data data;
-            recv_payload(client_sock, &data, header.payload_len);
+            if (recv_payload(client_sock, &data, header.payload_len) <= 0) {
+                ss_log("WRITE: Connection lost while receiving payload");
+                connection_lost = 1;
+                break;
+            }
             
             // Validate word index per spec:
             // - Negative indices are invalid
             // - Indices > num_words are invalid (can insert at num_words but not beyond)
-            if (data.word_index < 0) {
-                ss_log("WRITE: Invalid word index %d (negative) - IGNORING subquery", data.word_index);
-                fprintf(stderr, "[WARNING] Invalid word index %d - skipping this subquery. Current sentence has %d words (valid indices: 0-%d)\n", 
-                        data.word_index, num_words, num_words);
-                continue; // Skip this subquery, continue accepting more
-            }
-            if (data.word_index > num_words) {
-                ss_log("WRITE: Invalid word index %d (max: %d) - IGNORING subquery", data.word_index, num_words);
-                fprintf(stderr, "[WARNING] Invalid word index %d - skipping this subquery. Current sentence has %d words (valid indices: 0-%d)\n", 
-                        data.word_index, num_words, num_words);
-                continue; // Skip this subquery, continue accepting more
+            if (data.word_index < 0 || data.word_index > num_words) {
+                ss_log("WRITE: Invalid word index %d for sentence with %d words", data.word_index, num_words);
+                char err_msg[256];
+                snprintf(err_msg, sizeof(err_msg), "ERROR: Invalid word index %d. Current sentence has %d words (valid indices: 0-%d)", 
+                         data.word_index, num_words, num_words);
+                send_error_response_to_client(client_sock, err_msg);
+                
+                // Continue accepting more subqueries (spec says return ERROR for that subquery, not abort)
+                continue;
             }
             
             // Split the content into individual words (handling delimiters)
@@ -1033,6 +1051,17 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
             break; // End of transaction
         }
     }
+    
+    // Check if connection was lost during transaction
+    if (connection_lost) {
+        ss_log("WRITE: Connection lost during transaction for %s - aborting (no changes saved)", req->filename);
+        ss_free_words(words, num_words);
+        ss_free_sentences(sentences, num_sentences);
+        unlink(swappath);  // Delete swapfile
+        pthread_mutex_unlock(sentence_lock);
+        // Client already disconnected, no response needed
+        return;
+    }
 
     // 7. Re-join words into the modified sentence
     char* new_sentence = ss_join_words(words, num_words);
@@ -1049,19 +1078,104 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
         num_sentences++;
     }
 
-    // 8. Re-join sentences and write back to file
+    // 8. Re-join sentences and write to swapfile
     char* new_file_content = ss_join_sentences(sentences, num_sentences);
     
-    FILE* f = fopen(filepath, "w");
+    FILE* f = fopen(swappath, "w");
+    if (!f) {
+        ss_log("WRITE: Failed to open swapfile for writing %s", swappath);
+        free(new_file_content);
+        ss_free_words(words, num_words);
+        ss_free_sentences(sentences, num_sentences);
+        unlink(swappath);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not write to swapfile)");
+        return;
+    }
     fwrite(new_file_content, 1, strlen(new_file_content), f);
     fclose(f);
     
-    // 8b. Update metadata table with new counts
-    uint64_t new_char_count = strlen(new_file_content);
+    // 9. Acquire global file lock for atomic commit
+    pthread_rwlock_wrlock(&lock->file_lock);
+    ss_log("WRITE: Acquired global file lock for commit (file %s, sentence %d)", req->filename, req->sentence_num);
+    
+    // 10. Re-read original file and merge changes (to handle concurrent WRITEs to different sentences)
+    // CRITICAL: The original file may have been modified by other WRITEs since we created the swapfile
+    long current_file_size;
+    char* current_file_content = ss_read_file_to_memory(filepath, &current_file_size);
+    if (!current_file_content && current_file_size > 0) {
+        ss_log("WRITE: Failed to re-read original file during commit for %s", req->filename);
+        free(new_file_content);
+        ss_free_words(words, num_words);
+        ss_free_sentences(sentences, num_sentences);
+        unlink(swappath);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not re-read file during commit)");
+        return;
+    }
+    
+    // Split current file into sentences
+    int current_num_sentences;
+    char** current_sentences = ss_split_sentences(current_file_content ? current_file_content : "", &current_num_sentences);
+    if (current_file_content) free(current_file_content);
+    
+    // Replace or append our modified sentence in the current file's sentences
+    if (req->sentence_num < current_num_sentences) {
+        // Replace existing sentence in current file
+        free(current_sentences[req->sentence_num]);
+        current_sentences[req->sentence_num] = strdup(new_sentence);
+    } else if (req->sentence_num == current_num_sentences) {
+        // Append new sentence to current file
+        current_sentences = (char**)realloc(current_sentences, (current_num_sentences + 1) * sizeof(char*));
+        current_sentences[current_num_sentences] = strdup(new_sentence);
+        current_num_sentences++;
+    } else {
+        // Sentence index out of range in current file - this shouldn't happen if validated earlier
+        ss_log("WRITE: Sentence index %d out of range during commit (current file has %d sentences)", 
+               req->sentence_num, current_num_sentences);
+        free(new_file_content);
+        ss_free_words(words, num_words);
+        ss_free_sentences(sentences, num_sentences);
+        ss_free_sentences(current_sentences, current_num_sentences);
+        unlink(swappath);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (file changed during transaction)");
+        return;
+    }
+    
+    // Re-join the merged sentences and write to file
+    char* merged_content = ss_join_sentences(current_sentences, current_num_sentences);
+    
+    // 11. Write merged content to original file (atomic commit)
+    FILE* f_commit = fopen(filepath, "w");
+    if (!f_commit) {
+        ss_log("WRITE: Failed to open original file for commit %s", req->filename);
+        free(new_file_content);
+        free(merged_content);
+        ss_free_words(words, num_words);
+        ss_free_sentences(sentences, num_sentences);
+        ss_free_sentences(current_sentences, current_num_sentences);
+        unlink(swappath);
+        pthread_rwlock_unlock(&lock->file_lock);
+        pthread_mutex_unlock(sentence_lock);
+        send_error_response_to_client(client_sock, "Write failed (could not write to file)");
+        return;
+    }
+    fwrite(merged_content, 1, strlen(merged_content), f_commit);
+    fclose(f_commit);
+    
+    // 12. Delete swapfile
+    unlink(swappath);
+    ss_log("WRITE: Committed and deleted swapfile for %s (sentence %d)", req->filename, req->sentence_num);
+    
+    // 13. Update metadata table with new counts (using merged content)
+    uint64_t new_char_count = strlen(merged_content);
     uint64_t new_word_count = 0;
-    for (int i = 0; i < num_sentences; i++) {
+    for (int i = 0; i < current_num_sentences; i++) {
         int words_in_sentence;
-        char** sentence_words = ss_split_words(sentences[i], &words_in_sentence);
+        char** sentence_words = ss_split_words(current_sentences[i], &words_in_sentence);
         new_word_count += words_in_sentence;
         ss_free_words(sentence_words, words_in_sentence);
     }
@@ -1077,13 +1191,18 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     
     ss_log("WRITE: Updated metadata for %s (size: %ld, words: %lu, chars: %lu)",
            req->filename, st.st_size, new_word_count, new_char_count);
+    
+    // Persist metadata immediately after WRITE to ensure durability
+    metadata_table_save(g_metadata_table, METADATA_DB_PATH);
 
-    // 9. Clean up
+    // 14. Clean up
     free(new_file_content);
+    free(merged_content);
     ss_free_words(words, num_words);
     ss_free_sentences(sentences, num_sentences);
+    ss_free_sentences(current_sentences, current_num_sentences);
 
-    // 10. Release locks and send response
+    // 15. Release locks and send response
     pthread_rwlock_unlock(&lock->file_lock);
     pthread_mutex_unlock(sentence_lock);
 

@@ -32,10 +32,9 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     ss_log("RECOVERY: NS requests sync FROM backup TO primary SS %d (%s:%d)",
            req->target_ss_id, req->target_ip, req->target_port);
     
-    // Set syncing flag to block operations
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 1;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // NOTE: We do NOT set g_is_syncing anymore!
+    // Files will be locked individually during reading/sending.
+    // This allows clients to access other files during recovery.
     
     // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
@@ -44,9 +43,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     if (target_sock < 0) {
         ss_log("RECOVERY: Failed to connect to primary SS %d at %s:%d",
                req->target_ss_id, req->target_ip, req->target_port);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
+        // No need to clear g_is_syncing
         return;
     }
     
@@ -63,9 +60,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     if (!dir) {
         ss_log("RECOVERY: Failed to open files directory");
         close(target_sock);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
+        // No need to clear g_is_syncing
         return;
     }
     
@@ -91,9 +86,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         ss_log("RECOVERY: Failed to allocate memory for metadata array");
         closedir(dir);
         close(target_sock);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
+        // No need to clear g_is_syncing
         return;
     }
     int idx = 0;
@@ -132,6 +125,12 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_REG) continue;
         
+        // FINE-GRAINED FIX: Acquire read lock for THIS specific file
+        // This ensures file is not modified during sending
+        FileLock* file_lock = lock_map_get(&g_file_lock_map, entry->d_name);
+        pthread_rwlock_rdlock(&file_lock->file_lock);
+        ss_log("RECOVERY: Acquired read lock for %s", entry->d_name);
+        
         char filepath[MAX_PATH];
         snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, entry->d_name);
         
@@ -139,6 +138,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         int fd = open(filepath, O_RDONLY);
         if (fd < 0) {
             ss_log("RECOVERY: Failed to open file %s", entry->d_name);
+            pthread_rwlock_unlock(&file_lock->file_lock);
             continue;
         }
         
@@ -157,6 +157,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
             // FATAL ERROR: File exists but has no metadata during recovery!
             ss_log("ERROR: Recovery - file '%s' has no metadata, SKIPPING", entry->d_name);
             close(fd);
+            pthread_rwlock_unlock(&file_lock->file_lock);
             continue; // Skip this file
         }
         
@@ -173,6 +174,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         if (sent != (ssize_t)st.st_size) {
             ss_log("RECOVERY: sendfile failed for %s: sent %ld of %ld bytes",
                    entry->d_name, sent, (long)st.st_size);
+            pthread_rwlock_unlock(&file_lock->file_lock);
             // Continue with other files instead of aborting entire recovery
             continue;
         }
@@ -181,6 +183,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
         MsgHeader ack;
         if (recv_header(target_sock, &ack) <= 0) {
             ss_log("RECOVERY: Failed to receive ACK for %s", entry->d_name);
+            pthread_rwlock_unlock(&file_lock->file_lock);
             break;  // Connection lost, abort recovery
         }
         
@@ -188,6 +191,10 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
             ss_log("RECOVERY: Unexpected message type %d (expected ACK) for %s",
                    ack.type, entry->d_name);
         }
+        
+        // Release lock for this file
+        pthread_rwlock_unlock(&file_lock->file_lock);
+        ss_log("RECOVERY: Released read lock for %s", entry->d_name);
         
         files_sent++;
         ss_log("RECOVERY: Sent file %d/%u: %s (%ld bytes)",
@@ -201,10 +208,7 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     send_response(target_sock, MSG_S2S_RECOVERY_COMPLETE, NULL, 0);
     close(target_sock);
     
-    // Clear syncing flag
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 0;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // No need to clear g_is_syncing - we're using fine-grained file locks
     
     ss_log("RECOVERY: Sync to primary SS %d complete (%d files sent)", req->target_ss_id, files_sent);
 }
@@ -245,10 +249,12 @@ void ss_handle_re_replicate_all(int ns_sock, Req_ReReplicate* req) {
     
     // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
-    // Update backup target (same as MSG_N2S_UPDATE_BACKUP does)
+    // Update backup target (same as MSG_N2S_UPDATE_BACKUP does) - with mutex protection
+    pthread_mutex_lock(&g_backup_config_mutex);
     strncpy(g_backup_ip, req->backup_ip, sizeof(g_backup_ip));
     g_backup_ip[15] = '\0';
     g_backup_port = req->backup_port;
+    pthread_mutex_unlock(&g_backup_config_mutex);
     
     ss_log("RECOVERY: Initiating immediate re-replication for existing primary files");
     
@@ -286,24 +292,35 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
     ss_log("RECOVERY: Incoming recovery connection from SS %d (primary_recovery=%d)",
            start_req->ss_id, start_req->is_primary_recovery);
     
-    // Set syncing flag NOW to block operations during recovery
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 1;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // NOTE: We do NOT set g_is_syncing anymore!
+    // Instead, we'll acquire file locks for each file being recovered.
+    // This allows non-recovered files to be accessed normally during recovery.
     
     if (start_req->is_primary_recovery) {
         ss_log("RECOVERY: We are PRIMARY recovering from backup SS %d", start_req->ss_id);
         
         // Clear our existing files first (we were down, backup has fresher data)
+        // Use file locks to ensure no concurrent access during deletion
         DIR* dir = opendir(SS_FILES_DIR);
         if (dir) {
             struct dirent* entry;
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_type == DT_REG) {
+                    // Acquire write lock before deleting
+                    FileLock* lock = lock_map_get(&g_file_lock_map, entry->d_name);
+                    pthread_rwlock_wrlock(&lock->file_lock);
+                    
                     char filepath[MAX_PATH];
                     snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, entry->d_name);
                     unlink(filepath);
-                    ss_log("RECOVERY: Removed old file: %s", entry->d_name);
+                    
+                    // CRITICAL FIX: Also delete metadata entry
+                    // Without this, old metadata remains and may not be properly updated
+                    metadata_table_remove(g_metadata_table, entry->d_name);
+                    
+                    ss_log("RECOVERY: Removed old file and metadata: %s", entry->d_name);
+                    
+                    pthread_rwlock_unlock(&lock->file_lock);
                 }
             }
             closedir(dir);
@@ -312,15 +329,27 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
         ss_log("RECOVERY: We are BACKUP receiving fresh replication from primary SS %d", start_req->ss_id);
         
         // Clear old backup files
+        // Use file locks to ensure no concurrent access during deletion
         DIR* dir = opendir(SS_FILES_DIR);
         if (dir) {
             struct dirent* entry;
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_type == DT_REG) {
+                    // Acquire write lock before deleting
+                    FileLock* lock = lock_map_get(&g_file_lock_map, entry->d_name);
+                    pthread_rwlock_wrlock(&lock->file_lock);
+                    
                     char filepath[MAX_PATH];
                     snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, entry->d_name);
                     unlink(filepath);
-                    ss_log("RECOVERY: Removed old backup file: %s", entry->d_name);
+                    
+                    // CRITICAL FIX: Also delete metadata entry
+                    // Without this, old metadata remains and may not be properly updated
+                    metadata_table_remove(g_metadata_table, entry->d_name);
+                    
+                    ss_log("RECOVERY: Removed old backup file and metadata: %s", entry->d_name);
+                    
+                    pthread_rwlock_unlock(&lock->file_lock);
                 }
             }
             closedir(dir);
@@ -345,9 +374,7 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
     if (!metas && file_list.file_count > 0) {
         ss_log("RECOVERY: Failed to allocate memory for metadata array");
         close(sock);
-        pthread_mutex_lock(&g_sync_mutex);
-        g_is_syncing = 0;
-        pthread_mutex_unlock(&g_sync_mutex);
+        // No need to clear g_is_syncing - we're not using it anymore
         return;
     }
     if (file_list.file_count > 0) {
@@ -372,6 +399,12 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
         Req_Replicate req;
         recv_payload(sock, &req, header.payload_len);
         
+        // FINE-GRAINED FIX: Acquire write lock for THIS specific file
+        // Other files can still be accessed normally during recovery
+        FileLock* file_lock = lock_map_get(&g_file_lock_map, req.filename);
+        pthread_rwlock_wrlock(&file_lock->file_lock);
+        ss_log("RECOVERY: Acquired write lock for %s", req.filename);
+        
         char filepath[MAX_PATH];
         snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, req.filename);
         
@@ -388,6 +421,9 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
                 remaining -= n;
             }
             send_response(sock, MSG_S2S_ACK, NULL, 0);
+            
+            // Release lock for this file
+            pthread_rwlock_unlock(&file_lock->file_lock);
             continue;
         }
         
@@ -413,6 +449,10 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
                               meta->size_bytes, meta->word_count, meta->char_count,
                               now, now, is_backup_file);
         
+        // Release lock for this file
+        pthread_rwlock_unlock(&file_lock->file_lock);
+        ss_log("RECOVERY: Released write lock for %s", req.filename);
+        
         send_response(sock, MSG_S2S_ACK, NULL, 0);
         files_received++;
         
@@ -423,10 +463,7 @@ void ss_handle_recovery_connection(int sock, Req_StartRecovery* start_req) {
     free(metas);
     close(sock);
     
-    // Clear syncing flag (both primary and backup recovery paths end here)
-    pthread_mutex_lock(&g_sync_mutex);
-    g_is_syncing = 0;
-    pthread_mutex_unlock(&g_sync_mutex);
+    // No need to clear g_is_syncing - we're using fine-grained file locks instead
     
     ss_log("RECOVERY: Recovery complete! Received %u files from SS %d", files_received, start_req->ss_id);
 }

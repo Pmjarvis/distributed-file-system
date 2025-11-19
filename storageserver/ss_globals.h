@@ -15,6 +15,7 @@ extern int g_ss_id;
 // Backup SS's info
 extern char g_backup_ip[16];
 extern int g_backup_port;
+extern pthread_mutex_t g_backup_config_mutex;  // Protects g_backup_ip and g_backup_port
 // Local replication listener port (distinct from g_backup_port which is remote target)
 extern int g_repl_listen_port;
 
@@ -39,6 +40,7 @@ extern char g_ss_root_dir[256];
 extern char g_ss_files_dir[256];
 extern char g_ss_undo_dir[256];
 extern char g_ss_checkpoint_dir[256];
+extern char g_ss_swap_dir[256];  // For WRITE operation swapfiles
 extern char g_metadata_db_path[512];
 
 // Helper macros for backward compatibility
@@ -46,6 +48,7 @@ extern char g_metadata_db_path[512];
 #define SS_FILES_DIR g_ss_files_dir
 #define SS_UNDO_DIR g_ss_undo_dir
 #define SS_CHECKPOINT_DIR g_ss_checkpoint_dir
+#define SS_SWAP_DIR g_ss_swap_dir
 #define METADATA_DB_PATH g_metadata_db_path
 
 #endif // SS_GLOBALS_H
