@@ -1,3 +1,0 @@
-echo "running diagnositcs"
-echo "oye bevkuf"
-ls -l

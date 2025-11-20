@@ -34,7 +34,8 @@ void do_checkpoint_cmd(char* args, const char* command);
 // Access request commands
 void do_request_access(char* args);
 void do_view_requests(char* args);
-void do_grant_access(char* args);
+// void do_grant_access(char* args); // Removed
+
 
 
 #endif // CLIENT_COMMANDS_H

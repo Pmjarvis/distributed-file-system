@@ -65,6 +65,13 @@ void do_create(char* args) {
         fprintf(stderr, "Usage: CREATE <filename>\n");
         return;
     }
+    
+    // Check for spaces in filename
+    if (strchr(args, ' ') != NULL) {
+        fprintf(stderr, "Error: Filename cannot contain spaces.\n");
+        return;
+    }
+    
     Req_FileOp req;
     memset(&req, 0, sizeof(req));
     strncpy(req.filename, args, MAX_FILENAME - 1);
@@ -134,34 +141,49 @@ void do_access(char* args, MsgType type) {
     memset(&req, 0, sizeof(req));
     
     char* saveptr;
-    char* flag = strtok_r(args, " \t\n", &saveptr);
-    char* filename = strtok_r(NULL, " \t\n", &saveptr);
-    char* username = strtok_r(NULL, " \t\n", &saveptr);
-    
-    if (!flag || !filename || !username) {
-        if (type == MSG_C2N_ACCESS_ADD)
-            fprintf(stderr, "Usage: ADDACCESS -R|-W <filename> <username>\n");
-        else
-            fprintf(stderr, "Usage: REMACCESS <filename> <username>\n");
-        return;
-    }
+    char* token1 = strtok_r(args, " \t\n", &saveptr);
+    char* token2 = strtok_r(NULL, " \t\n", &saveptr);
+    char* token3 = strtok_r(NULL, " \t\n", &saveptr);
     
     if (type == MSG_C2N_ACCESS_ADD) {
-        if (strcmp(flag, "-R") == 0) req.perm_flag = 'R';
-        else if (strcmp(flag, "-W") == 0) req.perm_flag = 'W';
+        if (!token1 || !token2 || !token3) {
+            fprintf(stderr, "Usage: ADDACCESS -R|-W <filename> <username>\n");
+            return;
+        }
+        if (strcmp(token1, "-R") == 0) req.perm_flag = 'R';
+        else if (strcmp(token1, "-W") == 0) req.perm_flag = 'W';
         else {
              fprintf(stderr, "Usage: ADDACCESS -R|-W <filename> <username>\n");
              return;
         }
+        strncpy(req.filename, token2, MAX_FILENAME - 1);
+        strncpy(req.target_user, token3, MAX_USERNAME - 1);
     } else {
-        // For REMACCESS, the 'flag' is actually the filename
-        username = filename;
-        filename = flag;
+        // REMACCESS
+        if (!token1 || !token2) {
+             fprintf(stderr, "Usage: REMACCESS <filename> <username>\n");
+             return;
+        }
+        
+        if (token3 && token1[0] == '-') {
+             // Handle the case where user provided a flag: REMACCESS -W file user
+             printf("Note: REMACCESS removes all permissions. Flag '%s' is ignored.\n", token1);
+             strncpy(req.filename, token2, MAX_FILENAME - 1);
+             strncpy(req.target_user, token3, MAX_USERNAME - 1);
+        } else if (token3) {
+             // 3 args but first isn't a flag? Ambiguous.
+             fprintf(stderr, "Usage: REMACCESS <filename> <username>\n");
+             fprintf(stderr, "Debug: token1='%s', token2='%s', token3='%s'\n", token1, token2, token3);
+             return;
+        } else {
+             // 2 args: REMACCESS file user
+             strncpy(req.filename, token1, MAX_FILENAME - 1);
+             strncpy(req.target_user, token2, MAX_USERNAME - 1);
+        }
     }
 
-    strncpy(req.filename, filename, MAX_FILENAME - 1);
     req.filename[MAX_FILENAME - 1] = '\0';
-    strncpy(req.target_user, username, MAX_USERNAME - 1);
+    req.target_user[MAX_USERNAME - 1] = '\0';
     
     send_request(g_ns_sock, type, &req, sizeof(req));
     handle_generic_response(g_ns_sock, NULL);
@@ -209,6 +231,12 @@ void do_folder_cmd(char* args, const char* command) {
     // VIEWFOLDER and OPENPARENT don't require arguments
     if (!arg1 && (strcmp(command, "OPENPARENT") != 0) && (strcmp(command, "VIEWFOLDER") != 0)) {
         fprintf(stderr, "Usage: %s <arg1> [arg2]\n", command);
+        return;
+    }
+
+    // Check for spaces in foldername for CREATEFOLDER
+    if (strcmp(command, "CREATEFOLDER") == 0 && arg2) {
+        fprintf(stderr, "Error: Folder name cannot contain spaces.\n");
         return;
     }
     
@@ -297,7 +325,7 @@ void do_read(char* args) {
             Res_FileContent chunk;
             // Payload is *not* a string, it can be binary data
             memset(&chunk, 0, sizeof(chunk));
-            fprintf(stderr, "[DEBUG] Receiving payload of size %zu...\n", header.payload_len);
+            fprintf(stderr, "[DEBUG] Receiving payload of size %u...\n", header.payload_len);
             recv_payload(ss_sock, &chunk, header.payload_len);
             fprintf(stderr, "[DEBUG] Got chunk: data_len=%zu, is_final=%d\n", chunk.data_len, chunk.is_final_chunk);
             
@@ -451,9 +479,17 @@ void do_write(char* args) {
             continue;
         }
         
+        // Validate word_index is a number
+        char* endptr;
+        long val = strtol(idx_str, &endptr, 10);
+        if (*endptr != '\0' || val < 0) {
+            fprintf(stderr, "Invalid format. <word_index> must be a non-negative integer.\n");
+            continue;
+        }
+        
         Req_Write_Data data;
         memset(&data, 0, sizeof(data));
-        data.word_index = atoi(idx_str);
+        data.word_index = (int)val;
         strncpy(data.content, content, MAX_PAYLOAD - 5);
         
         if (send_request(ss_sock, MSG_C2S_WRITE_DATA, &data, sizeof(data)) < 0) {
@@ -619,33 +655,4 @@ void do_view_requests(char* args) {
     } else {
         handle_generic_response(g_ns_sock, &header);
     }
-}
-
-void do_grant_access(char* args) {
-    Req_Access req;
-    memset(&req, 0, sizeof(req));
-    
-    char* saveptr;
-    char* flag = strtok_r(args, " ", &saveptr);
-    char* filename = strtok_r(NULL, " ", &saveptr);
-    char* username = strtok_r(NULL, "", &saveptr);
-    
-    if (!flag || !filename || !username) {
-        fprintf(stderr, "Usage: GRANTACCESS -R|-W <filename> <username>\n");
-        return;
-    }
-    
-    if (strcmp(flag, "-R") == 0) req.perm_flag = 'R';
-    else if (strcmp(flag, "-W") == 0) req.perm_flag = 'W';
-    else {
-         fprintf(stderr, "Usage: GRANTACCESS -R|-W <filename> <username>\n");
-         return;
-    }
-
-    strncpy(req.filename, filename, MAX_FILENAME - 1);
-    req.filename[MAX_FILENAME - 1] = '\0';
-    strncpy(req.target_user, username, MAX_USERNAME - 1);
-    
-    send_request(g_ns_sock, MSG_C2N_GRANT_REQ_ACCESS, &req, sizeof(req));
-    handle_generic_response(g_ns_sock, NULL);
 }

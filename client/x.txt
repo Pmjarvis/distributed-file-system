@@ -1,0 +1,1702 @@
+I found a test sequence where two clients acquired a lock of the same sentence of the same file simultaneously. This should not be possible.
+
+Here is the test setup:
+On machine1: (machine 1 has IP=10.34.17.143)
+NS. Command used to start NS: ./nameserver
+SS (SS_ID=0): Command used to start this SS: ./storageserver 10.34.17.143 8081 10.34.17.143 9002 9003
+Client (user1): Command used to start this client: ./client 10.34.17.143 8080
+
+On machine2: (machine 2 has IP=)
+SS (SS_ID=1):  Command used to start this SS: ./storageserver 10.34.17.143 8081 10.34.17.66 9001 9002
+SS (SS_ID=2):  Command used to start this SS: ./storageserver 10.34.17.143 8081 10.34.17.66 9004 9005
+Client (user2):  Command used to start this client: ./client 10.34.17.143 8080 
+Client (user3): Command used to start this client ./client 10.34.17.143 8080 
+
+NS logs:
+Initializing Name Server...
+Loaded 0 users.
+Loaded access control table.
+Cache initialized.
+No existing file map at ./file_map.db (starting fresh)
+File mapping table initialized.
+Name Server is running on ports 8080 (Client) and 8081 (SS).
+SS: New connection from 10.34.17.143. Awaiting registration...
+SS: Registering NEW Storage Server 0 (10.34.17.143:9002).
+NS: Successfully added SS 0 to active list
+NS: SS 0 reported 0 files. file_count set to 0.
+NS: Single SS - no backup assignment
+NS: SS 0 has no replication target assigned
+[DEBUG send_response] Sending message type 30 with payload len 32
+SS: New connection from 10.34.17.66. Awaiting registration...
+SS: Registering NEW Storage Server 1 (10.34.17.66:9001).
+NS: Successfully added SS 1 to active list
+NS: SS 1 reported 0 files. file_count set to 0.
+NS: SS 1 backs up SS 0
+NS: SS 0 backs up SS 1
+NS: Informing SS 1 to send replications to SS 0 at 10.34.17.143:9003
+[DEBUG send_response] Sending message type 30 with payload len 32
+NS: Requesting full re-replication from SS 1 to backup SS 0
+[DEBUG send_response] Sending message type 60 with payload len 24
+NS: Notifying SS 0 about backup assignment change (backup_ss_id=1)
+[DEBUG send_response] Sending message type 61 with payload len 24
+NS: Requesting full re-replication from SS 0 to backup SS 1
+[DEBUG send_response] Sending message type 60 with payload len 24
+SS: New connection from 10.34.17.66. Awaiting registration...
+SS: Registering NEW Storage Server 2 (10.34.17.66:9004).
+NS: Successfully added SS 2 to active list
+NS: SS 2 reported 0 files. file_count set to 0.
+NS: SS 2 backs up SS 0
+NS: SS 1 backs up SS 2
+NS: SS 0 backs up SS 1
+NS: Informing SS 2 to send replications to SS 0 at 10.34.17.143:9003
+[DEBUG send_response] Sending message type 30 with payload len 32
+NS: Requesting full re-replication from SS 2 to backup SS 0
+[DEBUG send_response] Sending message type 60 with payload len 24
+NS: Notifying SS 1 about backup assignment change (backup_ss_id=2)
+[DEBUG send_response] Sending message type 61 with payload len 24
+NS: Requesting full re-replication from SS 1 to backup SS 2
+[DEBUG send_response] Sending message type 60 with payload len 24
+NS: Notifying SS 0 about backup assignment change (backup_ss_id=1)
+[DEBUG send_response] Sending message type 61 with payload len 24
+[DEBUG send_response] Sending message type 1 with payload len 0
+Client 'user1' logged in.
+[DEBUG send_response] Sending message type 1 with payload len 0
+Client 'user2' logged in.
+[DEBUG send_response] Sending message type 4 with payload len 4096
+[DEBUG send_response] Sending message type 4 with payload len 4096
+NS: Selected SS 2 for new file (file_count now: 1)
+[DEBUG send_response] Sending message type 32 with payload len 320
+NS: File user1:u1 created on primary SS 2 (will be replicated to backup SS 0)
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 4 with payload len 4096
+NS: Selected SS 1 for new file (file_count now: 1)
+[DEBUG send_response] Sending message type 32 with payload len 320
+NS: File user1:u2 created on primary SS 1 (will be replicated to backup SS 2)
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 4 with payload len 4096
+NS: Selected SS 0 for new file (file_count now: 1)
+[DEBUG send_response] Sending message type 32 with payload len 320
+NS: File user1:u3 created on primary SS 0 (will be replicated to backup SS 1)
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 4 with payload len 4096
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 34 with payload len 320
+[DEBUG send_response] Sending message type 4 with payload len 4096
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking READ/STREAM access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u2'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u2'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking READ/STREAM access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u3'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u3'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking READ/STREAM access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u2'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u2'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u3'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u3'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'NULL'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=0
+DEBUG: Access denied, sending error
+[DEBUG send_response] Sending message type 53 with payload len 4096
+[DEBUG send_response] Sending message type 53 with payload len 4096
+[DEBUG send_response] Sending message type 53 with payload len 4096
+[DEBUG send_response] Sending message type 16 with payload len 4096
+[DEBUG send_response] Sending message type 4 with payload len 4096
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 4 with payload len 4096
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[DEBUG send_response] Sending message type 4 with payload len 4096
+[DEBUG send_response] Sending message type 53 with payload len 4096
+SS: Heartbeat timeout from 1 (10.34.17.66). Marking as offline.
+NS: SS 1 marked INACTIVE (total:3, active:2)
+SS: Handler thread for 1 (10.34.17.66) terminated.
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+[DEBUG send_response] Sending message type 1 with payload len 0
+Client 'user3' logged in.
+[DEBUG send_response] Sending message type 4 with payload len 4096
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+[DEBUG send_response] Sending message type 52 with payload len 4096
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user2' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=10
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=9
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking READ/STREAM access
+DEBUG: Found 'r' in perms
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user1' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'rwo'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: Found 'o' in perms, granting access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+DEBUG: Found SS at 10.34.17.66:9004
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+SS: Heartbeat timeout from 2 (10.34.17.66). Marking as offline.
+NS: SS 2 marked INACTIVE (total:3, active:1)
+SS: Handler thread for 2 (10.34.17.66) terminated.
+DEBUG: handle_ss_redirect called, type=11
+DEBUG: Receiving payload of size 320
+DEBUG: Got filename: 'u1'
+DEBUG: About to lock g_access_table_mutex
+DEBUG: Mutex locked, checking access for user 'user3' on file 'u1'
+DEBUG: g_access_table = 0x6413276e1e80
+DEBUG: Got perms = 'read-write'
+DEBUG: Checking WRITE/UNDO access
+DEBUG: has_access=1
+DEBUG: Finding owner for file 'u1'
+DEBUG: Finding SS for file 'u1' (owner: user1)
+SS: Primary 2 for 'user1:u1' is down. Using backup 0.
+DEBUG: Found SS at 10.34.17.143:9002
+DEBUG: Sending SS location to client
+[DEBUG send_response] Sending message type 12 with payload len 20
+DEBUG: SS location sent successfully
+
+SS_0 logs:
+prathm_s@PrincipiaComputica:~/Desktop/course-project-ithilgwenirim/storageserver$ ./storageserver 10.34.17.143 8081 10.34.17.143 9002 9003
+[2025-11-20 18:33:48] --- LOGGING STARTED ---
+[2025-11-20 18:33:48] MAIN: Starting Storage Server...
+[2025-11-20 18:33:48] MAIN: Connected to Name Server. Performing initial registration (no local files yet loaded)...
+[DEBUG send_response] Sending message type 29 with payload len 44
+[2025-11-20 18:33:48] MAIN: Registration complete. This SS ID is 0
+[2025-11-20 18:33:48] --- LOGGING STOPPED ---
+[2025-11-20 18:33:48] --- LOGGING STARTED ---
+[2025-11-20 18:33:48] MAIN: Persistent log file initialized for SS ID 0
+[2025-11-20 18:33:48] MAIN: Using persistent data directory: ss_data_0
+[2025-11-20 18:33:48] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-20 18:33:48] No existing metadata file found at ss_data_0/metadata.db (starting fresh)
+[2025-11-20 18:33:48] MAIN: No existing metadata DB found for SS ID 0, creating new table
+[2025-11-20 18:33:48] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+Listening on 10.34.17.143:9002
+[2025-11-20 18:33:48] MAIN: Listening for Clients and NS on 10.34.17.143:9002
+Listening on 10.34.17.143:9003
+[2025-11-20 18:33:48] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-20 18:33:48] MAIN: Listening for Replication on 10.34.17.143:9003
+[2025-11-20 18:33:48] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-20 18:33:48] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-20 18:33:48] MAIN: File scan complete (no existing files found)
+[2025-11-20 18:33:48] MAIN: No replication target assigned (single SS or no backup available)
+[2025-11-20 18:33:48] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-20 18:33:53] Sent heartbeat to NS.
+[2025-11-20 18:33:56] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 18:33:56] HANDLER: Received backup assignment update from NS
+[2025-11-20 18:33:56] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 18:33:56] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 18:33:56] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
+[2025-11-20 18:33:56] NS_CONTROL: Received message type 60 from NS
+[2025-11-20 18:33:56] RECOVERY: NS requests re-replication of all files to backup SS 1 (10.34.17.66:9002)
+[2025-11-20 18:33:56] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-20 18:33:56] RECOVERY: Re-replication scheduling complete (0 primary files queued)
+[2025-11-20 18:33:58] Sent heartbeat to NS.
+[2025-11-20 18:34:03] Sent heartbeat to NS.
+[2025-11-20 18:34:07] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 18:34:07] HANDLER: Received backup assignment update from NS
+[2025-11-20 18:34:07] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 18:34:07] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 18:34:07] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
+[2025-11-20 18:34:08] Sent heartbeat to NS.
+[2025-11-20 18:34:13] Sent heartbeat to NS.
+[2025-11-20 18:34:18] Sent heartbeat to NS.
+[2025-11-20 18:34:23] Sent heartbeat to NS.
+[2025-11-20 18:34:28] Sent heartbeat to NS.
+[2025-11-20 18:34:33] Sent heartbeat to NS.
+[2025-11-20 18:34:38] Sent heartbeat to NS.
+[2025-11-20 18:34:43] Sent heartbeat to NS.
+[2025-11-20 18:34:48] Sent heartbeat to NS.
+[2025-11-20 18:34:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:34:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:34:48] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-20 18:34:48] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-20 18:34:53] Sent heartbeat to NS.
+[2025-11-20 18:34:53] REPL_IN: New incoming replication connection
+[2025-11-20 18:34:53] REPL_IN: Receiving replica for u1 (0 bytes)
+[2025-11-20 18:34:53] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:34:53] REPL_IN: Finished receiving u1
+[2025-11-20 18:34:53] DEBUG: Lazily created inner table for outer bucket 395
+[2025-11-20 18:34:53] Inserted metadata for: u1 (owner: user1, size: 0, is_backup: 1)
+[2025-11-20 18:34:53] REPL_IN: Created metadata for u1 (owner: user1, is_backup=true)
+[2025-11-20 18:34:53] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:34:58] Sent heartbeat to NS.
+[2025-11-20 18:35:03] Sent heartbeat to NS.
+[2025-11-20 18:35:08] Sent heartbeat to NS.
+[2025-11-20 18:35:13] Sent heartbeat to NS.
+[2025-11-20 18:35:18] Sent heartbeat to NS.
+[2025-11-20 18:35:23] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
+[2025-11-20 18:35:23] DEBUG: Lazily created inner table for outer bucket 397
+[2025-11-20 18:35:23] Inserted metadata for: u3 (owner: user1, size: 0, is_backup: 0)
+[2025-11-20 18:35:23] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:35:23] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:35:23] CREATE: File u3 created by user1
+[2025-11-20 18:35:23] REPL: Scheduling update for u3
+[DEBUG send_response] Sending message type 36 with payload len 4096
+[2025-11-20 18:35:23] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:23] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 18:35:23] REPL: Replicating u3 (owner: user1, size: 0)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:35:23] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 18:35:23] REPL: ACK received for file u3
+[2025-11-20 18:35:23] Sent heartbeat to NS.
+[2025-11-20 18:35:28] Sent heartbeat to NS.
+[2025-11-20 18:35:29] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:29] INFO: NS requesting metadata for u3 (for VIEW -l)
+[2025-11-20 18:35:29] INFO: Returning cached metadata for u3 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:29] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:33] Sent heartbeat to NS.
+[2025-11-20 18:35:38] Sent heartbeat to NS.
+[2025-11-20 18:35:43] Sent heartbeat to NS.
+[2025-11-20 18:35:48] Sent heartbeat to NS.
+[2025-11-20 18:35:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:35:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:35:48] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:35:48] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:35:53] Sent heartbeat to NS.
+[2025-11-20 18:35:58] Sent heartbeat to NS.
+[2025-11-20 18:36:03] Sent heartbeat to NS.
+[2025-11-20 18:36:08] Sent heartbeat to NS.
+[2025-11-20 18:36:13] Sent heartbeat to NS.
+[2025-11-20 18:36:18] Sent heartbeat to NS.
+[2025-11-20 18:36:23] Sent heartbeat to NS.
+[2025-11-20 18:36:28] Sent heartbeat to NS.
+[2025-11-20 18:36:33] Sent heartbeat to NS.
+[2025-11-20 18:36:38] Sent heartbeat to NS.
+[2025-11-20 18:36:43] Sent heartbeat to NS.
+[2025-11-20 18:36:48] Sent heartbeat to NS.
+[2025-11-20 18:36:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:36:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:36:48] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:36:48] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:36:53] Sent heartbeat to NS.
+[2025-11-20 18:36:58] Sent heartbeat to NS.
+[2025-11-20 18:37:03] Sent heartbeat to NS.
+[2025-11-20 18:37:08] Sent heartbeat to NS.
+[2025-11-20 18:37:13] Sent heartbeat to NS.
+[2025-11-20 18:37:18] Sent heartbeat to NS.
+[2025-11-20 18:37:23] Sent heartbeat to NS.
+[2025-11-20 18:37:28] Sent heartbeat to NS.
+[2025-11-20 18:37:33] Sent heartbeat to NS.
+[2025-11-20 18:37:38] Sent heartbeat to NS.
+[2025-11-20 18:37:43] Sent heartbeat to NS.
+[2025-11-20 18:37:48] Sent heartbeat to NS.
+[2025-11-20 18:37:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:37:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:37:48] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:37:48] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:37:53] Sent heartbeat to NS.
+[2025-11-20 18:37:58] Sent heartbeat to NS.
+[2025-11-20 18:38:03] Sent heartbeat to NS.
+[2025-11-20 18:38:08] Sent heartbeat to NS.
+[2025-11-20 18:38:13] Sent heartbeat to NS.
+[2025-11-20 18:38:15] REPL_IN: New incoming replication connection
+[2025-11-20 18:38:15] REPL_IN: Receiving replica for u1 (0 bytes)
+[2025-11-20 18:38:15] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:38:15] REPL_IN: Finished receiving u1
+[2025-11-20 18:38:15] Updated metadata for: u1
+[2025-11-20 18:38:15] REPL_IN: Updated metadata for u1 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 18:38:15] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:38:18] Sent heartbeat to NS.
+[2025-11-20 18:38:23] Sent heartbeat to NS.
+[2025-11-20 18:38:28] Sent heartbeat to NS.
+[2025-11-20 18:38:33] Sent heartbeat to NS.
+[2025-11-20 18:38:38] Sent heartbeat to NS.
+[2025-11-20 18:38:43] Sent heartbeat to NS.
+[2025-11-20 18:38:48] Sent heartbeat to NS.
+[2025-11-20 18:38:48] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:38:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:38:48] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:38:48] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:38:53] Sent heartbeat to NS.
+[2025-11-20 18:38:58] Sent heartbeat to NS.
+[2025-11-20 18:39:04] Sent heartbeat to NS.
+[2025-11-20 18:39:09] Sent heartbeat to NS.
+[2025-11-20 18:39:14] Sent heartbeat to NS.
+[2025-11-20 18:39:19] Sent heartbeat to NS.
+[2025-11-20 18:39:24] Sent heartbeat to NS.
+[2025-11-20 18:39:29] Sent heartbeat to NS.
+[2025-11-20 18:39:34] Sent heartbeat to NS.
+[2025-11-20 18:39:39] Sent heartbeat to NS.
+[2025-11-20 18:39:44] Sent heartbeat to NS.
+[2025-11-20 18:39:49] Sent heartbeat to NS.
+[2025-11-20 18:39:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:39:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:39:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:39:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:39:54] Sent heartbeat to NS.
+[2025-11-20 18:39:59] Sent heartbeat to NS.
+[2025-11-20 18:39:59] REPL_IN: New incoming replication connection
+[2025-11-20 18:39:59] REPL_IN: Receiving replica for u1 (24 bytes)
+[2025-11-20 18:39:59] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:39:59] REPL_IN: Finished receiving u1
+[2025-11-20 18:39:59] Updated metadata for: u1
+[2025-11-20 18:39:59] REPL_IN: Updated metadata for u1 (owner: user1, size: 24, is_backup=true)
+[2025-11-20 18:39:59] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:40:04] Sent heartbeat to NS.
+[2025-11-20 18:40:09] Sent heartbeat to NS.
+[2025-11-20 18:40:14] Sent heartbeat to NS.
+[2025-11-20 18:40:19] Sent heartbeat to NS.
+[2025-11-20 18:40:24] Sent heartbeat to NS.
+[2025-11-20 18:40:29] Sent heartbeat to NS.
+[2025-11-20 18:40:34] Sent heartbeat to NS.
+[2025-11-20 18:40:39] Sent heartbeat to NS.
+[2025-11-20 18:40:44] Sent heartbeat to NS.
+[2025-11-20 18:40:49] Sent heartbeat to NS.
+[2025-11-20 18:40:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:40:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:40:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:40:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:40:54] Sent heartbeat to NS.
+[2025-11-20 18:40:59] Sent heartbeat to NS.
+[2025-11-20 18:41:04] Sent heartbeat to NS.
+[2025-11-20 18:41:09] Sent heartbeat to NS.
+[2025-11-20 18:41:14] Sent heartbeat to NS.
+[2025-11-20 18:41:19] Sent heartbeat to NS.
+[2025-11-20 18:41:24] Sent heartbeat to NS.
+[2025-11-20 18:41:29] Sent heartbeat to NS.
+[2025-11-20 18:41:34] Sent heartbeat to NS.
+[2025-11-20 18:41:39] Sent heartbeat to NS.
+[2025-11-20 18:41:44] Sent heartbeat to NS.
+[2025-11-20 18:41:49] Sent heartbeat to NS.
+[2025-11-20 18:41:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:41:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:41:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:41:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:41:54] Sent heartbeat to NS.
+[2025-11-20 18:41:59] Sent heartbeat to NS.
+[2025-11-20 18:42:04] Sent heartbeat to NS.
+[2025-11-20 18:42:09] Sent heartbeat to NS.
+[2025-11-20 18:42:10] REPL_IN: New incoming replication connection
+[2025-11-20 18:42:10] REPL_IN: Receiving replica for u1 (29 bytes)
+[2025-11-20 18:42:10] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:42:10] REPL_IN: Finished receiving u1
+[2025-11-20 18:42:10] Updated metadata for: u1
+[2025-11-20 18:42:10] REPL_IN: Updated metadata for u1 (owner: user1, size: 29, is_backup=true)
+[2025-11-20 18:42:10] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:42:10] REPL_IN: New incoming replication connection
+[2025-11-20 18:42:10] REPL_IN: Receiving replica for u1 (35 bytes)
+[2025-11-20 18:42:10] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:42:10] REPL_IN: Finished receiving u1
+[2025-11-20 18:42:10] Updated metadata for: u1
+[2025-11-20 18:42:10] REPL_IN: Updated metadata for u1 (owner: user1, size: 35, is_backup=true)
+[2025-11-20 18:42:10] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:42:14] Sent heartbeat to NS.
+[2025-11-20 18:42:19] Sent heartbeat to NS.
+[2025-11-20 18:42:24] Sent heartbeat to NS.
+[2025-11-20 18:42:29] Sent heartbeat to NS.
+[2025-11-20 18:42:34] Sent heartbeat to NS.
+[2025-11-20 18:42:39] Sent heartbeat to NS.
+[2025-11-20 18:42:44] Sent heartbeat to NS.
+[2025-11-20 18:42:49] Sent heartbeat to NS.
+[2025-11-20 18:42:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:42:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:42:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:42:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:42:54] Sent heartbeat to NS.
+[2025-11-20 18:42:59] Sent heartbeat to NS.
+[2025-11-20 18:43:04] Sent heartbeat to NS.
+[2025-11-20 18:43:04] REPL_IN: New incoming replication connection
+[2025-11-20 18:43:05] REPL_IN: Receiving replica for u1 (35 bytes)
+[2025-11-20 18:43:05] REPL_IN: Acquired write lock for u1
+[2025-11-20 18:43:05] REPL_IN: Finished receiving u1
+[2025-11-20 18:43:05] Updated metadata for: u1
+[2025-11-20 18:43:05] REPL_IN: Updated metadata for u1 (owner: user1, size: 35, is_backup=true)
+[2025-11-20 18:43:05] REPL_IN: Released write lock for u1
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:43:09] Sent heartbeat to NS.
+[2025-11-20 18:43:14] Sent heartbeat to NS.
+[2025-11-20 18:43:19] Sent heartbeat to NS.
+[2025-11-20 18:43:21] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:43:21] WRITE: Created swapfile u1 (sentence 0)
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:43:24] Sent heartbeat to NS.
+[2025-11-20 18:43:29] Sent heartbeat to NS.
+[2025-11-20 18:43:34] Sent heartbeat to NS.
+[2025-11-20 18:43:39] Sent heartbeat to NS.
+[2025-11-20 18:43:44] Sent heartbeat to NS.
+[2025-11-20 18:43:49] Sent heartbeat to NS.
+[2025-11-20 18:43:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:43:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:43:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:43:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:43:54] Sent heartbeat to NS.
+[2025-11-20 18:43:59] Sent heartbeat to NS.
+[2025-11-20 18:44:04] Sent heartbeat to NS.
+[2025-11-20 18:44:09] Sent heartbeat to NS.
+[2025-11-20 18:44:14] Sent heartbeat to NS.
+[2025-11-20 18:44:19] Sent heartbeat to NS.
+[2025-11-20 18:44:24] Sent heartbeat to NS.
+[2025-11-20 18:44:29] Sent heartbeat to NS.
+[2025-11-20 18:44:34] Sent heartbeat to NS.
+[2025-11-20 18:44:39] Sent heartbeat to NS.
+[2025-11-20 18:44:44] Sent heartbeat to NS.
+[2025-11-20 18:44:49] Sent heartbeat to NS.
+[2025-11-20 18:44:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:44:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:44:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:44:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:44:54] Sent heartbeat to NS.
+[2025-11-20 18:44:59] Sent heartbeat to NS.
+[2025-11-20 18:45:04] Sent heartbeat to NS.
+[2025-11-20 18:45:09] Sent heartbeat to NS.
+[2025-11-20 18:45:14] Sent heartbeat to NS.
+[2025-11-20 18:45:19] Sent heartbeat to NS.
+[2025-11-20 18:45:24] Sent heartbeat to NS.
+[2025-11-20 18:45:29] Sent heartbeat to NS.
+[2025-11-20 18:45:34] Sent heartbeat to NS.
+[2025-11-20 18:45:39] Sent heartbeat to NS.
+[2025-11-20 18:45:44] Sent heartbeat to NS.
+[2025-11-20 18:45:49] Sent heartbeat to NS.
+[2025-11-20 18:45:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:45:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:45:49] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:45:49] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:45:54] Sent heartbeat to NS.
+[2025-11-20 18:45:59] Sent heartbeat to NS.
+^C
+Received signal 2, initiating graceful shutdown...
+[2025-11-20 18:46:02] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-20 18:46:02] NS_CONTROL: Listener thread exiting
+[2025-11-20 18:46:02] CLIENT_LISTENER: Thread exiting
+[2025-11-20 18:46:03] REPL_LISTENER: Thread exiting
+[2025-11-20 18:46:03] CHECKPOINT: Thread exiting
+[2025-11-20 18:46:04] HEARTBEAT: Thread exiting
+[2025-11-20 18:46:04] MAIN: Performing final metadata save (2 entries)...
+[2025-11-20 18:46:04] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 18:46:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:46:04] MAIN: Final metadata save successful
+[2025-11-20 18:46:04] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-20 18:46:04] REPL: Worker thread shutting down.
+[2025-11-20 18:46:04] --- LOGGING STOPPED ---
+
+SS_1 logs:
+pragya-mishra@pragya-mishra-Victus-by-HP-Gaming-Laptop-15-fb0xxx:~/Downloads/objectfiles_osn_cp$ ./storageserver 10.34.17.143 8081 10.34.17.66 9001 9002
+[2025-11-20 18:33:55] --- LOGGING STARTED ---
+[2025-11-20 18:33:55] MAIN: Starting Storage Server...
+[2025-11-20 18:33:55] MAIN: Connected to Name Server. Performing initial registration (no local files yet loaded)...
+[DEBUG send_response] Sending message type 29 with payload len 44
+[2025-11-20 18:33:56] MAIN: Registration complete. This SS ID is 1
+[2025-11-20 18:33:56] --- LOGGING STOPPED ---
+[2025-11-20 18:33:56] --- LOGGING STARTED ---
+[2025-11-20 18:33:56] MAIN: Persistent log file initialized for SS ID 1
+[2025-11-20 18:33:56] MAIN: Using persistent data directory: ss_data_1
+[2025-11-20 18:33:56] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-20 18:33:56] No existing metadata file found at ss_data_1/metadata.db (starting fresh)
+[2025-11-20 18:33:56] MAIN: No existing metadata DB found for SS ID 1, creating new table
+[2025-11-20 18:33:56] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+Listening on 10.34.17.66:9001
+[2025-11-20 18:33:56] MAIN: Listening for Clients and NS on 10.34.17.66:9001
+Listening on 10.34.17.66:9002
+[2025-11-20 18:33:56] MAIN: Listening for Replication on 10.34.17.66:9002
+[2025-11-20 18:33:56] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-20 18:33:56] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-20 18:33:56] NS_CONTROL: Received message type 60 from NS
+[2025-11-20 18:33:56] RECOVERY: NS requests re-replication of all files to backup SS 0 (10.34.17.143:9003)
+[2025-11-20 18:33:56] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-20 18:33:56] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-20 18:33:56] RECOVERY: Re-replication scheduling complete (0 primary files queued)
+[2025-11-20 18:33:56] MAIN: File scan complete (no existing files found)
+[2025-11-20 18:33:56] MAIN: Will send replications to: 10.34.17.143:9003
+[2025-11-20 18:33:56] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-20 18:34:01] Sent heartbeat to NS.
+[2025-11-20 18:34:06] Sent heartbeat to NS.
+[2025-11-20 18:34:07] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 18:34:08] HANDLER: Received backup assignment update from NS
+[2025-11-20 18:34:08] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9005 (SS ID 2)
+[2025-11-20 18:34:08] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 18:34:08] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
+[2025-11-20 18:34:08] NS_CONTROL: Received message type 60 from NS
+[2025-11-20 18:34:08] RECOVERY: NS requests re-replication of all files to backup SS 2 (10.34.17.66:9005)
+[2025-11-20 18:34:08] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-20 18:34:08] RECOVERY: Re-replication scheduling complete (0 primary files queued)
+[2025-11-20 18:34:11] Sent heartbeat to NS.
+[2025-11-20 18:34:16] Sent heartbeat to NS.
+[2025-11-20 18:34:21] Sent heartbeat to NS.
+[2025-11-20 18:34:26] Sent heartbeat to NS.
+[2025-11-20 18:34:31] Sent heartbeat to NS.
+[2025-11-20 18:34:36] Sent heartbeat to NS.
+[2025-11-20 18:34:41] Sent heartbeat to NS.
+[2025-11-20 18:34:46] Sent heartbeat to NS.
+[2025-11-20 18:34:51] Sent heartbeat to NS.
+[2025-11-20 18:34:56] Sent heartbeat to NS.
+[2025-11-20 18:34:56] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:34:56] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-20 18:34:56] Successfully saved 0 metadata entries (atomic snapshot)
+[2025-11-20 18:34:56] CHECKPOINT: Metadata saved successfully (0 entries)
+[2025-11-20 18:35:01] Sent heartbeat to NS.
+[2025-11-20 18:35:06] Sent heartbeat to NS.
+[2025-11-20 18:35:11] Sent heartbeat to NS.
+[2025-11-20 18:35:13] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
+[2025-11-20 18:35:13] DEBUG: Lazily created inner table for outer bucket 396
+[2025-11-20 18:35:13] Inserted metadata for: u2 (owner: user1, size: 0, is_backup: 0)
+[2025-11-20 18:35:13] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-20 18:35:13] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-20 18:35:13] CREATE: File u2 created by user1
+[2025-11-20 18:35:13] REPL: Scheduling update for u2
+[DEBUG send_response] Sending message type 36 with payload len 4096
+[2025-11-20 18:35:13] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:13] REPL: Connected to backup. Replicating update for u2...
+[2025-11-20 18:35:13] REPL: Replicating u2 (owner: user1, size: 0)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:35:13] REPL: Successfully replicated u2 (0 bytes)
+[2025-11-20 18:35:13] REPL: ACK received for file u2
+[2025-11-20 18:35:13] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:13] INFO: NS requesting metadata for u2 (for VIEW -l)
+[2025-11-20 18:35:13] INFO: Returning cached metadata for u2 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:13] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:16] Sent heartbeat to NS.
+[2025-11-20 18:35:21] Sent heartbeat to NS.
+[2025-11-20 18:35:23] REPL_IN: New incoming replication connection
+[2025-11-20 18:35:24] REPL_IN: Receiving replica for u3 (0 bytes)
+[2025-11-20 18:35:24] REPL_IN: Acquired write lock for u3
+[2025-11-20 18:35:24] REPL_IN: Finished receiving u3
+[2025-11-20 18:35:24] DEBUG: Lazily created inner table for outer bucket 397
+[2025-11-20 18:35:24] Inserted metadata for: u3 (owner: user1, size: 0, is_backup: 1)
+[2025-11-20 18:35:24] REPL_IN: Created metadata for u3 (owner: user1, is_backup=true)
+[2025-11-20 18:35:24] REPL_IN: Released write lock for u3
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:35:26] Sent heartbeat to NS.
+[2025-11-20 18:35:30] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:30] INFO: NS requesting metadata for u2 (for VIEW -l)
+[2025-11-20 18:35:30] INFO: Returning cached metadata for u2 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:30] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:31] Sent heartbeat to NS.
+[2025-11-20 18:35:36] Sent heartbeat to NS.
+[2025-11-20 18:35:41] Sent heartbeat to NS.
+[2025-11-20 18:35:46] Sent heartbeat to NS.
+[2025-11-20 18:35:51] Sent heartbeat to NS.
+[2025-11-20 18:35:56] Sent heartbeat to NS.
+[2025-11-20 18:35:56] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:35:56] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-20 18:35:56] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:35:56] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:36:01] Sent heartbeat to NS.
+[2025-11-20 18:36:06] Sent heartbeat to NS.
+[2025-11-20 18:36:11] Sent heartbeat to NS.
+[2025-11-20 18:36:16] Sent heartbeat to NS.
+[2025-11-20 18:36:21] Sent heartbeat to NS.
+[2025-11-20 18:36:26] Sent heartbeat to NS.
+[2025-11-20 18:36:31] Sent heartbeat to NS.
+[2025-11-20 18:36:36] Sent heartbeat to NS.
+[2025-11-20 18:36:41] Sent heartbeat to NS.
+[2025-11-20 18:36:46] Sent heartbeat to NS.
+[2025-11-20 18:36:51] Sent heartbeat to NS.
+[2025-11-20 18:36:56] Sent heartbeat to NS.
+[2025-11-20 18:36:56] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:36:56] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-20 18:36:56] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:36:56] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:37:01] Sent heartbeat to NS.
+[2025-11-20 18:37:06] Sent heartbeat to NS.
+[2025-11-20 18:37:11] Sent heartbeat to NS.
+[2025-11-20 18:37:16] Sent heartbeat to NS.
+[2025-11-20 18:37:21] Sent heartbeat to NS.
+[2025-11-20 18:37:26] Sent heartbeat to NS.
+[2025-11-20 18:37:31] Sent heartbeat to NS.
+[2025-11-20 18:37:36] Sent heartbeat to NS.
+Connection closed by peer gracefully
+[2025-11-20 18:37:36] NS_CONTROL: Lost connection to NS (recv returned 0, errno=11)
+[2025-11-20 18:37:36] NS_CONTROL: Listener thread exiting
+[2025-11-20 18:37:41] Sent heartbeat to NS.
+[2025-11-20 18:37:46] Sent heartbeat to NS.
+[2025-11-20 18:37:51] FATAL: Failed to send heartbeat to NS. Connection lost.
+pragya-mishr
+
+SS_2 logs:
+pragya-mishra@pragya-mishra-Victus-by-HP-Gaming-Laptop-15-fb0xxx:~/Downloads/objectfiles_osn_cp$ ./storageserver 10.34.17.143 8081 10.34.17.66 9004 9005
+[2025-11-20 18:34:04] --- LOGGING STARTED ---
+[2025-11-20 18:34:04] MAIN: Starting Storage Server...
+[2025-11-20 18:34:07] MAIN: Connected to Name Server. Performing initial registration (no local files yet loaded)...
+[DEBUG send_response] Sending message type 29 with payload len 44
+[2025-11-20 18:34:08] MAIN: Registration complete. This SS ID is 2
+[2025-11-20 18:34:08] --- LOGGING STOPPED ---
+[2025-11-20 18:34:08] --- LOGGING STARTED ---
+[2025-11-20 18:34:08] MAIN: Persistent log file initialized for SS ID 2
+[2025-11-20 18:34:08] MAIN: Using persistent data directory: ss_data_2
+[2025-11-20 18:34:08] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-20 18:34:08] No existing metadata file found at ss_data_2/metadata.db (starting fresh)
+[2025-11-20 18:34:08] MAIN: No existing metadata DB found for SS ID 2, creating new table
+[2025-11-20 18:34:08] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+Listening on 10.34.17.66:9004
+Listening on 10.34.17.66:9005
+[2025-11-20 18:34:08] MAIN: Listening for Clients and NS on 10.34.17.66:9004
+[2025-11-20 18:34:08] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-20 18:34:08] NS_CONTROL: Received message type 60 from NS
+[2025-11-20 18:34:08] RECOVERY: NS requests re-replication of all files to backup SS 0 (10.34.17.143:9003)
+[2025-11-20 18:34:08] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-20 18:34:08] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-20 18:34:08] MAIN: Listening for Replication on 10.34.17.66:9005
+[2025-11-20 18:34:08] RECOVERY: Re-replication scheduling complete (0 primary files queued)
+[2025-11-20 18:34:08] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-20 18:34:08] MAIN: File scan complete (no existing files found)
+[2025-11-20 18:34:08] MAIN: Will send replications to: 10.34.17.143:9003
+[2025-11-20 18:34:08] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-20 18:34:13] Sent heartbeat to NS.
+[2025-11-20 18:34:18] Sent heartbeat to NS.
+[2025-11-20 18:34:23] Sent heartbeat to NS.
+[2025-11-20 18:34:28] Sent heartbeat to NS.
+[2025-11-20 18:34:33] Sent heartbeat to NS.
+[2025-11-20 18:34:38] Sent heartbeat to NS.
+[2025-11-20 18:34:43] Sent heartbeat to NS.
+[2025-11-20 18:34:48] Sent heartbeat to NS.
+[2025-11-20 18:34:53] Sent heartbeat to NS.
+[2025-11-20 18:34:54] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
+[2025-11-20 18:34:54] DEBUG: Lazily created inner table for outer bucket 395
+[2025-11-20 18:34:54] Inserted metadata for: u1 (owner: user1, size: 0, is_backup: 0)
+[2025-11-20 18:34:54] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:34:54] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-20 18:34:54] CREATE: File u1 created by user1
+[2025-11-20 18:34:54] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 36 with payload len 4096
+[2025-11-20 18:34:54] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:34:54] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:34:54] REPL: Replicating u1 (owner: user1, size: 0)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:34:54] REPL: Successfully replicated u1 (0 bytes)
+[2025-11-20 18:34:54] REPL: ACK received for file u1
+[2025-11-20 18:34:58] Sent heartbeat to NS.
+[2025-11-20 18:35:03] Sent heartbeat to NS.
+[2025-11-20 18:35:04] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:04] INFO: NS requesting metadata for u1 (for VIEW -l)
+[2025-11-20 18:35:04] INFO: Returning cached metadata for u1 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:04] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:08] Sent heartbeat to NS.
+[2025-11-20 18:35:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:35:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:35:08] Successfully saved 1 metadata entries (atomic snapshot)
+[2025-11-20 18:35:08] CHECKPOINT: Metadata saved successfully (1 entries)
+[2025-11-20 18:35:13] Sent heartbeat to NS.
+[2025-11-20 18:35:13] REPL_IN: New incoming replication connection
+[2025-11-20 18:35:13] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 18:35:13] REPL_IN: Acquired write lock for u2
+[2025-11-20 18:35:13] REPL_IN: Finished receiving u2
+[2025-11-20 18:35:13] DEBUG: Lazily created inner table for outer bucket 396
+[2025-11-20 18:35:13] Inserted metadata for: u2 (owner: user1, size: 0, is_backup: 1)
+[2025-11-20 18:35:13] REPL_IN: Created metadata for u2 (owner: user1, is_backup=true)
+[2025-11-20 18:35:13] REPL_IN: Released write lock for u2
+[DEBUG send_response] Sending message type 57 with payload len 0
+[2025-11-20 18:35:13] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:13] INFO: NS requesting metadata for u1 (for VIEW -l)
+[2025-11-20 18:35:13] INFO: Returning cached metadata for u1 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:13] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:18] Sent heartbeat to NS.
+[2025-11-20 18:35:23] Sent heartbeat to NS.
+[2025-11-20 18:35:28] Sent heartbeat to NS.
+[2025-11-20 18:35:29] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 18:35:29] INFO: NS requesting metadata for u1 (for VIEW -l)
+[2025-11-20 18:35:29] INFO: Returning cached metadata for u1 (size: 0, words: 0, chars: 0)
+[DEBUG send_response] Sending message type 39 with payload len 352
+[2025-11-20 18:35:29] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:35:33] Sent heartbeat to NS.
+[2025-11-20 18:35:38] Sent heartbeat to NS.
+[2025-11-20 18:35:43] Sent heartbeat to NS.
+[2025-11-20 18:35:48] Sent heartbeat to NS.
+[2025-11-20 18:35:53] Sent heartbeat to NS.
+[2025-11-20 18:35:58] Sent heartbeat to NS.
+[2025-11-20 18:36:03] Sent heartbeat to NS.
+[2025-11-20 18:36:08] Sent heartbeat to NS.
+[2025-11-20 18:36:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:36:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:36:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:36:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:36:13] Sent heartbeat to NS.
+[2025-11-20 18:36:18] Sent heartbeat to NS.
+[2025-11-20 18:36:23] Sent heartbeat to NS.
+[2025-11-20 18:36:28] Sent heartbeat to NS.
+[2025-11-20 18:36:33] Sent heartbeat to NS.
+[2025-11-20 18:36:38] Sent heartbeat to NS.
+[2025-11-20 18:36:43] Sent heartbeat to NS.
+[2025-11-20 18:36:48] Sent heartbeat to NS.
+[2025-11-20 18:36:53] Sent heartbeat to NS.
+[2025-11-20 18:36:58] Sent heartbeat to NS.
+[2025-11-20 18:37:03] Sent heartbeat to NS.
+[2025-11-20 18:37:08] Sent heartbeat to NS.
+[2025-11-20 18:37:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:37:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:37:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:37:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:37:13] Sent heartbeat to NS.
+[2025-11-20 18:37:18] Sent heartbeat to NS.
+[2025-11-20 18:37:23] Sent heartbeat to NS.
+[2025-11-20 18:37:28] Sent heartbeat to NS.
+[2025-11-20 18:37:33] Sent heartbeat to NS.
+[2025-11-20 18:37:38] Sent heartbeat to NS.
+[2025-11-20 18:37:43] Sent heartbeat to NS.
+[2025-11-20 18:37:48] Sent heartbeat to NS.
+[2025-11-20 18:37:50] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
+[2025-11-20 18:37:50] WRITE: Created swapfile u1 (sentence 0)
+[2025-11-20 18:37:50] WRITE: Appending sentence 0 to empty file
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:37:53] Sent heartbeat to NS.
+[2025-11-20 18:37:53] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:37:53] WRITE: Sentence 0 of u1 is already locked
+[DEBUG send_response] Sending message type 50 with payload len 4096
+[2025-11-20 18:37:58] Sent heartbeat to NS.
+[2025-11-20 18:38:03] Sent heartbeat to NS.
+[2025-11-20 18:38:08] Sent heartbeat to NS.
+[2025-11-20 18:38:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:38:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:38:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:38:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:38:13] Sent heartbeat to NS.
+[2025-11-20 18:38:15] WRITE: Acquired global file lock for commit (file u1, sentence 0)
+[2025-11-20 18:38:15] WRITE: Committed and deleted swapfile for u1 (sentence 0)
+[2025-11-20 18:38:15] Updated size for u1: 0 bytes
+[2025-11-20 18:38:15] Updated counts for u1: 0 words, 0 chars
+[2025-11-20 18:38:15] WRITE: Updated metadata for u1 (size: 0, words: 0, chars: 0)
+[2025-11-20 18:38:15] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:38:15] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:38:15] WRITE: Completed for u1 (sentence 0)
+[2025-11-20 18:38:15] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[2025-11-20 18:38:15] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:38:15] REPL: Replicating u1 (owner: user1, size: 0)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:38:15] REPL: Successfully replicated u1 (0 bytes)
+[2025-11-20 18:38:15] REPL: ACK received for file u1
+[2025-11-20 18:38:18] Sent heartbeat to NS.
+[2025-11-20 18:38:18] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
+[2025-11-20 18:38:18] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:38:18] READ: Handler called for file 'u1'
+[2025-11-20 18:38:18] READ: Starting read for file u1
+[2025-11-20 18:38:18] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:38:18] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:38:18] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:38:18] READ: Read complete for u1, sent 0 chunks
+[2025-11-20 18:38:18] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:38:22] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 40)
+[2025-11-20 18:38:22] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:38:22] READ: Handler called for file 'u1'
+[2025-11-20 18:38:22] READ: Starting read for file u1
+[2025-11-20 18:38:22] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:38:22] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:38:22] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:38:22] READ: Read complete for u1, sent 0 chunks
+[2025-11-20 18:38:22] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:38:23] Sent heartbeat to NS.
+[2025-11-20 18:38:28] Sent heartbeat to NS.
+[2025-11-20 18:38:33] Sent heartbeat to NS.
+[2025-11-20 18:38:38] Sent heartbeat to NS.
+[2025-11-20 18:38:41] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
+[2025-11-20 18:38:41] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:38:41] READ: Handler called for file 'u1'
+[2025-11-20 18:38:41] READ: Starting read for file u1
+[2025-11-20 18:38:41] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:38:41] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:38:41] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:38:41] READ: Read complete for u1, sent 0 chunks
+[2025-11-20 18:38:41] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:38:43] Sent heartbeat to NS.
+[2025-11-20 18:38:46] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
+[2025-11-20 18:38:46] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:38:46] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:38:46] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:38:48] Sent heartbeat to NS.
+[2025-11-20 18:38:50] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:38:50] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:38:50] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:38:50] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:38:53] Sent heartbeat to NS.
+[2025-11-20 18:38:58] Sent heartbeat to NS.
+[2025-11-20 18:38:59] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
+[2025-11-20 18:38:59] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:38:59] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:38:59] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:38:59] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:38:59] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:38:59] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:38:59] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:03] Sent heartbeat to NS.
+[2025-11-20 18:39:07] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
+[2025-11-20 18:39:07] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:39:07] READ: Handler called for file 'u1'
+[2025-11-20 18:39:07] READ: Starting read for file u1
+[2025-11-20 18:39:07] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:39:07] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:39:07] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:39:07] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:39:07] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:39:07] STREAM: Handler called for file 'u1'
+[2025-11-20 18:39:07] READ: Read complete for u1, sent 0 chunks
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:39:07] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:39:07] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:08] Sent heartbeat to NS.
+[2025-11-20 18:39:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:39:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:39:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:39:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:39:10] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
+[2025-11-20 18:39:10] WRITE: Created swapfile u1 (sentence 0)
+[2025-11-20 18:39:10] WRITE: Appending sentence 0 to empty file
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:39:13] Sent heartbeat to NS.
+[2025-11-20 18:39:13] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 40)
+[2025-11-20 18:39:13] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:39:13] READ: Handler called for file 'u1'
+[2025-11-20 18:39:13] READ: Starting read for file u1
+[2025-11-20 18:39:13] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:39:13] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:39:13] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:39:13] READ: Read complete for u1, sent 0 chunks
+[2025-11-20 18:39:13] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:18] Sent heartbeat to NS.
+[2025-11-20 18:39:21] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 40)
+[2025-11-20 18:39:21] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:39:21] READ: Handler called for file 'u1'
+[2025-11-20 18:39:21] READ: Starting read for file u1
+[2025-11-20 18:39:21] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:39:21] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:39:21] READ: File is empty, sending empty final chunk
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:39:21] READ: Read complete for u1, sent 0 chunks
+[2025-11-20 18:39:21] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:23] Sent heartbeat to NS.
+[2025-11-20 18:39:28] Sent heartbeat to NS.
+[2025-11-20 18:39:29] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:39:29] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:39:29] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:39:29] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:32] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:39:32] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:39:32] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:39:32] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:33] Sent heartbeat to NS.
+[2025-11-20 18:39:35] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:39:35] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:39:35] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:39:35] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:39:38] Sent heartbeat to NS.
+[2025-11-20 18:39:40] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:39:40] WRITE: Created swapfile u1 (sentence 1)
+[2025-11-20 18:39:40] WRITE: Sentence index 1 out of range (max: 0)
+[DEBUG send_response] Sending message type 53 with payload len 4096
+[2025-11-20 18:39:43] Sent heartbeat to NS.
+[2025-11-20 18:39:48] Sent heartbeat to NS.
+[2025-11-20 18:39:53] Sent heartbeat to NS.
+[2025-11-20 18:39:58] Sent heartbeat to NS.
+[2025-11-20 18:39:59] WRITE: Acquired global file lock for commit (file u1, sentence 0)
+[2025-11-20 18:39:59] WRITE: Committed and deleted swapfile for u1 (sentence 0)
+[2025-11-20 18:39:59] Updated size for u1: 24 bytes
+[2025-11-20 18:39:59] Updated counts for u1: 19 words, 24 chars
+[2025-11-20 18:39:59] WRITE: Updated metadata for u1 (size: 24, words: 19, chars: 24)
+[2025-11-20 18:39:59] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:39:59] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:39:59] WRITE: Completed for u1 (sentence 0)
+[2025-11-20 18:39:59] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[2025-11-20 18:39:59] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:39:59] REPL: Replicating u1 (owner: user1, size: 24)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:39:59] REPL: Successfully replicated u1 (24 bytes)
+[2025-11-20 18:39:59] REPL: ACK received for file u1
+[2025-11-20 18:39:59] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 41)
+[2025-11-20 18:39:59] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 18:39:59] STREAM: Handler called for file 'u1'
+[DEBUG send_response] Sending message type 48 with payload len 256
+[DEBUG send_response] Sending message type 48 with payload len 256
+[DEBUG send_response] Sending message type 49 with payload len 0
+[2025-11-20 18:40:00] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:40:03] Sent heartbeat to NS.
+[2025-11-20 18:40:08] Sent heartbeat to NS.
+[2025-11-20 18:40:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:40:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:40:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:40:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:40:13] Sent heartbeat to NS.
+[2025-11-20 18:40:18] Sent heartbeat to NS.
+[2025-11-20 18:40:23] Sent heartbeat to NS.
+[2025-11-20 18:40:28] Sent heartbeat to NS.
+[2025-11-20 18:40:33] Sent heartbeat to NS.
+[2025-11-20 18:40:38] Sent heartbeat to NS.
+[2025-11-20 18:40:43] Sent heartbeat to NS.
+[2025-11-20 18:40:43] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 40)
+[2025-11-20 18:40:43] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:40:43] READ: Handler called for file 'u1'
+[2025-11-20 18:40:43] READ: Starting read for file u1
+[2025-11-20 18:40:43] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:40:43] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:40:43] READ: Chunk 1 - read 24 bytes, is_final=1
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:40:43] READ: Chunk 1 sent
+[2025-11-20 18:40:43] READ: Read complete for u1, sent 1 chunks
+[2025-11-20 18:40:43] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:40:48] Sent heartbeat to NS.
+[2025-11-20 18:40:53] Sent heartbeat to NS.
+[2025-11-20 18:40:58] Sent heartbeat to NS.
+[2025-11-20 18:41:03] Sent heartbeat to NS.
+[2025-11-20 18:41:08] Sent heartbeat to NS.
+[2025-11-20 18:41:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:41:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:41:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:41:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:41:13] Sent heartbeat to NS.
+[2025-11-20 18:41:18] Sent heartbeat to NS.
+[2025-11-20 18:41:23] Sent heartbeat to NS.
+[2025-11-20 18:41:28] Sent heartbeat to NS.
+[2025-11-20 18:41:33] Sent heartbeat to NS.
+[2025-11-20 18:41:38] Sent heartbeat to NS.
+[2025-11-20 18:41:43] Sent heartbeat to NS.
+[2025-11-20 18:41:44] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
+[2025-11-20 18:41:44] WRITE: Created swapfile u1 (sentence 0)
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:41:44] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:41:44] WRITE: Sentence 0 of u1 is already locked
+[DEBUG send_response] Sending message type 50 with payload len 4096
+[2025-11-20 18:41:48] Sent heartbeat to NS.
+[2025-11-20 18:41:51] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:41:51] WRITE: Created swapfile u1 (sentence 1)
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:41:53] Sent heartbeat to NS.
+[2025-11-20 18:41:58] Sent heartbeat to NS.
+[2025-11-20 18:42:03] Sent heartbeat to NS.
+[2025-11-20 18:42:08] Sent heartbeat to NS.
+[2025-11-20 18:42:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:42:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:42:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:42:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:42:10] WRITE: Acquired global file lock for commit (file u1, sentence 1)
+[2025-11-20 18:42:10] WRITE: Committed and deleted swapfile for u1 (sentence 1)
+[2025-11-20 18:42:10] Updated size for u1: 29 bytes
+[2025-11-20 18:42:10] Updated counts for u1: 20 words, 29 chars
+[2025-11-20 18:42:10] WRITE: Updated metadata for u1 (size: 29, words: 20, chars: 29)
+[2025-11-20 18:42:10] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:42:10] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:42:10] WRITE: Completed for u1 (sentence 1)
+[2025-11-20 18:42:10] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[2025-11-20 18:42:10] WRITE: Acquired global file lock for commit (file u1, sentence 0)
+[2025-11-20 18:42:10] WRITE: Committed and deleted swapfile for u1 (sentence 0)
+[2025-11-20 18:42:10] Updated size for u1: 35 bytes
+[2025-11-20 18:42:10] Updated counts for u1: 21 words, 35 chars
+[2025-11-20 18:42:10] WRITE: Updated metadata for u1 (size: 35, words: 21, chars: 35)
+[2025-11-20 18:42:10] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:42:10] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:42:10] WRITE: Completed for u1 (sentence 0)
+[2025-11-20 18:42:10] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[2025-11-20 18:42:10] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:42:10] REPL: Replicating u1 (owner: user1, size: 29)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:42:10] REPL: Successfully replicated u1 (29 bytes)
+[2025-11-20 18:42:10] REPL: ACK received for file u1
+[2025-11-20 18:42:10] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:42:10] REPL: Replicating u1 (owner: user1, size: 35)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:42:10] REPL: Successfully replicated u1 (35 bytes)
+[2025-11-20 18:42:10] REPL: ACK received for file u1
+[2025-11-20 18:42:13] Sent heartbeat to NS.
+[2025-11-20 18:42:15] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
+[2025-11-20 18:42:15] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:42:16] READ: Handler called for file 'u1'
+[2025-11-20 18:42:16] READ: Starting read for file u1
+[2025-11-20 18:42:16] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:42:16] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:42:16] READ: Chunk 1 - read 35 bytes, is_final=1
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:42:16] READ: Chunk 1 sent
+[2025-11-20 18:42:16] READ: Read complete for u1, sent 1 chunks
+[2025-11-20 18:42:16] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 18:42:17] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 40)
+[2025-11-20 18:42:17] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-20 18:42:17] READ: Handler called for file 'u1'
+[2025-11-20 18:42:17] READ: Starting read for file u1
+[2025-11-20 18:42:17] READ: Full path is ss_data_2/files/u1
+[2025-11-20 18:42:17] READ: File opened successfully, starting to read chunks
+[2025-11-20 18:42:17] READ: Chunk 1 - read 35 bytes, is_final=1
+[DEBUG send_response] Sending message type 47 with payload len 4112
+[2025-11-20 18:42:17] READ: Chunk 1 sent
+[2025-11-20 18:42:17] READ: Read complete for u1, sent 1 chunks
+[2025-11-20 18:42:17] HANDLER: Closing connection from 10.34.17.66
+[2025-11-20 18:42:18] Sent heartbeat to NS.
+[2025-11-20 18:42:23] Sent heartbeat to NS.
+[2025-11-20 18:42:28] Sent heartbeat to NS.
+[2025-11-20 18:42:33] Sent heartbeat to NS.
+[2025-11-20 18:42:38] Sent heartbeat to NS.
+[2025-11-20 18:42:43] Sent heartbeat to NS.
+[2025-11-20 18:42:48] Sent heartbeat to NS.
+[2025-11-20 18:42:53] Sent heartbeat to NS.
+[2025-11-20 18:42:58] Sent heartbeat to NS.
+[2025-11-20 18:42:58] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
+[2025-11-20 18:42:58] WRITE: Created swapfile u1 (sentence 0)
+[2025-11-20 18:42:58] HANDLER: New CLIENT connection from 10.34.17.66 (Req: 42)
+[2025-11-20 18:42:58] WRITE: Sentence 0 of u1 is already locked
+[DEBUG send_response] Sending message type 50 with payload len 4096
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:43:03] Sent heartbeat to NS.
+[2025-11-20 18:43:04] WRITE: Acquired global file lock for commit (file u1, sentence 0)
+[2025-11-20 18:43:04] WRITE: Committed and deleted swapfile for u1 (sentence 0)
+[2025-11-20 18:43:04] Updated size for u1: 35 bytes
+[2025-11-20 18:43:04] Updated counts for u1: 21 words, 35 chars
+[2025-11-20 18:43:04] WRITE: Updated metadata for u1 (size: 35, words: 21, chars: 35)
+[2025-11-20 18:43:04] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:43:04] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:43:04] WRITE: Completed for u1 (sentence 0)
+[2025-11-20 18:43:04] REPL: Scheduling update for u1
+[DEBUG send_response] Sending message type 52 with payload len 4096
+[2025-11-20 18:43:04] REPL: Connected to backup. Replicating update for u1...
+[2025-11-20 18:43:04] REPL: Replicating u1 (owner: user1, size: 35)
+[DEBUG send_response] Sending message type 55 with payload len 328
+[2025-11-20 18:43:04] REPL: Successfully replicated u1 (35 bytes)
+[2025-11-20 18:43:08] Sent heartbeat to NS.
+[2025-11-20 18:43:08] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 18:43:08] Saving metadata to ss_data_2/metadata.db (atomic snapshot)...
+[2025-11-20 18:43:08] Successfully saved 2 metadata entries (atomic snapshot)
+[2025-11-20 18:43:08] CHECKPOINT: Metadata saved successfully (2 entries)
+[2025-11-20 18:43:08] REPL: ACK received for file u1
+[2025-11-20 18:43:13] Sent heartbeat to NS.
+[2025-11-20 18:43:15] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
+[2025-11-20 18:43:15] WRITE: Created swapfile u1 (sentence 0)
+[DEBUG send_response] Sending message type 51 with payload len 0
+[2025-11-20 18:43:18] Sent heartbeat to NS.
+Connection closed by peer gracefully
+[2025-11-20 18:43:18] NS_CONTROL: Lost connection to NS (recv returned 0, errno=11)
+[2025-11-20 18:43:18] NS_CONTROL: Listener thread exiting
+[2025-11-20 18:43:23] Sent heartbeat to NS.
+[2025-11-20 18:43:28] Sent heartbeat to NS.
+[2025-11-20 18:43:33] Sent heartbeat to NS.
+[2025-11-20 18:43:38] Sent heartbeat to NS.
+[2025-11-20 18:43:43] FATAL: Failed to send heartbeat to NS. Connection lost.
+
+Client(user3) interface output:
+pragya-mishra@pragya-mishra-Victus-by-HP-Gaming-Laptop-15-fb0xxx:~/Downloads/objectfiles_osn_cp$ ./client 10.34.17.143 8080 
+Enter username: user3
+[DEBUG] Successfully connected to 10.34.17.143:8080
+Login successful. Welcome to the NFS. Type 'help' for commands.
+[user3@nfs]$ VIEW
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+
+[user3@nfs]$ READ u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=9
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+[DEBUG] Waiting for READ response...
+[DEBUG] About to recv header...
+[DEBUG] recv_header returned 1, type=47
+[DEBUG] Receiving payload of size 4112...
+[DEBUG] Got chunk: data_len=0, is_final=1
+[DEBUG] Final chunk received, breaking
+
+[user3@nfs]$ READ u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=9
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+[DEBUG] Waiting for READ response...
+[DEBUG] About to recv header...
+[DEBUG] recv_header returned 1, type=47
+[DEBUG] Receiving payload of size 4112...
+[DEBUG] Got chunk: data_len=0, is_final=1
+[DEBUG] Final chunk received, breaking
+
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+
+[user3@nfs]$ STREAM u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=10
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+hey oye................! 
+[user3@nfs]$ READ u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=9
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+[DEBUG] Waiting for READ response...
+[DEBUG] About to recv header...
+[DEBUG] recv_header returned 1, type=47
+[DEBUG] Receiving payload of size 4112...
+[DEBUG] Got chunk: data_len=24, is_final=1
+[DEBUG] Final chunk received, breaking
+hey oye................!
+[user3@nfs]$ WRITE u1 0
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=11
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+ERROR: Sentence is locked by another user
+[user3@nfs]$ WRITE u1 1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=11
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+Entering write mode for 'u1' (sentence 1).
+Enter '<word_index> <content>' or 'ETIRW' to save and exit.
+w> 0 user2
+w> ETIRW
+SUCCESS: Write successful
+[user3@nfs]$ READ u1
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=9
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+[DEBUG] Waiting for READ response...
+[DEBUG] About to recv header...
+[DEBUG] recv_header returned 1, type=47
+[DEBUG] Receiving payload of size 4112...
+[DEBUG] Got chunk: data_len=35, is_final=1
+[DEBUG] Final chunk received, breaking
+user1 hey oye.user2...............!
+[user3@nfs]$ WRITE u1 0
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=11
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.66:9004
+ERROR: Sentence is locked by another user
+[user3@nfs]$ WRITE u1 0
+[DEBUG] get_ss_connection: requesting SS for 'u1', req_type=11
+[DEBUG] Sending request to NS on sock 3
+[DEBUG] Waiting for NS response...
+[DEBUG] recv_header returned 1
+[DEBUG] Successfully connected to 10.34.17.143:9002
+Entering write mode for 'u1' (sentence 0).
+Enter '<word_index> <content>' or 'ETIRW' to save and exit.
+w> ^C
+
+As you can see, user1 and user3 both acquired sentence lock for sentence_index 0 at the end.
+Why did this happen? What is the bug?

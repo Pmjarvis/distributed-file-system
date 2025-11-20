@@ -229,6 +229,13 @@ int main(int argc, char* argv[]) {
     // Initialize g_backup_ip to empty - will be set by NS during registration
     memset(g_backup_ip, 0, 16);
     
+    // Check for loopback or wildcard IP usage which might confuse remote clients
+    if (strcmp(g_ss_ip, "127.0.0.1") == 0 || strcmp(g_ss_ip, "localhost") == 0 || strcmp(g_ss_ip, "0.0.0.0") == 0) {
+        fprintf(stderr, "WARNING: You are using a local/wildcard IP (%s) for registration.\n", g_ss_ip);
+        fprintf(stderr, "         Clients on OTHER machines will likely fail to connect to this SS.\n");
+        fprintf(stderr, "         Please restart with your LAN IP (e.g., 192.168.x.x) if you need remote access.\n");
+    }
+    
     // Install signal handlers for graceful shutdown
     signal(SIGINT, sigint_handler);
     signal(SIGTERM, sigint_handler);
@@ -385,8 +392,13 @@ static void* ns_heartbeat_thread(void* arg) {
         
         if (send(g_ns_sock, &hb_header, sizeof(hb_header), 0) <= 0) {
             if (g_shutdown) break;  // Connection may be closed during shutdown
-            ss_log("FATAL: Failed to send heartbeat to NS. Connection lost.");
-            exit(1); // The NS will mark us as dead. We must restart.
+            ss_log("FATAL: Failed to send heartbeat to NS. Connection lost. Terminating immediately.");
+            
+            // CRITICAL FIX: Force immediate termination to prevent "Zombie Primary" scenario
+            // where we continue accepting client writes after NS has marked us dead.
+            // We use SIGKILL to ensure no further instructions are executed.
+            kill(getpid(), SIGKILL);
+            exit(1); // Fallback
         }
         ss_log_console("Sent heartbeat to NS.");
     }
@@ -412,7 +424,8 @@ static void* ns_control_listener_thread(void* arg) {
         int recv_result = recv_header(g_ns_sock, &header);
         
         if (recv_result <= 0) {
-            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+            // Check for timeout (only if result is -1)
+            if (recv_result == -1 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
                 // Timeout - check shutdown flag and continue
                 continue;
             }

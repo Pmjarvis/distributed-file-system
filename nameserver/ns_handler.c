@@ -27,7 +27,7 @@ static void handle_exec(UserSession* session, MsgHeader* header);
 static void handle_folder_cmd(UserSession* session, MsgHeader* header);
 static void handle_req_access(UserSession* session, MsgHeader* header);
 static void handle_view_req_access(UserSession* session, MsgHeader* header);
-static void handle_grant_req_access(UserSession* session, MsgHeader* header);
+// static void handle_grant_req_access(UserSession* session, MsgHeader* header); // Removed
 
 // For READ/WRITE/STREAM/UNDO/CHECKPOINT
 static void handle_ss_redirect(UserSession* session, MsgHeader* header);
@@ -106,9 +106,7 @@ void* handle_client_request(void* arg) {
             case MSG_C2N_VIEW_REQ_ACCESS:
                 handle_view_req_access(session, &header);
                 break;
-            case MSG_C2N_GRANT_REQ_ACCESS:
-                handle_grant_req_access(session, &header);
-                break;
+            // MSG_C2N_GRANT_REQ_ACCESS removed - use ADDACCESS instead
 
             default:
                 fprintf(stderr, "Client %s sent unknown command: %d\n", session->username, header.type);
@@ -489,6 +487,27 @@ static void handle_access_cmd(UserSession* session, MsgHeader* header) {
     user_ht_save(g_access_table, DB_PATH); // Persist
     pthread_mutex_unlock(&g_access_table_mutex);
     
+    // 4. Remove request from list (if exists) - Merged from GRANTACCESS
+    if (header->type == MSG_C2N_ACCESS_ADD) {
+        pthread_mutex_lock(&g_access_req_mutex);
+        AccessRequest* curr = g_access_requests_head;
+        AccessRequest* prev = NULL;
+        while(curr) {
+            if (strcmp(curr->requester, payload.target_user) == 0 &&
+                strcmp(curr->filename, payload.filename) == 0) {
+                
+                if (prev) prev->next = curr->next;
+                else g_access_requests_head = curr->next;
+                
+                free(curr);
+                break; // Assume only one request per user/file
+            }
+            prev = curr;
+            curr = curr->next;
+        }
+        pthread_mutex_unlock(&g_access_req_mutex);
+    }
+    
     send_success_response_to_client(session->client_sock, "Permissions updated.");
 }
 
@@ -653,9 +672,19 @@ static void handle_folder_cmd(UserSession* session, MsgHeader* header) {
     if (strcmp(payload.command, "CREATEFOLDER") == 0) {
         err_msg = createTreeFolder(session->current_directory, payload.arg1);
     } else if (strcmp(payload.command, "VIEWFOLDER") == 0) {
-        // VIEWFOLDER shows the current directory (no arguments needed)
-        view_result = viewTreeFolder(session->current_directory);
-        if (!view_result) err_msg = "Error generating folder view.";
+        // VIEWFOLDER shows the current directory or specified path
+        Node* target_dir = session->current_directory;
+        if (strlen(payload.arg1) > 0) {
+            target_dir = resolvePath(session->folder_hierarchy_root, session->current_directory, payload.arg1);
+            if (!target_dir) {
+                err_msg = "Invalid path.";
+            }
+        }
+        
+        if (!err_msg) {
+            view_result = viewTreeFolder(target_dir);
+            if (!view_result) err_msg = "Error generating folder view.";
+        }
     } else if (strcmp(payload.command, "MOVE") == 0) {
         err_msg = moveTreeFile(session->current_directory, payload.arg1, payload.arg2);
     } else if (strcmp(payload.command, "UPMOVE") == 0) {
@@ -842,44 +871,4 @@ static void handle_view_req_access(UserSession* session, MsgHeader* header) {
     free(buffer);
     
     send_response(session->client_sock, MSG_N2C_VIEW_REQ_ACCESS_RES, &res, sizeof(res));
-}
-
-static void handle_grant_req_access(UserSession* session, MsgHeader* header) {
-    Req_Access payload; // Uses same payload as ADDACCESS
-    recv_payload(session->client_sock, &payload, header->payload_len);
-
-    // 1. Check if user is owner
-    if (!is_owner(session->username, payload.filename)) {
-        send_error_response_to_client(session->client_sock, "Access Denied: Only owner can grant access.");
-        return;
-    }
-
-    // 2. Grant permission
-    pthread_mutex_lock(&g_access_table_mutex);
-    const char* perm_str = (payload.perm_flag == 'W') ? "rw" : "r";
-    user_ht_add_permission(g_access_table, payload.target_user, payload.filename, perm_str);
-    // --- FIX ---
-    user_ht_save(g_access_table, DB_PATH);
-    pthread_mutex_unlock(&g_access_table_mutex);
-    
-    // 3. Remove request from list
-    pthread_mutex_lock(&g_access_req_mutex);
-    AccessRequest* curr = g_access_requests_head;
-    AccessRequest* prev = NULL;
-    while(curr) {
-        if (strcmp(curr->requester, payload.target_user) == 0 &&
-            strcmp(curr->filename, payload.filename) == 0) {
-            
-            if (prev) prev->next = curr->next;
-            else g_access_requests_head = curr->next;
-            
-            free(curr);
-            break; // Assume only one request per user/file
-        }
-        prev = curr;
-        curr = curr->next;
-    }
-    pthread_mutex_unlock(&g_access_req_mutex);
-    
-    send_success_response_to_client(session->client_sock, "Access granted.");
 }

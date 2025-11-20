@@ -54,4 +54,8 @@ Node* openTreeFolder(Node* current_directory, const char* foldername, bool creat
 // Returns parent directory on success, NULL on error
 Node* openTreeParentDirectory(Node* current_directory);
 
+// Resolves a path string to a Node*
+// Supports absolute paths (starting with "ROOT") and relative paths
+Node* resolvePath(Node* root, Node* current, const char* path);
+
 #endif // NS_FOLDERS_H

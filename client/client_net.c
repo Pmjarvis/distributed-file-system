@@ -31,6 +31,8 @@ int connect_to_server(const char* ip, int port) {
         return -1;
     }
 
+    fprintf(stderr, "[DEBUG] Successfully connected to %s:%d\n", ip, port);
+
     return sock;
 }
 

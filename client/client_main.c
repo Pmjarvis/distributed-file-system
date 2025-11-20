@@ -31,6 +31,12 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
     g_username[strcspn(g_username, "\n")] = 0; // Remove newline
+    
+    // Check for spaces in username
+    if (strchr(g_username, ' ') != NULL) {
+        fprintf(stderr, "Error: Username cannot contain spaces.\n");
+        exit(EXIT_FAILURE);
+    }
 
     g_ns_sock = connect_to_server(argv[1], atoi(argv[2]));
     if (g_ns_sock < 0) {
@@ -113,8 +119,6 @@ int main(int argc, char* argv[]) {
             do_request_access(args);
         } else if (strcmp(command, "VIEWREQS") == 0) {
             do_view_requests(args);
-        } else if (strcmp(command, "GRANTACCESS") == 0) {
-            do_grant_access(args);
         }
         else if (strcmp(command, "help") == 0) {
             printf("Available Commands:\n");
@@ -124,7 +128,7 @@ int main(int argc, char* argv[]) {
             printf("  WRITE <file> <sent_#>  UNDO <file>          EXEC <file>\n");
             printf("  LIST\n");
             printf("  ADDACCESS -R|-W <file> <user>    REMACCESS <file> <user>\n");
-            printf("  REQACCESS <file>    VIEWREQS    GRANTACCESS -R|-W <file> <user>\n");
+            printf("  REQACCESS <file>    VIEWREQS\n");
             printf("  CREATEFOLDER <dir>  VIEWFOLDER\n");
             printf("  OPEN [-c] <dir>     OPENPARENT\n");
             printf("  MOVE <file> <dir>   UPMOVE <file>\n");

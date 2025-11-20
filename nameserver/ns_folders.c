@@ -116,6 +116,9 @@ const char* createTreeFolder(Node* current_directory, const char* foldername) {
     if (strcmp(foldername, "ROOT") == 0) {
         return "Error: Cannot create folder with reserved name 'ROOT'.";
     }
+    if (strchr(foldername, '/') != NULL) {
+        return "Error: Folder name cannot contain '/'.";
+    }
     if (findChildByName(current_directory, foldername) != NULL) {
         return "Error: Name already exists in current directory.";
     }
@@ -234,6 +237,7 @@ Node* openTreeFolder(Node* current_directory, const char* foldername, bool creat
 }
 
 // --- 7. OPENPARENT ---
+// Returns parent directory on success, NULL on error
 Node* openTreeParentDirectory(Node* current_directory) {
     // Can't go up if we're already in ROOT
     if (current_directory->type == NODE_ROOT) {
@@ -247,4 +251,46 @@ Node* openTreeParentDirectory(Node* current_directory) {
     
     // Return parent (could be ROOT or another folder)
     return current_directory->parent;
+}
+
+Node* resolvePath(Node* root, Node* current, const char* path) {
+    if (!path || strlen(path) == 0) return current;
+    
+    Node* currNode = current;
+    
+    // Check for absolute path indicators
+    if (path[0] == '/') {
+        currNode = root;
+    }
+    
+    char* pathCopy = strdup(path);
+    if (!pathCopy) return NULL;
+
+    char* saveptr;
+    char* token = strtok_r(pathCopy, "/", &saveptr);
+    
+    // Check if first token is ROOT (also absolute path)
+    if (token && strcmp(token, "ROOT") == 0) {
+        currNode = root;
+        token = strtok_r(NULL, "/", &saveptr);
+    }
+    
+    while (token) {
+        if (strcmp(token, ".") == 0) {
+            // Stay
+        } else if (strcmp(token, "..") == 0) {
+            if (currNode->parent) currNode = currNode->parent;
+        } else {
+            Node* next = findChildByName(currNode, token);
+            if (!next || next->type == NODE_FILE) {
+                free(pathCopy);
+                return NULL;
+            }
+            currNode = next;
+        }
+        token = strtok_r(NULL, "/", &saveptr);
+    }
+    
+    free(pathCopy);
+    return currNode;
 }

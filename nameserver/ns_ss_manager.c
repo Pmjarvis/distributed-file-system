@@ -921,7 +921,7 @@ static void format_file_list_callback(const FileMapNode* node, void* user_data) 
                 localtime_r(&meta.last_access_time, &local_tm);
                 strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M", &local_tm);
                 // FIX: Show both primary and backup SS IDs
-                snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | SS_%d | Backup_SS_%d\n",
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8llu | %-20s | SS_%-3d | Backup_SS_%-3d\n",
                          node->filename,
                          node->owner,
                          (unsigned long long)meta.size_bytes,
@@ -930,7 +930,7 @@ static void format_file_list_callback(const FileMapNode* node, void* user_data) 
                          node->backup_ss_id);
             } else {
                 // If metadata fetch fails, show minimal info
-                snprintf(line, sizeof(line), "%-30s | %-10s | %-8s | %-20s | SS_%d | Backup_SS_%d\n",
+                snprintf(line, sizeof(line), "%-30s | %-10s | %-8s | %-20s | SS_%-3d | Backup_SS_%-3d\n",
                          node->filename,
                          node->owner,
                          "N/A",
@@ -964,9 +964,9 @@ char* format_file_list(UserHashTable* access_table, const char* username, const 
     buffer[0] = '\0';
     
     if (long_format) {
-        snprintf(buffer, buf_size, "%-30s | %-10s | %-8s | %-20s | %s\n",
+        snprintf(buffer, buf_size, "%-30s | %-10s | %-8s | %-20s | %-25s\n",
                  "Filename", "Owner", "Size", "Last Access", "SS_ID");
-        strncat(buffer, "----------------------------------------------------------------------------------------\n", buf_size - strlen(buffer) - 1);
+        strncat(buffer, "--------------------------------------------------------------------------------------------------------\n", buf_size - strlen(buffer) - 1);
     }
 
     // Set up context for iterator
