@@ -101,7 +101,13 @@ static void notify_backup_assignments_locked(StorageServer* skip_ss) {
     do {
         StorageServer* next = curr->next;
 
-        if (curr != skip_ss && curr->is_online && !curr->is_syncing) {
+        // Skip the specified SS (usually the one currently registering/recovering)
+        if (curr == skip_ss) {
+            curr = next;
+            continue;
+        }
+
+        if (curr->is_online && !curr->is_syncing) {
             // Build update message
             Req_UpdateBackup update;
             update.backup_ss_id = curr->backup_ss_id;
@@ -337,6 +343,13 @@ void* ss_handler_thread(void* arg) {
     // Update backup assignments for all SSs (each backs up prev in circular list)
     recompute_backup_assignments_locked();
     
+    // FIX: If recovering, we don't need to trigger full replication to backup yet.
+    // The recovery sync (FROM backup) will ensure we have the latest data.
+    // Pushing our (potentially stale) data to backup immediately is dangerous/wasteful.
+    if (is_recovery) {
+        ss_node->pending_full_sync = false;
+    }
+
     pthread_mutex_unlock(&g_ss_list_mutex);
     
     // 3. Send ACK with backup assignment info
@@ -372,8 +385,9 @@ void* ss_handler_thread(void* arg) {
     // Inform other online SSs about updated backup assignments AFTER ACK to avoid
     // interfering with the registration handshake. Skip notifying the newly
     // registered SS because the ACK already contains its replication target info.
+    // Also skip if recovering, to prevent premature re-replication before sync.
     pthread_mutex_lock(&g_ss_list_mutex);
-    notify_backup_assignments_locked(is_new_ss ? ss_node : NULL);
+    notify_backup_assignments_locked((is_new_ss || is_recovery) ? ss_node : NULL);
     pthread_mutex_unlock(&g_ss_list_mutex);
     
     // 4. Handle recovery synchronization via NS coordination

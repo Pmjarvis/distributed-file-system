@@ -1317,3 +1317,698 @@
 [2025-11-20 20:53:52] Nested metadata hash table freed (1024 locks destroyed)
 [2025-11-20 20:53:52] REPL: Worker thread shutting down.
 [2025-11-20 20:53:52] --- LOGGING STOPPED ---
+[2025-11-20 21:41:15] --- LOGGING STARTED ---
+[2025-11-20 21:41:15] MAIN: Persistent log file initialized for SS ID 0
+[2025-11-20 21:41:15] MAIN: Using persistent data directory: ss_data_0
+[2025-11-20 21:41:15] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-20 21:41:15] Loading 7 metadata entries from ss_data_0/metadata.db...
+[2025-11-20 21:41:15] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 395
+[2025-11-20 21:41:15] Inserted metadata for: u1 (owner: user1, size: 35, is_backup: 1)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 396
+[2025-11-20 21:41:15] Inserted metadata for: u2 (owner: user1, size: 0, is_backup: 1)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 397
+[2025-11-20 21:41:15] Inserted metadata for: u3 (owner: user1, size: 0, is_backup: 0)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-20 21:41:15] Inserted metadata for: f (owner: iuig7ye	, size: 14, is_backup: 0)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 759
+[2025-11-20 21:41:15] Inserted metadata for: a1 (owner: user1, size: 1151, is_backup: 1)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 760
+[2025-11-20 21:41:15] Inserted metadata for: a2 (owner: user1, size: 1342, is_backup: 0)
+[2025-11-20 21:41:15] DEBUG: Lazily created inner table for outer bucket 761
+[2025-11-20 21:41:15] Inserted metadata for: a3 (owner: user1, size: 53, is_backup: 1)
+[2025-11-20 21:41:15] Loaded 7/7 metadata entries from ss_data_0/metadata.db
+[2025-11-20 21:41:15] MAIN: Loaded metadata for 7 files from disk
+[2025-11-20 21:41:15] MAIN: Listening for Clients and NS on 10.34.17.143:9002
+[2025-11-20 21:41:15] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-20 21:41:15] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-20 21:41:15] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-20 21:41:15] MAIN: No replication target assigned (single SS or no backup available)
+[2025-11-20 21:41:15] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-20 21:41:15] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-20 21:41:15] MAIN: Listening for Replication on 10.34.17.143:9003
+[2025-11-20 21:42:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:42:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:42:15] Successfully saved 7 metadata entries (atomic snapshot)
+[2025-11-20 21:42:15] CHECKPOINT: Metadata saved successfully (7 entries)
+[2025-11-20 21:43:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:43:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:43:15] Successfully saved 7 metadata entries (atomic snapshot)
+[2025-11-20 21:43:15] CHECKPOINT: Metadata saved successfully (7 entries)
+[2025-11-20 21:43:51] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
+[2025-11-20 21:43:51] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-20 21:43:51] Inserted metadata for: file (owner: dsua, size: 0, is_backup: 0)
+[2025-11-20 21:43:51] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:43:51] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:43:51] CREATE: File file created by dsua
+[2025-11-20 21:43:51] REPL: Scheduling update for file
+[2025-11-20 21:43:51] REPL: No backup assigned, skipping replication for file
+[2025-11-20 21:43:51] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:44:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:44:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:44:15] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:44:15] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:45:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:45:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:45:15] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:45:15] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:46:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:46:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:46:15] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:46:15] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:47:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:47:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:47:15] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:47:15] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:48:15] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:48:15] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:48:15] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:48:15] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:48:31] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 21:48:31] INFO: NS requesting metadata for file (for VIEW -l)
+[2025-11-20 21:48:31] INFO: Returning cached metadata for file (size: 0, words: 0, chars: 0)
+[2025-11-20 21:48:31] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:48:38] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 21:48:38] INFO: NS requesting metadata for file (for VIEW -l)
+[2025-11-20 21:48:38] INFO: Returning cached metadata for file (size: 0, words: 0, chars: 0)
+[2025-11-20 21:48:38] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:49:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:49:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:49:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:49:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:50:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:50:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:50:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:50:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:50:42] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 21:50:42] INFO: NS requesting metadata for file (for VIEW -l)
+[2025-11-20 21:50:42] INFO: Returning cached metadata for file (size: 0, words: 0, chars: 0)
+[2025-11-20 21:50:42] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:51:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:51:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:51:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:51:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:52:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:52:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:52:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:52:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:53:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:53:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:53:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:53:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:54:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:54:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:54:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:54:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:55:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:55:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:55:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:55:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:56:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:56:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:56:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:56:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:57:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:57:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:57:16] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-20 21:57:16] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-20 21:57:59] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 21:57:59] HANDLER: Received backup assignment update from NS
+[2025-11-20 21:57:59] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 21:57:59] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 21:57:59] REPL: Scheduling update for a2
+[2025-11-20 21:57:59] REPL: Scheduling update for f
+[2025-11-20 21:57:59] REPL: Scheduling update for u3
+[2025-11-20 21:57:59] REPL: Scheduling update for file
+[2025-11-20 21:57:59] HANDLER: Catch-up replication scheduling complete (4 primary files queued)
+[2025-11-20 21:57:59] NS_CONTROL: Received message type 60 from NS
+[2025-11-20 21:57:59] RECOVERY: NS requests re-replication of all files to backup SS 1 (10.34.17.66:9002)
+[2025-11-20 21:57:59] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-20 21:57:59] REPL: Scheduling update for a2
+[2025-11-20 21:57:59] REPL: Scheduling update for a2
+[2025-11-20 21:57:59] REPL: Scheduling update for f
+[2025-11-20 21:57:59] REPL: Scheduling update for f
+[2025-11-20 21:57:59] REPL: Scheduling update for u3
+[2025-11-20 21:57:59] REPL: Scheduling update for u3
+[2025-11-20 21:57:59] REPL: Scheduling update for file
+[2025-11-20 21:57:59] REPL: Scheduling update for file
+[2025-11-20 21:57:59] RECOVERY: Re-replication scheduling complete (4 primary files queued)
+[2025-11-20 21:57:59] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 21:57:59] REPL: Re-queueing a2 for retry attempt 1
+[2025-11-20 21:57:59] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 21:57:59] REPL: Re-queueing f for retry attempt 1
+[2025-11-20 21:57:59] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 21:57:59] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 21:57:59] REPL_IN: New incoming replication connection
+[2025-11-20 21:57:59] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 21:57:59] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 21:57:59] REPL_IN: Acquired write lock for b1
+[2025-11-20 21:57:59] REPL_IN: Finished receiving b1
+[2025-11-20 21:57:59] DEBUG: Lazily created inner table for outer bucket 792
+[2025-11-20 21:57:59] Inserted metadata for: b1 (owner: user2, size: 0, is_backup: 1)
+[2025-11-20 21:57:59] REPL_IN: Created metadata for b1 (owner: user2, is_backup=true)
+[2025-11-20 21:57:59] REPL_IN: Released write lock for b1
+[2025-11-20 21:57:59] REPL: ACK received for file u3
+[2025-11-20 21:57:59] REPL_IN: New incoming replication connection
+[2025-11-20 21:57:59] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 21:57:59] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 21:57:59] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 21:57:59] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 21:57:59] REPL_IN: Acquired write lock for u2
+[2025-11-20 21:57:59] REPL_IN: Finished receiving u2
+[2025-11-20 21:57:59] Updated metadata for: u2
+[2025-11-20 21:57:59] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 21:57:59] REPL_IN: Released write lock for u2
+[2025-11-20 21:57:59] REPL: ACK received for file file
+[2025-11-20 21:57:59] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 21:57:59] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 21:57:59] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 21:57:59] REPL: ACK received for file a2
+[2025-11-20 21:57:59] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 21:57:59] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 21:57:59] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 21:58:00] REPL: ACK received for file f
+[2025-11-20 21:58:00] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 21:58:00] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 21:58:00] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 21:58:00] REPL: ACK received for file u3
+[2025-11-20 21:58:00] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 21:58:00] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 21:58:00] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 21:58:00] REPL: ACK received for file file
+[2025-11-20 21:58:00] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 21:58:00] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 21:58:00] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 21:58:00] REPL: ACK received for file a2
+[2025-11-20 21:58:00] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 21:58:00] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 21:58:00] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 21:58:00] REPL: ACK received for file f
+[2025-11-20 21:58:13] REPL_IN: New incoming replication connection
+[2025-11-20 21:58:13] REPL_IN: Receiving replica for F (0 bytes)
+[2025-11-20 21:58:13] REPL_IN: Acquired write lock for F
+[2025-11-20 21:58:13] REPL_IN: Finished receiving F
+[2025-11-20 21:58:13] DEBUG: Lazily created inner table for outer bucket 491
+[2025-11-20 21:58:13] Inserted metadata for: F (owner: dsua, size: 0, is_backup: 1)
+[2025-11-20 21:58:13] REPL_IN: Created metadata for F (owner: dsua, is_backup=true)
+[2025-11-20 21:58:13] REPL_IN: Released write lock for F
+[2025-11-20 21:58:16] REPL_IN: New incoming replication connection
+[2025-11-20 21:58:16] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 21:58:16] REPL_IN: Acquired write lock for F1
+[2025-11-20 21:58:16] REPL_IN: Finished receiving F1
+[2025-11-20 21:58:16] DEBUG: Lazily created inner table for outer bucket 892
+[2025-11-20 21:58:16] Inserted metadata for: F1 (owner: dsua, size: 0, is_backup: 1)
+[2025-11-20 21:58:16] REPL_IN: Created metadata for F1 (owner: dsua, is_backup=true)
+[2025-11-20 21:58:16] REPL_IN: Released write lock for F1
+[2025-11-20 21:58:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:58:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:58:16] Successfully saved 11 metadata entries (atomic snapshot)
+[2025-11-20 21:58:16] CHECKPOINT: Metadata saved successfully (11 entries)
+[2025-11-20 21:58:17] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
+[2025-11-20 21:58:17] DEBUG: Lazily created inner table for outer bucket 893
+[2025-11-20 21:58:17] Inserted metadata for: F2 (owner: dsua, size: 0, is_backup: 0)
+[2025-11-20 21:58:17] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:58:17] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 21:58:17] CREATE: File F2 created by dsua
+[2025-11-20 21:58:17] REPL: Scheduling update for F2
+[2025-11-20 21:58:17] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:58:18] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 21:58:18] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 21:58:18] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 21:58:18] REPL: ACK received for file F2
+[2025-11-20 21:58:24] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 21:58:24] INFO: NS requesting metadata for F2 (for VIEW -l)
+[2025-11-20 21:58:24] INFO: Returning cached metadata for F2 (size: 0, words: 0, chars: 0)
+[2025-11-20 21:58:24] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:58:24] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 34)
+[2025-11-20 21:58:24] INFO: NS requesting metadata for file (for VIEW -l)
+[2025-11-20 21:58:24] INFO: Returning cached metadata for file (size: 0, words: 0, chars: 0)
+[2025-11-20 21:58:24] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 21:58:48] REPL_IN: New incoming replication connection
+[2025-11-20 21:58:49] REPL_IN: Receiving replica for F (0 bytes)
+[2025-11-20 21:58:49] REPL_IN: Acquired write lock for F
+[2025-11-20 21:58:49] REPL_IN: Finished receiving F
+[2025-11-20 21:58:49] Updated metadata for: F
+[2025-11-20 21:58:49] REPL_IN: Updated metadata for F (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 21:58:49] REPL_IN: Released write lock for F
+[2025-11-20 21:59:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 21:59:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 21:59:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 21:59:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 21:59:35] REPL_IN: New incoming replication connection
+[2025-11-20 21:59:35] REPL_IN: Receiving replica for F (602 bytes)
+[2025-11-20 21:59:35] REPL_IN: Acquired write lock for F
+[2025-11-20 21:59:35] REPL_IN: Finished receiving F
+[2025-11-20 21:59:35] Updated metadata for: F
+[2025-11-20 21:59:35] REPL_IN: Updated metadata for F (owner: dsua, size: 602, is_backup=true)
+[2025-11-20 21:59:35] REPL_IN: Released write lock for F
+[2025-11-20 22:00:08] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 22:00:08] HANDLER: Received backup assignment update from NS
+[2025-11-20 22:00:08] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 22:00:08] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 22:00:08] REPL: Scheduling update for a2
+[2025-11-20 22:00:08] REPL: Scheduling update for f
+[2025-11-20 22:00:08] REPL: Scheduling update for F2
+[2025-11-20 22:00:08] REPL: Scheduling update for u3
+[2025-11-20 22:00:08] REPL: Scheduling update for file
+[2025-11-20 22:00:08] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
+[2025-11-20 22:00:08] NS_CONTROL: Received message type 58 from NS
+[2025-11-20 22:00:08] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
+[2025-11-20 22:00:08] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:00:08] REPL: Re-queueing a2 for retry attempt 2
+[2025-11-20 22:00:08] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
+[2025-11-20 22:00:08] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 22:00:08] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 22:00:08] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 22:00:08] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:08] REPL: ACK received for file f
+[2025-11-20 22:00:08] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 22:00:08] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 22:00:08] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 22:00:08] REPL_IN: Acquired write lock for b1
+[2025-11-20 22:00:08] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 22:00:08] REPL_IN: Finished receiving b1
+[2025-11-20 22:00:08] Updated metadata for: b1
+[2025-11-20 22:00:08] REPL_IN: Updated metadata for b1 (owner: user2, size: 0, is_backup=true)
+[2025-11-20 22:00:08] REPL_IN: Released write lock for b1
+[2025-11-20 22:00:09] REPL: ACK received for file F2
+[2025-11-20 22:00:09] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:09] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 22:00:09] REPL_IN: Acquired write lock for u2
+[2025-11-20 22:00:09] REPL_IN: Finished receiving u2
+[2025-11-20 22:00:09] Updated metadata for: u2
+[2025-11-20 22:00:09] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 22:00:09] REPL_IN: Released write lock for u2
+[2025-11-20 22:00:09] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 22:00:09] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 22:00:09] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 22:00:09] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:09] REPL: ACK received for file u3
+[2025-11-20 22:00:09] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 22:00:09] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 22:00:09] REPL_IN: Receiving replica for F (602 bytes)
+[2025-11-20 22:00:09] REPL_IN: Acquired write lock for F
+[2025-11-20 22:00:09] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 22:00:09] REPL_IN: Finished receiving F
+[2025-11-20 22:00:09] Updated metadata for: F
+[2025-11-20 22:00:09] REPL_IN: Updated metadata for F (owner: dsua, size: 602, is_backup=true)
+[2025-11-20 22:00:09] REPL_IN: Released write lock for F
+[2025-11-20 22:00:09] REPL: ACK received for file file
+[2025-11-20 22:00:09] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:09] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 22:00:09] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 22:00:09] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 22:00:09] REPL_IN: Acquired write lock for F1
+[2025-11-20 22:00:09] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 22:00:09] REPL_IN: Finished receiving F1
+[2025-11-20 22:00:09] Updated metadata for: F1
+[2025-11-20 22:00:09] REPL_IN: Updated metadata for F1 (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 22:00:09] REPL_IN: Released write lock for F1
+[2025-11-20 22:00:09] REPL: ACK received for file a2
+[2025-11-20 22:00:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:00:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:00:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:00:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:00:56] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 22:00:56] HANDLER: Received backup assignment update from NS
+[2025-11-20 22:00:56] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 22:00:56] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 22:00:56] REPL: Scheduling update for a2
+[2025-11-20 22:00:56] REPL: Scheduling update for f
+[2025-11-20 22:00:56] REPL: Scheduling update for F2
+[2025-11-20 22:00:56] REPL: Scheduling update for u3
+[2025-11-20 22:00:56] REPL: Scheduling update for file
+[2025-11-20 22:00:56] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
+[2025-11-20 22:00:56] NS_CONTROL: Received message type 58 from NS
+[2025-11-20 22:00:56] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
+[2025-11-20 22:00:56] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
+[2025-11-20 22:00:56] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:00:56] REPL: Re-queueing a2 for retry attempt 3
+[2025-11-20 22:00:57] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:00:57] REPL: Re-queueing f for retry attempt 2
+[2025-11-20 22:00:57] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 22:00:57] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 22:00:57] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:57] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 22:00:57] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 22:00:57] REPL_IN: Acquired write lock for b1
+[2025-11-20 22:00:57] REPL_IN: Finished receiving b1
+[2025-11-20 22:00:57] Updated metadata for: b1
+[2025-11-20 22:00:57] REPL_IN: Updated metadata for b1 (owner: user2, size: 0, is_backup=true)
+[2025-11-20 22:00:57] REPL_IN: Released write lock for b1
+[2025-11-20 22:00:57] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:57] REPL: ACK received for file F2
+[2025-11-20 22:00:57] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 22:00:57] REPL_IN: Acquired write lock for u2
+[2025-11-20 22:00:57] REPL_IN: Finished receiving u2
+[2025-11-20 22:00:57] Updated metadata for: u2
+[2025-11-20 22:00:57] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 22:00:57] REPL_IN: Released write lock for u2
+[2025-11-20 22:00:57] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 22:00:57] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 22:00:57] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 22:00:57] REPL: ACK received for file u3
+[2025-11-20 22:00:57] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:57] REPL_IN: Receiving replica for F (602 bytes)
+[2025-11-20 22:00:57] REPL_IN: Acquired write lock for F
+[2025-11-20 22:00:57] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 22:00:57] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 22:00:57] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 22:00:57] REPL_IN: Finished receiving F
+[2025-11-20 22:00:57] Updated metadata for: F
+[2025-11-20 22:00:57] REPL_IN: Updated metadata for F (owner: dsua, size: 602, is_backup=true)
+[2025-11-20 22:00:57] REPL_IN: Released write lock for F
+[2025-11-20 22:00:57] REPL_IN: New incoming replication connection
+[2025-11-20 22:00:57] REPL: ACK received for file file
+[2025-11-20 22:00:57] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 22:00:57] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 22:00:57] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 22:00:57] REPL_IN: Acquired write lock for F1
+[2025-11-20 22:00:57] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 22:00:57] REPL_IN: Finished receiving F1
+[2025-11-20 22:00:57] Updated metadata for: F1
+[2025-11-20 22:00:57] REPL_IN: Updated metadata for F1 (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 22:00:57] REPL_IN: Released write lock for F1
+[2025-11-20 22:00:58] REPL: ACK received for file a2
+[2025-11-20 22:00:58] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 22:00:58] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 22:00:58] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 22:00:58] REPL: ACK received for file f
+[2025-11-20 22:01:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:01:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:01:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:01:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:01:29] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 22:01:29] HANDLER: Received backup assignment update from NS
+[2025-11-20 22:01:29] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 22:01:29] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 22:01:29] REPL: Scheduling update for a2
+[2025-11-20 22:01:29] REPL: Scheduling update for f
+[2025-11-20 22:01:29] REPL: Scheduling update for F2
+[2025-11-20 22:01:29] REPL: Scheduling update for u3
+[2025-11-20 22:01:29] REPL: Scheduling update for file
+[2025-11-20 22:01:29] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
+[2025-11-20 22:01:29] NS_CONTROL: Received message type 58 from NS
+[2025-11-20 22:01:29] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
+[2025-11-20 22:01:29] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:01:29] REPL: Re-queueing a2 for retry attempt 4
+[2025-11-20 22:01:29] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
+[2025-11-20 22:01:29] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:01:29] REPL: Re-queueing f for retry attempt 3
+[2025-11-20 22:01:29] REPL_IN: New incoming replication connection
+[2025-11-20 22:01:29] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 22:01:29] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 22:01:29] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 22:01:29] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 22:01:29] REPL_IN: Acquired write lock for b1
+[2025-11-20 22:01:29] REPL_IN: Finished receiving b1
+[2025-11-20 22:01:29] Updated metadata for: b1
+[2025-11-20 22:01:29] REPL_IN: Updated metadata for b1 (owner: user2, size: 0, is_backup=true)
+[2025-11-20 22:01:29] REPL_IN: Released write lock for b1
+[2025-11-20 22:01:30] REPL: ACK received for file F2
+[2025-11-20 22:01:30] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 22:01:30] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 22:01:30] REPL_IN: New incoming replication connection
+[2025-11-20 22:01:30] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 22:01:30] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 22:01:30] REPL_IN: Acquired write lock for u2
+[2025-11-20 22:01:30] REPL_IN: Finished receiving u2
+[2025-11-20 22:01:30] Updated metadata for: u2
+[2025-11-20 22:01:30] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 22:01:30] REPL_IN: Released write lock for u2
+[2025-11-20 22:01:30] REPL: ACK received for file u3
+[2025-11-20 22:01:30] REPL_IN: New incoming replication connection
+[2025-11-20 22:01:30] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 22:01:30] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 22:01:30] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 22:01:30] REPL_IN: Receiving replica for F (602 bytes)
+[2025-11-20 22:01:30] REPL_IN: Acquired write lock for F
+[2025-11-20 22:01:30] REPL_IN: Finished receiving F
+[2025-11-20 22:01:30] Updated metadata for: F
+[2025-11-20 22:01:30] REPL_IN: Updated metadata for F (owner: dsua, size: 602, is_backup=true)
+[2025-11-20 22:01:30] REPL_IN: Released write lock for F
+[2025-11-20 22:01:30] REPL: ACK received for file file
+[2025-11-20 22:01:30] REPL_IN: New incoming replication connection
+[2025-11-20 22:01:30] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 22:01:30] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 22:01:30] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 22:01:30] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 22:01:30] REPL_IN: Acquired write lock for F1
+[2025-11-20 22:01:30] REPL_IN: Finished receiving F1
+[2025-11-20 22:01:30] Updated metadata for: F1
+[2025-11-20 22:01:30] REPL_IN: Updated metadata for F1 (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 22:01:30] REPL_IN: Released write lock for F1
+[2025-11-20 22:01:30] REPL: ACK received for file a2
+[2025-11-20 22:01:30] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 22:01:30] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 22:01:30] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 22:01:30] REPL: ACK received for file f
+[2025-11-20 22:01:43] REPL_IN: New incoming replication connection
+[2025-11-20 22:01:43] REPL_IN: Receiving replica for F (1663 bytes)
+[2025-11-20 22:01:43] REPL_IN: Acquired write lock for F
+[2025-11-20 22:01:43] REPL_IN: Finished receiving F
+[2025-11-20 22:01:43] Updated metadata for: F
+[2025-11-20 22:01:43] REPL_IN: Updated metadata for F (owner: dsua, size: 1663, is_backup=true)
+[2025-11-20 22:01:43] REPL_IN: Released write lock for F
+[2025-11-20 22:02:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:02:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:02:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:02:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:03:15] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
+[2025-11-20 22:03:15] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 22:03:15] STREAM: Handler called for file 'F'
+[2025-11-20 22:03:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:03:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:03:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:03:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:03:17] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 22:03:21] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
+[2025-11-20 22:03:21] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 22:03:21] STREAM: Handler called for file 'F'
+[2025-11-20 22:03:22] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 22:03:28] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 22:03:28] HANDLER: Received backup assignment update from NS
+[2025-11-20 22:03:28] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 22:03:28] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 22:03:28] REPL: Scheduling update for a2
+[2025-11-20 22:03:28] REPL: Scheduling update for f
+[2025-11-20 22:03:28] REPL: Scheduling update for F2
+[2025-11-20 22:03:28] REPL: Scheduling update for u3
+[2025-11-20 22:03:28] REPL: Scheduling update for file
+[2025-11-20 22:03:28] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
+[2025-11-20 22:03:28] NS_CONTROL: Received message type 58 from NS
+[2025-11-20 22:03:28] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
+[2025-11-20 22:03:28] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:03:28] REPL: Re-queueing a2 for retry attempt 5
+[2025-11-20 22:03:28] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
+[2025-11-20 22:03:28] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:03:28] REPL: Re-queueing f for retry attempt 4
+[2025-11-20 22:03:28] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 22:03:28] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 22:03:28] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:28] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Acquired write lock for b1
+[2025-11-20 22:03:28] REPL_IN: Finished receiving b1
+[2025-11-20 22:03:28] Updated metadata for: b1
+[2025-11-20 22:03:28] REPL_IN: Updated metadata for b1 (owner: user2, size: 0, is_backup=true)
+[2025-11-20 22:03:28] REPL_IN: Released write lock for b1
+[2025-11-20 22:03:28] REPL: ACK received for file F2
+[2025-11-20 22:03:28] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 22:03:28] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 22:03:28] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:28] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Acquired write lock for u2
+[2025-11-20 22:03:28] REPL_IN: Finished receiving u2
+[2025-11-20 22:03:28] Updated metadata for: u2
+[2025-11-20 22:03:28] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 22:03:28] REPL_IN: Released write lock for u2
+[2025-11-20 22:03:28] REPL: ACK received for file u3
+[2025-11-20 22:03:28] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:28] REPL_IN: Receiving replica for F (1663 bytes)
+[2025-11-20 22:03:28] REPL_IN: Acquired write lock for F
+[2025-11-20 22:03:28] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 22:03:28] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 22:03:28] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Finished receiving F
+[2025-11-20 22:03:28] Updated metadata for: F
+[2025-11-20 22:03:28] REPL_IN: Updated metadata for F (owner: dsua, size: 1663, is_backup=true)
+[2025-11-20 22:03:28] REPL_IN: Released write lock for F
+[2025-11-20 22:03:28] REPL: ACK received for file file
+[2025-11-20 22:03:28] REPL: Connected to backup. Replicating update for a2...
+[2025-11-20 22:03:28] REPL: Replicating a2 (owner: user1, size: 1342)
+[2025-11-20 22:03:28] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:28] REPL: Successfully replicated a2 (1342 bytes)
+[2025-11-20 22:03:28] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 22:03:28] REPL_IN: Acquired write lock for F1
+[2025-11-20 22:03:28] REPL_IN: Finished receiving F1
+[2025-11-20 22:03:28] Updated metadata for: F1
+[2025-11-20 22:03:28] REPL_IN: Updated metadata for F1 (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 22:03:28] REPL_IN: Released write lock for F1
+[2025-11-20 22:03:28] REPL: ACK received for file a2
+[2025-11-20 22:03:28] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 22:03:28] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 22:03:28] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 22:03:28] REPL: ACK received for file f
+[2025-11-20 22:03:45] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
+[2025-11-20 22:03:45] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-20 22:03:45] STREAM: Handler called for file 'F'
+[2025-11-20 22:03:45] NS_CONTROL: Received message type 61 from NS
+[2025-11-20 22:03:45] HANDLER: Received backup assignment update from NS
+[2025-11-20 22:03:45] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
+[2025-11-20 22:03:45] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-20 22:03:45] REPL: Scheduling update for a2
+[2025-11-20 22:03:45] REPL: Scheduling update for f
+[2025-11-20 22:03:45] REPL: Scheduling update for F2
+[2025-11-20 22:03:45] REPL: Scheduling update for u3
+[2025-11-20 22:03:45] REPL: Scheduling update for file
+[2025-11-20 22:03:45] HANDLER: Catch-up replication scheduling complete (5 primary files queued)
+[2025-11-20 22:03:45] NS_CONTROL: Received message type 58 from NS
+[2025-11-20 22:03:45] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
+[2025-11-20 22:03:45] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
+[2025-11-20 22:03:45] REPL: Could not connect to backup server at 10.34.17.66:9002
+[2025-11-20 22:03:45] REPL: Giving up on a2 after 5 failed attempts
+[2025-11-20 22:03:45] REPL: Connected to backup. Replicating update for f...
+[2025-11-20 22:03:45] REPL: Replicating f (owner: iuig7ye	, size: 14)
+[2025-11-20 22:03:45] REPL: Successfully replicated f (14 bytes)
+[2025-11-20 22:03:45] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:45] REPL_IN: Receiving replica for b1 (0 bytes)
+[2025-11-20 22:03:45] REPL_IN: Acquired write lock for b1
+[2025-11-20 22:03:45] REPL: ACK received for file f
+[2025-11-20 22:03:45] REPL_IN: Finished receiving b1
+[2025-11-20 22:03:45] Updated metadata for: b1
+[2025-11-20 22:03:45] REPL_IN: Updated metadata for b1 (owner: user2, size: 0, is_backup=true)
+[2025-11-20 22:03:45] REPL_IN: Released write lock for b1
+[2025-11-20 22:03:45] REPL: Connected to backup. Replicating update for F2...
+[2025-11-20 22:03:45] REPL: Replicating F2 (owner: dsua, size: 0)
+[2025-11-20 22:03:45] REPL: Successfully replicated F2 (0 bytes)
+[2025-11-20 22:03:45] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:45] REPL_IN: Receiving replica for u2 (0 bytes)
+[2025-11-20 22:03:45] REPL: ACK received for file F2
+[2025-11-20 22:03:45] REPL_IN: Acquired write lock for u2
+[2025-11-20 22:03:45] REPL_IN: Finished receiving u2
+[2025-11-20 22:03:45] Updated metadata for: u2
+[2025-11-20 22:03:45] REPL_IN: Updated metadata for u2 (owner: user1, size: 0, is_backup=true)
+[2025-11-20 22:03:45] REPL_IN: Released write lock for u2
+[2025-11-20 22:03:45] REPL: Connected to backup. Replicating update for u3...
+[2025-11-20 22:03:45] REPL: Replicating u3 (owner: user1, size: 0)
+[2025-11-20 22:03:45] REPL: Successfully replicated u3 (0 bytes)
+[2025-11-20 22:03:45] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:45] REPL_IN: Receiving replica for F (1663 bytes)
+[2025-11-20 22:03:45] REPL: ACK received for file u3
+[2025-11-20 22:03:45] REPL: Connected to backup. Replicating update for file...
+[2025-11-20 22:03:45] REPL: Replicating file (owner: dsua, size: 0)
+[2025-11-20 22:03:45] REPL: Successfully replicated file (0 bytes)
+[2025-11-20 22:03:45] REPL: ACK received for file file
+[2025-11-20 22:03:46] HANDLER: Closing connection from 10.34.17.143
+[2025-11-20 22:03:46] REPL_IN: Acquired write lock for F
+[2025-11-20 22:03:46] REPL_IN: Finished receiving F
+[2025-11-20 22:03:46] Updated metadata for: F
+[2025-11-20 22:03:46] REPL_IN: Updated metadata for F (owner: dsua, size: 1663, is_backup=true)
+[2025-11-20 22:03:46] REPL_IN: Released write lock for F
+[2025-11-20 22:03:47] REPL_IN: New incoming replication connection
+[2025-11-20 22:03:47] REPL_IN: Receiving replica for F1 (0 bytes)
+[2025-11-20 22:03:47] REPL_IN: Acquired write lock for F1
+[2025-11-20 22:03:47] REPL_IN: Finished receiving F1
+[2025-11-20 22:03:47] Updated metadata for: F1
+[2025-11-20 22:03:47] REPL_IN: Updated metadata for F1 (owner: dsua, size: 0, is_backup=true)
+[2025-11-20 22:03:47] REPL_IN: Released write lock for F1
+[2025-11-20 22:04:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:04:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:04:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:04:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:05:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:05:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:05:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:05:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:06:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:06:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:06:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:06:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:07:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:07:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:07:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:07:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:08:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:08:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:08:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:08:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:09:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:09:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:09:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:09:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:10:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:10:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:10:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:10:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:11:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:11:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:11:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:11:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:12:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:12:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:12:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:12:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:13:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:13:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:13:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:13:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:14:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:14:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:14:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:14:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:15:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:15:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:15:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:15:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:16:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:16:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:16:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:16:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:17:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:17:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:17:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:17:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:18:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:18:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:18:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:18:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:19:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:19:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:19:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:19:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:20:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:20:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:20:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:20:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:21:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:21:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:21:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:21:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:22:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:22:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:22:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:22:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:23:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:23:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:23:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:23:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:24:16] CHECKPOINT: Saving metadata to disk...
+[2025-11-20 22:24:16] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:24:16] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:24:16] CHECKPOINT: Metadata saved successfully (12 entries)
+[2025-11-20 22:24:59] NS_CONTROL: Lost connection to NS (recv returned 0, errno=11)
+[2025-11-20 22:24:59] NS_CONTROL: Listener thread exiting
+[2025-11-20 22:24:59] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-20 22:24:59] CHECKPOINT: Thread exiting
+[2025-11-20 22:24:59] REPL_LISTENER: Thread exiting
+[2025-11-20 22:25:00] CLIENT_LISTENER: Thread exiting
+[2025-11-20 22:25:01] HEARTBEAT: Thread exiting
+[2025-11-20 22:25:01] MAIN: Performing final metadata save (12 entries)...
+[2025-11-20 22:25:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-20 22:25:01] Successfully saved 12 metadata entries (atomic snapshot)
+[2025-11-20 22:25:01] MAIN: Final metadata save successful
+[2025-11-20 22:25:01] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-20 22:25:01] REPL: Worker thread shutting down.
+[2025-11-20 22:25:01] --- LOGGING STOPPED ---

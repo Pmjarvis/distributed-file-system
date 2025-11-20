@@ -48,6 +48,16 @@ ss_node->file_list_head = NULL;
 - Removes the specified file from each user's permission table
 - Called when a file is deleted to maintain consistency
 
+### 1.5 ns_cache.c/h - Replace GLib LRU Cache with Custom Implementation
+**Location:** `ns_cache.c` and `ns_cache.h`
+**Change:** Replaced GLib `GHashTable` and `GList` with custom Hash Table and Doubly Linked List
+**Implementation:**
+- Implemented `djb2` hash function
+- Implemented custom Hash Table with chaining for collision resolution
+- Implemented Doubly Linked List for O(1) LRU eviction
+- Removed GLib dependency from `Makefile`
+- Verified with custom test suite
+
 ---
 
 ## 2. Storage Server (storageserver/)
@@ -139,10 +149,11 @@ if (recv_header(sock, &ack_header) <= 0) {
 3. `/nameserver/ns_handler.c` - Updated delete handler
 4. `/nameserver/ns_ss_manager.c` - Added file list cleanup
 5. `/nameserver/ns_main.c` - Added cleanup code
-6. `/storageserver/ss_main.c` - Updated documentation
-7. `/storageserver/ss_file_manager.c` - Added checkpoint operations
-8. `/storageserver/ss_replicator.c` - Added error handling and recovery notes
-9. `/client/client_commands.c` - Added response handling
+6. `/nameserver/ns_cache.c` - Replaced GLib cache with custom implementation
+7. `/storageserver/ss_main.c` - Updated documentation
+8. `/storageserver/ss_file_manager.c` - Added checkpoint operations
+9. `/storageserver/ss_replicator.c` - Added error handling and recovery notes
+10. `/client/client_commands.c` - Added response handling
 
 ### Compilation Status
 ✅ All modified files compile without errors  
@@ -162,8 +173,31 @@ if (recv_header(sock, &ack_header) <= 0) {
 ## Summary Statistics
 - **Total TODOs resolved:** 10+
 - **Lines of code added:** ~200
-- **Files modified:** 9
+- **Files modified:** 10
 - **New functions added:** 1
 - **Compilation errors:** 0
 
 All TODOs have been successfully completed with proper error handling, documentation, and adherence to the existing code structure and patterns.
+
+---
+
+## 4. Critical Bug Fixes (Post-Implementation)
+
+### 4.1 Storage Server Segmentation Fault (Write Operation)
+**Location:** `storageserver/ss_file_manager.c` and `storageserver/ss_handler.c`
+**Issue:** Server crashed with segfault when receiving extremely long words or malicious payloads.
+**Fix:**
+- Increased `word_buffer` size in `ss_split_words` to `MAX_PAYLOAD + 1`.
+- Added bounds checking in `ss_split_words` loop.
+- Added payload length validation in `ss_file_manager.c` and `ss_handler.c` to prevent stack corruption in `recv_payload`.
+**Verification:** Verified with `test_segfault.c` and successful compilation.
+
+### 4.2 Access Control Verification
+**Location:** `nameserver/ns_access.c` and `nameserver/ns_handler.c`
+**Issue:** Need to ensure `REMACCESS` and permission checks work correctly.
+**Fix:**
+- Verified `user_ht_revoke_permission` logic.
+- Verified `handle_ss_redirect` permission checking logic (r/w/o flags).
+- Confirmed `REMACCESS` command parsing fix (from previous session).
+**Verification:** Verified logic with `test_perms.c`.
+

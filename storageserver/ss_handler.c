@@ -45,6 +45,11 @@ void* handle_connection(void* arg) {
             recv_payload(sock, &req, header.payload_len);
             ss_handle_stream(sock, &req);
         } else if (header.type == MSG_C2S_WRITE) {
+            if (header.payload_len > sizeof(Req_Write_Transaction)) {
+                ss_log("HANDLER: Payload too large for WRITE (%d > %lu)", header.payload_len, sizeof(Req_Write_Transaction));
+                close(sock);
+                return NULL;
+            }
             Req_Write_Transaction req;
             recv_payload(sock, &req, header.payload_len);
             ss_handle_write_transaction(sock, &req);

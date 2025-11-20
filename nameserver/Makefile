@@ -1,9 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g -pthread
 LIBS = -pthread
-# Add GLib flags
-CFLAGS += $(shell pkg-config --cflags glib-2.0)
-LIBS += $(shell pkg-config --libs glib-2.0)
 
 # Source files
 COMMON_OBJ = ../common/net_utils.o

@@ -222,7 +222,8 @@ char** ss_split_words(const char* sentence, int* num_words) {
     *num_words = 0;
     
     const char* ptr = sentence;
-    char word_buffer[1024];
+    // FIX: Increase buffer size to handle large payloads and prevent overflow
+    char word_buffer[MAX_PAYLOAD + 1]; 
     int word_len = 0;
     
     while (*ptr) {
@@ -247,7 +248,10 @@ char** ss_split_words(const char* sentence, int* num_words) {
         // Read a regular word until whitespace or delimiter
         word_len = 0;
         while (*ptr && !isspace(*ptr) && *ptr != '.' && *ptr != '!' && *ptr != '?') {
-            word_buffer[word_len++] = *ptr++;
+            if (word_len < MAX_PAYLOAD) {
+                word_buffer[word_len++] = *ptr;
+            }
+            ptr++;
         }
         
         if (word_len > 0) {
@@ -1004,12 +1008,27 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     
     while (recv_header(client_sock, &header) > 0) {
         if (header.type == MSG_C2S_WRITE_DATA) {
+            // FIX: Validate payload length to prevent stack buffer overflow
+            if (header.payload_len > sizeof(Req_Write_Data)) {
+                ss_log("WRITE: Payload too large (%d > %lu) - aborting transaction", 
+                       header.payload_len, sizeof(Req_Write_Data));
+                connection_lost = 1;
+                break;
+            }
+
             Req_Write_Data data;
             if (recv_payload(client_sock, &data, header.payload_len) <= 0) {
                 ss_log("WRITE: Connection lost while receiving payload");
                 connection_lost = 1;
                 break;
             }
+            
+            // SAFETY: Ensure content is null-terminated
+            // Calculate how much data is in content
+            int content_len = header.payload_len - sizeof(int); // word_index is int
+            if (content_len < 0) content_len = 0;
+            if (content_len >= sizeof(data.content)) content_len = sizeof(data.content) - 1;
+            data.content[content_len] = '\0';
             
             // Validate word index per spec:
             // - Negative indices are invalid

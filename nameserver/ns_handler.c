@@ -626,7 +626,17 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
         return;
     }
     
-    fprintf(script_file, "%s", file_content.output);
+    // Parse content and replace literal "\n" with actual newlines
+    char* ptr = file_content.output;
+    while (*ptr) {
+        if (ptr[0] == '\\' && ptr[1] == 'n') {
+            fputc('\n', script_file);
+            ptr += 2;
+        } else {
+            fputc(*ptr, script_file);
+            ptr++;
+        }
+    }
     fclose(script_file);
     
     // Make script executable and run it

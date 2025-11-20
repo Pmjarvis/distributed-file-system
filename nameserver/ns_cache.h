@@ -1,18 +1,23 @@
 #ifndef NS_CACHE_H
 #define NS_CACHE_H
 
-#include <glib.h> // Requires GLib. Install with `sudo apt-get install libglib2.0-dev`
+#include <stddef.h>
 
 typedef struct CacheNode {
     char* key;
     void* value;
-    struct CacheNode *prev, *next;
+    struct CacheNode* prev; // For LRU list
+    struct CacheNode* next; // For LRU list
+    struct CacheNode* h_next; // For Hash Table collision chain
 } CacheNode;
 
-typedef struct {
+typedef struct LRUCache {
     int capacity;
-    GHashTable* map; // Hash map for O(1) lookups
-    CacheNode *head, *tail; // Doubly linked list for O(1) eviction
+    int size;
+    CacheNode** buckets;
+    int num_buckets;
+    CacheNode* head; // MRU
+    CacheNode* tail; // LRU
 } LRUCache;
 
 LRUCache* lru_cache_create(int capacity);
@@ -21,4 +26,4 @@ void* lru_cache_get(LRUCache* cache, const char* key);
 void lru_cache_remove(LRUCache* cache, const char* key);
 void lru_cache_free(LRUCache* cache, void (*free_value)(void*));
 
-#endif // NS_CACHE_H
+#endif
