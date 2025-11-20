@@ -39,9 +39,20 @@ void ss_handle_sync_from_backup(int ns_sock, Req_SyncFromBackup* req) {
     // Note: No ACK sent - NS uses persistent socket for one-way notifications
     
     // Connect to target (primary) SS
-    int target_sock = connect_to_server(req->target_ip, req->target_port);
+    int target_sock = -1;
+    int retries = 10; // Retry for up to 10 seconds
+    while (retries > 0) {
+        target_sock = connect_to_server(req->target_ip, req->target_port);
+        if (target_sock >= 0) break;
+        
+        ss_log("RECOVERY: Connection to primary SS %d failed, retrying in 1s... (%d attempts left)", 
+               req->target_ss_id, retries);
+        sleep(1);
+        retries--;
+    }
+
     if (target_sock < 0) {
-        ss_log("RECOVERY: Failed to connect to primary SS %d at %s:%d",
+        ss_log("RECOVERY: Failed to connect to primary SS %d at %s:%d after multiple attempts",
                req->target_ss_id, req->target_ip, req->target_port);
         // No need to clear g_is_syncing
         return;

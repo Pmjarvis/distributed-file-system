@@ -1,3 +1,0 @@
-echo "running...."
-ls
-echo "done"
