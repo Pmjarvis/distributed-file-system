@@ -398,7 +398,16 @@ static void handle_info(UserSession* session, MsgHeader* header) {
     }
 
     // 2. Find the actual owner of the file
-    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    // FIX: Prioritize the requesting user's own file
+    char* file_owner = NULL;
+    FileMapNode* my_file = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    
+    if (my_file) {
+        file_owner = strdup(session->username);
+    } else {
+        file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    }
+
     if (!file_owner) {
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");
         return;
@@ -544,7 +553,16 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
     }
 
     // 2. Find the actual owner of the file
-    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    // FIX: Prioritize the requesting user's own file
+    char* file_owner = NULL;
+    FileMapNode* my_file = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    
+    if (my_file) {
+        file_owner = strdup(session->username);
+    } else {
+        file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    }
+
     if (!file_owner) {
         send_error_response_to_client(session->client_sock, "File not found or SS is offline.");
         return;
@@ -799,7 +817,21 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
     
     // 2. Find the actual owner of the file
     printf("DEBUG: Finding owner for file '%s'\n", payload.filename);
-    char* file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+    
+    // FIX: Prioritize the requesting user's own file
+    char* file_owner = NULL;
+    FileMapNode* my_file = file_map_table_search(g_file_map_table, session->username, payload.filename);
+    
+    if (my_file) {
+        // I own this file, so use my username
+        file_owner = strdup(session->username);
+        printf("DEBUG: Found file owned by requester '%s'\n", session->username);
+    } else {
+        // I don't own it, so search for other owners (e.g. shared files)
+        file_owner = file_map_table_find_owner(g_file_map_table, payload.filename);
+        printf("DEBUG: Found file owned by '%s' (shared/other)\n", file_owner ? file_owner : "NULL");
+    }
+
     if (!file_owner) {
         printf("DEBUG: File not found in file map\n");
         send_error_response_to_client(session->client_sock, "File not found or Storage Server is offline.");

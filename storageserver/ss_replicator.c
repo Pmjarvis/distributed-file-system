@@ -49,12 +49,18 @@ static void _do_replication_update(const char* filename) {
         free(check_meta);
     }
     
+    // CRITICAL FIX: Acquire read lock to prevent concurrent writes during replication
+    FileLock* lock = lock_map_get(&g_file_lock_map, filename);
+    pthread_rwlock_rdlock(&lock->file_lock);
+    ss_log("REPL: Acquired read lock for %s", filename);
+
     char filepath[MAX_PATH];
     snprintf(filepath, sizeof(filepath), "%s/%s", SS_FILES_DIR, filename);
     
     int fd = open(filepath, O_RDONLY);
     if (fd < 0) {
         ss_log("REPL: Failed to open file for replication: %s", filename);
+        pthread_rwlock_unlock(&lock->file_lock);
         return;
     }
     
@@ -62,6 +68,7 @@ static void _do_replication_update(const char* filename) {
     if (fstat(fd, &file_stat) < 0) {
         ss_log("REPL: Failed to fstat file: %s", filename);
         close(fd);
+        pthread_rwlock_unlock(&lock->file_lock);
         return;
     }
 
@@ -78,6 +85,7 @@ static void _do_replication_update(const char* filename) {
             ss_log("REPL: Giving up on %s after %d failed attempts", filename, retry_counts[idx]);
         }
         close(fd);
+        pthread_rwlock_unlock(&lock->file_lock);
         return;
     }
 
@@ -103,6 +111,7 @@ static void _do_replication_update(const char* filename) {
         ss_log("FATAL ERROR: Aborting replication for this file to prevent propagating bad data");
         close(sock);
         close(fd);
+        pthread_rwlock_unlock(&lock->file_lock);
         return;
     }
     
@@ -122,6 +131,10 @@ static void _do_replication_update(const char* filename) {
     } else {
         ss_log("REPL: Successfully replicated %s (%ld bytes)", filename, sent_bytes);
     }
+    
+    // Release lock after reading is done
+    pthread_rwlock_unlock(&lock->file_lock);
+    ss_log("REPL: Released read lock for %s", filename);
     
     // 3. Wait for ACK
     MsgHeader ack_header;
@@ -147,6 +160,17 @@ static void _do_replication_delete(const char* filename) {
     int sock = connect_to_server(g_backup_ip, g_backup_port); // Remote backup target
     if (sock < 0) {
         ss_log("REPL: Could not connect to backup server for DELETE %s", filename);
+        
+        // Simplest Fix: Copy the retry logic from _do_replication_update
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        if (retry_counts[idx] < 5) {
+            retry_counts[idx]++;
+            ss_log("REPL: Re-queueing delete %s for retry attempt %d", filename, retry_counts[idx]);
+            // Push back to queue with DELETE operation type
+            repl_queue_push(&g_repl_queue, filename, MSG_S2S_DELETE_FILE);
+        } else {
+            ss_log("REPL: Giving up on delete %s after %d failed attempts", filename, retry_counts[idx]);
+        }
         return;
     }
 

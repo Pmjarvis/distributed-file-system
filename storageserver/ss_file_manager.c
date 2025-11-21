@@ -1005,6 +1005,15 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     // Per spec: each subquery updates indices for the next one
     MsgHeader header;
     int connection_lost = 0;
+    bool transaction_completed = false; // FIX: Track if ETIRW was received
+
+    // FIX: Set a timeout for the transaction loop to prevent "Zombie" locks
+    struct timeval tv;
+    tv.tv_sec = 300; // 5 minutes timeout
+    tv.tv_usec = 0;
+    if (setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        ss_log("WRITE: Warning - failed to set socket timeout for transaction");
+    }
     
     while (recv_header(client_sock, &header) > 0) {
         if (header.type == MSG_C2S_WRITE_DATA) {
@@ -1067,18 +1076,25 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
             free(content_words);
             
         } else if (header.type == MSG_C2S_WRITE_ETIRW) {
+            transaction_completed = true; // FIX: Mark transaction as successfully completed
             break; // End of transaction
         }
     }
+
+    // FIX: Reset socket timeout to infinite (or default) after transaction
+    struct timeval tv_infinite;
+    tv_infinite.tv_sec = 0;
+    tv_infinite.tv_usec = 0;
+    setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &tv_infinite, sizeof(tv_infinite));
     
-    // Check if connection was lost during transaction
-    if (connection_lost) {
-        ss_log("WRITE: Connection lost during transaction for %s - aborting (no changes saved)", req->filename);
+    // Check if connection was lost during transaction OR transaction didn't complete properly
+    if (connection_lost || !transaction_completed) {
+        ss_log("WRITE: Transaction failed (connection lost or no ETIRW received) for %s - aborting", req->filename);
         ss_free_words(words, num_words);
         ss_free_sentences(sentences, num_sentences);
         unlink(swappath);  // Delete swapfile
         pthread_mutex_unlock(sentence_lock);
-        // Client already disconnected, no response needed
+        // Client already disconnected or timed out, no response needed
         return;
     }
 

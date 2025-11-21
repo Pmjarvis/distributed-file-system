@@ -306,6 +306,17 @@ void* ss_handler_thread(void* arg) {
                 // Don't update - primary_ss_id should never change
             }
         } else {
+            // New file not in file map
+            
+            // CRITICAL FIX: If this is a recovery (reconnecting SS), and the file is NOT in the map,
+            // it means the file was DELETED while this SS was offline.
+            // We must NOT add it back (resurrection bug).
+            if (is_recovery) {
+                printf("NS: SS %d reported file %s, but it's not in file map. Assuming DELETED while SS was offline. Ignoring.\n",
+                       ss_node->ss_id, meta.filename);
+                continue; // Skip this file
+            }
+
             // New file not in file map - add it with this SS as primary
             int backup_ss_id = ss_node->backup_ss_id;
             
