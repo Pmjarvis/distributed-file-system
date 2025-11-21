@@ -1,322 +1,379 @@
-[2025-11-20 23:34:01] --- LOGGING STARTED ---
-[2025-11-20 23:34:01] MAIN: Persistent log file initialized for SS ID 0
-[2025-11-20 23:34:01] MAIN: Using persistent data directory: ss_data_0
-[2025-11-20 23:34:01] MAIN: Loading metadata hash table (post-registration)...
-[2025-11-20 23:34:01] No existing metadata file found at ss_data_0/metadata.db (starting fresh)
-[2025-11-20 23:34:01] MAIN: No existing metadata DB found for SS ID 0, creating new table
-[2025-11-20 23:34:01] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
-[2025-11-20 23:34:01] MAIN: Listening for Clients and NS on 10.34.17.143:9002
-[2025-11-20 23:34:01] MAIN: Listening for Replication on 10.34.17.143:9003
-[2025-11-20 23:34:01] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
-[2025-11-20 23:34:01] NS_CONTROL: Listener thread started for NS control messages
-[2025-11-20 23:34:01] MAIN: File scan complete (no existing files found)
-[2025-11-20 23:34:01] MAIN: No replication target assigned (single SS or no backup available)
-[2025-11-20 23:34:01] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
-[2025-11-20 23:34:01] CHECKPOINT: Thread started (interval: 60 seconds)
-[2025-11-20 23:34:10] NS_CONTROL: Received message type 61 from NS
-[2025-11-20 23:34:10] HANDLER: Received backup assignment update from NS
-[2025-11-20 23:34:10] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
-[2025-11-20 23:34:10] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-20 23:34:10] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
-[2025-11-20 23:34:10] NS_CONTROL: Received message type 60 from NS
-[2025-11-20 23:34:10] RECOVERY: NS requests re-replication of all files to backup SS 1 (10.34.17.66:9002)
-[2025-11-20 23:34:10] RECOVERY: Initiating immediate re-replication for existing primary files
-[2025-11-20 23:34:10] RECOVERY: Re-replication scheduling complete (0 primary files queued)
-[2025-11-20 23:34:17] REPL_IN: New incoming replication connection
-[2025-11-20 23:34:17] REPL_IN: Receiving replica for file (0 bytes)
-[2025-11-20 23:34:17] REPL_IN: Acquired write lock for file
-[2025-11-20 23:34:17] REPL_IN: Finished receiving file
-[2025-11-20 23:34:17] DEBUG: Lazily created inner table for outer bucket 805
-[2025-11-20 23:34:17] Inserted metadata for: file (owner: user, size: 0, is_backup: 1)
-[2025-11-20 23:34:17] REPL_IN: Created metadata for file (owner: user, is_backup=true)
-[2025-11-20 23:34:17] REPL_IN: Released write lock for file
-[2025-11-20 23:34:27] REPL_IN: New incoming replication connection
-[2025-11-20 23:34:27] REPL_IN: Receiving replica for file (12 bytes)
-[2025-11-20 23:34:27] REPL_IN: Acquired write lock for file
-[2025-11-20 23:34:27] REPL_IN: Finished receiving file
-[2025-11-20 23:34:27] Updated metadata for: file
-[2025-11-20 23:34:27] REPL_IN: Updated metadata for file (owner: user, size: 12, is_backup=true)
-[2025-11-20 23:34:27] REPL_IN: Released write lock for file
-[2025-11-20 23:34:44] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:34:44] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:34:44] READ: Handler called for file 'file'
-[2025-11-20 23:34:44] READ: Starting read for file file
-[2025-11-20 23:34:44] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:34:44] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:34:44] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:34:44] READ: Chunk 1 sent
-[2025-11-20 23:34:44] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:34:44] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:34:47] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:34:47] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:34:47] READ: Handler called for file 'file'
-[2025-11-20 23:34:47] READ: Starting read for file file
-[2025-11-20 23:34:47] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:34:47] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:34:47] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:34:47] READ: Chunk 1 sent
-[2025-11-20 23:34:47] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:34:47] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:34:50] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:34:50] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:34:50] READ: Handler called for file 'file'
-[2025-11-20 23:34:50] READ: Starting read for file file
-[2025-11-20 23:34:50] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:34:50] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:34:50] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:34:50] READ: Chunk 1 sent
-[2025-11-20 23:34:50] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:34:50] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:34:52] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:34:52] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:34:52] READ: Handler called for file 'file'
-[2025-11-20 23:34:52] READ: Starting read for file file
-[2025-11-20 23:34:52] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:34:52] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:34:52] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:34:52] READ: Chunk 1 sent
-[2025-11-20 23:34:52] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:34:52] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:34:54] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:34:54] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:34:54] READ: Handler called for file 'file'
-[2025-11-20 23:34:54] READ: Starting read for file file
-[2025-11-20 23:34:54] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:34:54] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:34:54] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:34:54] READ: Chunk 1 sent
-[2025-11-20 23:34:54] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:34:54] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:34:58] NS_CONTROL: Received message type 61 from NS
-[2025-11-20 23:34:58] HANDLER: Received backup assignment update from NS
-[2025-11-20 23:34:58] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
-[2025-11-20 23:34:58] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-20 23:34:58] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
-[2025-11-20 23:34:58] NS_CONTROL: Received message type 58 from NS
-[2025-11-20 23:34:58] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
-[2025-11-20 23:34:58] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
-[2025-11-20 23:35:01] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:35:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:35:01] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:35:01] CHECKPOINT: Metadata saved successfully (1 entries)
-[2025-11-20 23:35:14] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:35:14] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:35:14] READ: Handler called for file 'file'
-[2025-11-20 23:35:14] READ: Starting read for file file
-[2025-11-20 23:35:14] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:35:14] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:35:14] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:35:14] READ: Chunk 1 sent
-[2025-11-20 23:35:14] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:35:14] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:35:41] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:35:41] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:35:41] READ: Handler called for file 'file'
-[2025-11-20 23:35:41] READ: Starting read for file file
-[2025-11-20 23:35:41] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:35:41] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:35:41] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:35:41] READ: Chunk 1 sent
-[2025-11-20 23:35:41] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:35:41] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:35:59] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:35:59] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:35:59] READ: Handler called for file 'file'
-[2025-11-20 23:35:59] READ: Starting read for file file
-[2025-11-20 23:35:59] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:35:59] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:35:59] READ: Chunk 1 - read 12 bytes, is_final=1
-[2025-11-20 23:35:59] READ: Chunk 1 sent
-[2025-11-20 23:35:59] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:35:59] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:36:01] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:36:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:36:01] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:36:01] CHECKPOINT: Metadata saved successfully (1 entries)
-[2025-11-20 23:36:02] NS_CONTROL: Received message type 61 from NS
-[2025-11-20 23:36:02] HANDLER: Received backup assignment update from NS
-[2025-11-20 23:36:02] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
-[2025-11-20 23:36:02] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-20 23:36:02] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
-[2025-11-20 23:36:02] NS_CONTROL: Received message type 58 from NS
-[2025-11-20 23:36:02] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
-[2025-11-20 23:36:02] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
-[2025-11-20 23:36:23] REPL_IN: New incoming replication connection
-[2025-11-20 23:36:23] REPL_IN: Receiving replica for file (22 bytes)
-[2025-11-20 23:36:23] REPL_IN: Acquired write lock for file
-[2025-11-20 23:36:23] REPL_IN: Finished receiving file
-[2025-11-20 23:36:23] Updated metadata for: file
-[2025-11-20 23:36:23] REPL_IN: Updated metadata for file (owner: user, size: 22, is_backup=true)
-[2025-11-20 23:36:23] REPL_IN: Released write lock for file
-[2025-11-20 23:36:49] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:36:49] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:36:49] READ: Handler called for file 'file'
-[2025-11-20 23:36:49] READ: Starting read for file file
-[2025-11-20 23:36:49] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:36:49] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:36:49] READ: Chunk 1 - read 22 bytes, is_final=1
-[2025-11-20 23:36:49] READ: Chunk 1 sent
-[2025-11-20 23:36:49] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:36:49] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:36:53] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 41)
-[2025-11-20 23:36:53] HANDLER: Routing to ss_handle_stream() for message type 41
-[2025-11-20 23:36:53] STREAM: Handler called for file 'file'
-[2025-11-20 23:36:53] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:36:57] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 35)
-[2025-11-20 23:36:57] EXEC: Read file file, size=22 bytes, content='litlleeee beforeBACKUP'
-[2025-11-20 23:36:57] EXEC: Sending content to NS: 'litlleeee beforeBACKUP'
-[2025-11-20 23:36:57] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:36:59] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 35)
-[2025-11-20 23:36:59] EXEC: Read file file, size=22 bytes, content='litlleeee beforeBACKUP'
-[2025-11-20 23:36:59] EXEC: Sending content to NS: 'litlleeee beforeBACKUP'
-[2025-11-20 23:36:59] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:37:01] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:37:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:37:01] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:37:01] CHECKPOINT: Metadata saved successfully (1 entries)
-[2025-11-20 23:38:01] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:38:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:38:01] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:38:01] CHECKPOINT: Metadata saved successfully (1 entries)
-[2025-11-20 23:38:09] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
-[2025-11-20 23:38:09] WRITE: Created swapfile file (sentence 0)
-[2025-11-20 23:38:13] NS_CONTROL: Received message type 61 from NS
-[2025-11-20 23:38:13] HANDLER: Received backup assignment update from NS
-[2025-11-20 23:38:13] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
-[2025-11-20 23:38:13] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-20 23:38:13] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
-[2025-11-20 23:38:13] NS_CONTROL: Received message type 58 from NS
-[2025-11-20 23:38:13] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
-[2025-11-20 23:38:14] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
-[2025-11-20 23:38:17] WRITE: Acquired global file lock for commit (file file, sentence 0)
-[2025-11-20 23:38:17] WRITE: Committed and deleted swapfile for file (sentence 0)
-[2025-11-20 23:38:17] Updated size for file: 26 bytes
-[2025-11-20 23:38:17] Updated counts for file: 3 words, 26 chars
-[2025-11-20 23:38:17] WRITE: Updated metadata for file (size: 26, words: 3, chars: 26)
-[2025-11-20 23:38:17] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:38:17] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:38:17] WRITE: Completed for file (sentence 0)
-[2025-11-20 23:38:17] REPL: Scheduling update for file
-[2025-11-20 23:38:17] REPL: Skipping backup file file (not replicating backups to prevent cascading)
-[2025-11-20 23:39:01] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:39:01] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:39:01] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:39:01] CHECKPOINT: Metadata saved successfully (1 entries)
-[2025-11-20 23:39:11] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:39:11] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:39:11] READ: Handler called for file 'file'
-[2025-11-20 23:39:11] READ: Starting read for file file
-[2025-11-20 23:39:11] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:39:11] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:39:11] READ: Chunk 1 - read 26 bytes, is_final=1
-[2025-11-20 23:39:11] READ: Chunk 1 sent
-[2025-11-20 23:39:11] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:39:11] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:39:19] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 40)
-[2025-11-20 23:39:19] HANDLER: Routing to ss_handle_read() for message type 40
-[2025-11-20 23:39:19] READ: Handler called for file 'file'
-[2025-11-20 23:39:19] READ: Starting read for file file
-[2025-11-20 23:39:19] READ: Full path is ss_data_0/files/file
-[2025-11-20 23:39:19] READ: File opened successfully, starting to read chunks
-[2025-11-20 23:39:19] READ: Chunk 1 - read 26 bytes, is_final=1
-[2025-11-20 23:39:19] READ: Chunk 1 sent
-[2025-11-20 23:39:19] READ: Read complete for file, sent 1 chunks
-[2025-11-20 23:39:19] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:39:22] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
-[2025-11-20 23:39:22] WRITE: Created swapfile file (sentence 0)
-[2025-11-20 23:39:28] NS_CONTROL: Received message type 61 from NS
-[2025-11-20 23:39:28] HANDLER: Received backup assignment update from NS
-[2025-11-20 23:39:28] HANDLER: Backup assignment updated - will replicate to 10.34.17.66:9002 (SS ID 1)
-[2025-11-20 23:39:28] HANDLER: Initiating immediate catch-up replication for existing primary files
-[2025-11-20 23:39:28] HANDLER: Catch-up replication scheduling complete (0 primary files queued)
-[2025-11-20 23:39:28] NS_CONTROL: Received message type 58 from NS
-[2025-11-20 23:39:28] RECOVERY: NS requests sync FROM backup TO primary SS 1 (10.34.17.66:9002)
-[2025-11-20 23:39:28] WRITE: Acquired global file lock for commit (file file, sentence 0)
-[2025-11-20 23:39:28] WRITE: Committed and deleted swapfile for file (sentence 0)
-[2025-11-20 23:39:28] Updated size for file: 38 bytes
-[2025-11-20 23:39:28] Updated counts for file: 6 words, 38 chars
-[2025-11-20 23:39:28] WRITE: Updated metadata for file (size: 38, words: 6, chars: 38)
-[2025-11-20 23:39:28] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:39:28] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:39:28] WRITE: Completed for file (sentence 0)
-[2025-11-20 23:39:28] REPL: Scheduling update for file
-[2025-11-20 23:39:28] REPL: Skipping backup file file (not replicating backups to prevent cascading)
-[2025-11-20 23:39:28] RECOVERY: Failed to connect to primary SS 1 at 10.34.17.66:9002
-[2025-11-20 23:39:44] MAIN: Shutdown detected. Joining threads and performing final cleanup...
-[2025-11-20 23:39:44] CHECKPOINT: Thread exiting
-[2025-11-20 23:39:44] NS_CONTROL: Listener thread exiting
-[2025-11-20 23:39:44] CLIENT_LISTENER: Thread exiting
-[2025-11-20 23:39:45] REPL_LISTENER: Thread exiting
-[2025-11-20 23:39:46] HEARTBEAT: Thread exiting
-[2025-11-20 23:39:46] MAIN: Performing final metadata save (1 entries)...
-[2025-11-20 23:39:46] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:39:46] Successfully saved 1 metadata entries (atomic snapshot)
-[2025-11-20 23:39:46] MAIN: Final metadata save successful
-[2025-11-20 23:39:46] Nested metadata hash table freed (1024 locks destroyed)
-[2025-11-20 23:39:46] REPL: Worker thread shutting down.
-[2025-11-20 23:39:46] --- LOGGING STOPPED ---
-[2025-11-20 23:46:32] --- LOGGING STARTED ---
-[2025-11-20 23:46:32] MAIN: Persistent log file initialized for SS ID 0
-[2025-11-20 23:46:32] MAIN: Using persistent data directory: ss_data_0
-[2025-11-20 23:46:32] MAIN: Loading metadata hash table (post-registration)...
-[2025-11-20 23:46:32] Loading 1 metadata entries from ss_data_0/metadata.db...
-[2025-11-20 23:46:32] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
-[2025-11-20 23:46:32] DEBUG: Lazily created inner table for outer bucket 805
-[2025-11-20 23:46:32] Inserted metadata for: file (owner: user, size: 38, is_backup: 1)
-[2025-11-20 23:46:32] Loaded 1/1 metadata entries from ss_data_0/metadata.db
-[2025-11-20 23:46:32] MAIN: Loaded metadata for 1 files from disk
-[2025-11-20 23:46:32] MAIN: Listening for Clients and NS on 10.34.17.143:9002
-[2025-11-20 23:46:32] NS_CONTROL: Listener thread started for NS control messages
-[2025-11-20 23:46:32] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
-[2025-11-20 23:46:32] CHECKPOINT: Thread started (interval: 60 seconds)
-[2025-11-20 23:46:32] MAIN: File scan complete (0 existing files added post-startup)
-[2025-11-20 23:46:32] MAIN: No replication target assigned (single SS or no backup available)
-[2025-11-20 23:46:32] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
-[2025-11-20 23:46:32] MAIN: Listening for Replication on 10.34.17.143:9003
-[2025-11-20 23:47:24] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 32)
-[2025-11-20 23:47:24] DEBUG: Lazily created inner table for outer bucket 523
-[2025-11-20 23:47:24] Inserted metadata for: f (owner: po, size: 0, is_backup: 0)
-[2025-11-20 23:47:24] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:47:24] Successfully saved 2 metadata entries (atomic snapshot)
-[2025-11-20 23:47:24] CREATE: File f created by po
-[2025-11-20 23:47:24] REPL: Scheduling update for f
-[2025-11-20 23:47:24] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:47:24] REPL: No backup assigned, skipping replication for f
-[2025-11-20 23:47:28] HANDLER: New CLIENT connection from 10.34.17.143 (Req: 42)
-[2025-11-20 23:47:28] WRITE: Created swapfile f (sentence 0)
-[2025-11-20 23:47:28] WRITE: Appending sentence 0 to empty file
-[2025-11-20 23:47:32] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:47:32] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:47:32] Successfully saved 2 metadata entries (atomic snapshot)
-[2025-11-20 23:47:32] CHECKPOINT: Metadata saved successfully (2 entries)
-[2025-11-20 23:47:52] WRITE: Acquired global file lock for commit (file f, sentence 0)
-[2025-11-20 23:47:52] WRITE: Committed and deleted swapfile for f (sentence 0)
-[2025-11-20 23:47:52] Updated size for f: 26 bytes
-[2025-11-20 23:47:52] Updated counts for f: 6 words, 26 chars
-[2025-11-20 23:47:52] WRITE: Updated metadata for f (size: 26, words: 6, chars: 26)
-[2025-11-20 23:47:52] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:47:52] Successfully saved 2 metadata entries (atomic snapshot)
-[2025-11-20 23:47:52] WRITE: Completed for f (sentence 0)
-[2025-11-20 23:47:52] REPL: Scheduling update for f
-[2025-11-20 23:47:52] REPL: No backup assigned, skipping replication for f
-[2025-11-20 23:47:56] HANDLER: New NAME SERVER connection from 10.34.17.143 (Req: 35)
-[2025-11-20 23:47:56] EXEC: Read file f, size=26 bytes, content='echo "diagnostics... "\nls'
-[2025-11-20 23:47:56] EXEC: Sending content to NS: 'echo "diagnostics... "\nls'
-[2025-11-20 23:47:56] HANDLER: Closing connection from 10.34.17.143
-[2025-11-20 23:48:32] CHECKPOINT: Saving metadata to disk...
-[2025-11-20 23:48:32] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:48:32] Successfully saved 2 metadata entries (atomic snapshot)
-[2025-11-20 23:48:32] CHECKPOINT: Metadata saved successfully (2 entries)
-[2025-11-20 23:48:47] MAIN: Shutdown detected. Joining threads and performing final cleanup...
-[2025-11-20 23:48:48] CLIENT_LISTENER: Thread exiting
-[2025-11-20 23:48:48] NS_CONTROL: Listener thread exiting
-[2025-11-20 23:48:48] CHECKPOINT: Thread exiting
-[2025-11-20 23:48:48] REPL_LISTENER: Thread exiting
-[2025-11-20 23:48:52] HEARTBEAT: Thread exiting
-[2025-11-20 23:48:52] MAIN: Performing final metadata save (2 entries)...
-[2025-11-20 23:48:52] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
-[2025-11-20 23:48:52] Successfully saved 2 metadata entries (atomic snapshot)
-[2025-11-20 23:48:52] MAIN: Final metadata save successful
-[2025-11-20 23:48:52] Nested metadata hash table freed (1024 locks destroyed)
-[2025-11-20 23:48:52] REPL: Worker thread shutting down.
-[2025-11-20 23:48:52] --- LOGGING STOPPED ---
+[2025-11-21 21:21:49] --- LOGGING STARTED ---
+[2025-11-21 21:21:49] MAIN: Persistent log file initialized for SS ID 0
+[2025-11-21 21:21:49] MAIN: Using persistent data directory: ss_data_0
+[2025-11-21 21:21:49] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 21:21:49] Loading 2 metadata entries from ss_data_0/metadata.db...
+[2025-11-21 21:21:49] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 21:21:49] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 21:21:49] Inserted metadata for: f (owner: po, size: 26, is_backup: 0)
+[2025-11-21 21:21:49] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 21:21:49] Inserted metadata for: file (owner: user, size: 38, is_backup: 1)
+[2025-11-21 21:21:49] Loaded 2/2 metadata entries from ss_data_0/metadata.db
+[2025-11-21 21:21:49] MAIN: Loaded metadata for 2 files from disk
+[2025-11-21 21:21:49] MAIN: Listening for Clients and NS on 127.0.0.1:9001
+[2025-11-21 21:21:49] MAIN: Listening for Replication on 127.0.0.1:9002
+[2025-11-21 21:21:49] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 21:21:49] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 21:21:49] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 21:21:49] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 21:21:49] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 21:21:49] MAIN: No replication target assigned (single SS or no backup available)
+[2025-11-21 21:21:49] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 21:22:07] NS_CONTROL: Received message type 61 from NS
+[2025-11-21 21:22:07] HANDLER: Received backup assignment update from NS
+[2025-11-21 21:22:07] HANDLER: Backup assignment updated - will replicate to 127.0.0.1:9004 (SS ID 1)
+[2025-11-21 21:22:07] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-21 21:22:07] REPL: Scheduling update for f
+[2025-11-21 21:22:07] HANDLER: Catch-up replication scheduling complete (1 primary files queued)
+[2025-11-21 21:22:07] NS_CONTROL: Received message type 60 from NS
+[2025-11-21 21:22:07] RECOVERY: NS requests re-replication of all files to backup SS 1 (127.0.0.1:9004)
+[2025-11-21 21:22:07] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-21 21:22:07] REPL: Scheduling update for f
+[2025-11-21 21:22:07] REPL: Scheduling update for f
+[2025-11-21 21:22:07] RECOVERY: Re-replication scheduling complete (1 primary files queued)
+[2025-11-21 21:22:07] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:22:07] REPL: Re-queueing f for retry attempt 1
+[2025-11-21 21:22:07] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 21:22:07] REPL: Replicating f (owner: po, size: 26)
+[2025-11-21 21:22:07] REPL: Successfully replicated f (26 bytes)
+[2025-11-21 21:22:07] REPL: ACK received for file f
+[2025-11-21 21:22:07] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 21:22:07] REPL: Replicating f (owner: po, size: 26)
+[2025-11-21 21:22:07] REPL: Successfully replicated f (26 bytes)
+[2025-11-21 21:22:07] REPL: ACK received for file f
+[2025-11-21 21:22:21] REPL_IN: New incoming replication connection
+[2025-11-21 21:22:21] REPL_IN: Receiving replica for f1 (0 bytes)
+[2025-11-21 21:22:21] REPL_IN: Acquired write lock for f1
+[2025-11-21 21:22:21] REPL_IN: Finished receiving f1
+[2025-11-21 21:22:21] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 21:22:21] Inserted metadata for: f1 (owner: user, size: 0, is_backup: 1)
+[2025-11-21 21:22:21] REPL_IN: Created metadata for f1 (owner: user, is_backup=true)
+[2025-11-21 21:22:21] REPL_IN: Released write lock for f1
+[2025-11-21 21:22:23] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 32)
+[2025-11-21 21:22:23] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 21:22:23] Inserted metadata for: f2 (owner: user, size: 0, is_backup: 0)
+[2025-11-21 21:22:23] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:22:23] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:22:23] CREATE: File f2 created by user
+[2025-11-21 21:22:23] REPL: Scheduling update for f2
+[2025-11-21 21:22:23] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:22:23] REPL: Connected to backup. Replicating update for f2...
+[2025-11-21 21:22:23] REPL: Replicating f2 (owner: user, size: 0)
+[2025-11-21 21:22:23] REPL: Successfully replicated f2 (0 bytes)
+[2025-11-21 21:22:23] REPL: ACK received for file f2
+[2025-11-21 21:22:25] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:22:25] INFO: NS requesting metadata for f2 (for VIEW -l)
+[2025-11-21 21:22:25] INFO: Returning cached metadata for f2 (size: 0, words: 0, chars: 0)
+[2025-11-21 21:22:25] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:22:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:22:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:22:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:22:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:23:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:23:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:23:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:23:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:24:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:24:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:24:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:24:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:25:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:25:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:25:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:25:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:26:28] REPL_IN: New incoming replication connection
+[2025-11-21 21:26:28] REPL_IN: Receiving replica for f1 (5357 bytes)
+[2025-11-21 21:26:28] REPL_IN: Acquired write lock for f1
+[2025-11-21 21:26:28] REPL_IN: Finished receiving f1
+[2025-11-21 21:26:28] Updated metadata for: f1
+[2025-11-21 21:26:28] REPL_IN: Updated metadata for f1 (owner: user, size: 5357, is_backup=true)
+[2025-11-21 21:26:28] REPL_IN: Released write lock for f1
+[2025-11-21 21:26:37] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:26:37] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:26:37] READ: Handler called for file 'f2'
+[2025-11-21 21:26:37] READ: Starting read for file f2
+[2025-11-21 21:26:37] READ: Full path is ss_data_0/files/f2
+[2025-11-21 21:26:37] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:26:37] READ: File is empty, sending empty final chunk
+[2025-11-21 21:26:37] READ: Read complete for f2, sent 0 chunks
+[2025-11-21 21:26:37] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:26:43] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:26:43] INFO: NS requesting metadata for f2 (for VIEW -l)
+[2025-11-21 21:26:43] INFO: Returning cached metadata for f2 (size: 0, words: 0, chars: 0)
+[2025-11-21 21:26:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:26:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:26:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:26:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:26:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:26:55] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:26:55] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:26:55] READ: Handler called for file 'f1'
+[2025-11-21 21:26:55] READ: Starting read for file f1
+[2025-11-21 21:26:55] READ: Full path is ss_data_0/files/f1
+[2025-11-21 21:26:55] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:26:55] READ: Chunk 1 - read 4096 bytes, is_final=0
+[2025-11-21 21:26:55] READ: Chunk 1 sent
+[2025-11-21 21:26:55] READ: Chunk 2 - read 1261 bytes, is_final=1
+[2025-11-21 21:26:55] READ: Chunk 2 sent
+[2025-11-21 21:26:55] READ: Read complete for f1, sent 2 chunks
+[2025-11-21 21:26:55] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:00] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 21:27:00] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 21:27:00] STREAM: Handler called for file 'f1'
+[2025-11-21 21:27:02] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:06] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:27:06] INFO: NS requesting metadata for f2 (for VIEW -l)
+[2025-11-21 21:27:06] INFO: Returning cached metadata for f2 (size: 0, words: 0, chars: 0)
+[2025-11-21 21:27:06] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:06] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:27:06] INFO: NS requesting metadata for f1 (for VIEW -l)
+[2025-11-21 21:27:06] INFO: Returning cached metadata for f1 (size: 5357, words: 0, chars: 0)
+[2025-11-21 21:27:06] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:09] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-21 21:27:09] WRITE: Created swapfile f1 (sentence 0)
+[2025-11-21 21:27:14] WRITE: Acquired global file lock for commit (file f1, sentence 0)
+[2025-11-21 21:27:14] WRITE: Committed and deleted swapfile for f1 (sentence 0)
+[2025-11-21 21:27:14] Updated size for f1: 5363 bytes
+[2025-11-21 21:27:14] Updated counts for f1: 3 words, 5363 chars
+[2025-11-21 21:27:14] WRITE: Updated metadata for f1 (size: 5363, words: 3, chars: 5363)
+[2025-11-21 21:27:14] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:27:14] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:27:14] WRITE: Completed for f1 (sentence 0)
+[2025-11-21 21:27:14] REPL: Scheduling update for f1
+[2025-11-21 21:27:14] REPL: Skipping backup file f1 (not replicating backups to prevent cascading)
+[2025-11-21 21:27:16] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:27:16] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:27:16] READ: Handler called for file 'f1'
+[2025-11-21 21:27:16] READ: Starting read for file f1
+[2025-11-21 21:27:16] READ: Full path is ss_data_0/files/f1
+[2025-11-21 21:27:16] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:27:16] READ: Chunk 1 - read 4096 bytes, is_final=0
+[2025-11-21 21:27:16] READ: Chunk 1 sent
+[2025-11-21 21:27:16] READ: Chunk 2 - read 1267 bytes, is_final=1
+[2025-11-21 21:27:16] READ: Chunk 2 sent
+[2025-11-21 21:27:16] READ: Read complete for f1, sent 2 chunks
+[2025-11-21 21:27:16] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:19] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 21:27:19] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 21:27:19] STREAM: Handler called for file 'f1'
+[2025-11-21 21:27:21] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:24] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:27:24] INFO: NS requesting metadata for f2 (for VIEW -l)
+[2025-11-21 21:27:24] INFO: Returning cached metadata for f2 (size: 0, words: 0, chars: 0)
+[2025-11-21 21:27:24] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:24] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:27:24] INFO: NS requesting metadata for f1 (for VIEW -l)
+[2025-11-21 21:27:24] INFO: Returning cached metadata for f1 (size: 5363, words: 3, chars: 5363)
+[2025-11-21 21:27:24] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:28] NS_CONTROL: Received message type 61 from NS
+[2025-11-21 21:27:28] HANDLER: Received backup assignment update from NS
+[2025-11-21 21:27:28] HANDLER: Backup assignment updated - will replicate to 127.0.0.1:9004 (SS ID 1)
+[2025-11-21 21:27:28] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-21 21:27:28] REPL: Scheduling update for f2
+[2025-11-21 21:27:28] REPL: Scheduling update for f
+[2025-11-21 21:27:28] HANDLER: Catch-up replication scheduling complete (2 primary files queued)
+[2025-11-21 21:27:28] NS_CONTROL: Received message type 58 from NS
+[2025-11-21 21:27:28] RECOVERY: NS requests sync FROM backup TO primary SS 1 (127.0.0.1:9004)
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f2 for retry attempt 1
+[2025-11-21 21:27:28] RECOVERY: Connection to primary SS 1 failed, retrying in 1s... (10 attempts left)
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f for retry attempt 2
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f2 for retry attempt 2
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f for retry attempt 3
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f2 for retry attempt 3
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f for retry attempt 4
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f2 for retry attempt 4
+[2025-11-21 21:27:28] REPL: Could not connect to backup server at 127.0.0.1:9004
+[2025-11-21 21:27:28] REPL: Re-queueing f for retry attempt 5
+[2025-11-21 21:27:28] REPL: Connected to backup. Replicating update for f2...
+[2025-11-21 21:27:28] REPL: Replicating f2 (owner: user, size: 0)
+[2025-11-21 21:27:28] REPL: Successfully replicated f2 (0 bytes)
+[2025-11-21 21:27:28] REPL: ACK received for file f2
+[2025-11-21 21:27:28] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 21:27:28] REPL: Replicating f (owner: po, size: 26)
+[2025-11-21 21:27:28] REPL: Successfully replicated f (26 bytes)
+[2025-11-21 21:27:28] REPL: ACK received for file f
+[2025-11-21 21:27:29] RECOVERY: Connected to primary SS 1
+[2025-11-21 21:27:29] RECOVERY: Sending 4 files to primary SS
+[2025-11-21 21:27:29] RECOVERY: Acquired read lock for f2
+[2025-11-21 21:27:29] RECOVERY: Released read lock for f2
+[2025-11-21 21:27:29] RECOVERY: Sent file 1/4: f2 (0 bytes)
+[2025-11-21 21:27:29] RECOVERY: Acquired read lock for f
+[2025-11-21 21:27:29] RECOVERY: sendfile failed for f: sent -1 of 26 bytes
+[2025-11-21 21:27:29] RECOVERY: Acquired read lock for file
+[2025-11-21 21:27:29] RECOVERY: sendfile failed for file: sent -1 of 38 bytes
+[2025-11-21 21:27:29] RECOVERY: Acquired read lock for f1
+[2025-11-21 21:27:29] RECOVERY: sendfile failed for f1: sent -1 of 5363 bytes
+[2025-11-21 21:27:29] RECOVERY: Sync to primary SS 1 complete (1 files sent)
+[2025-11-21 21:27:46] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:27:46] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:27:46] READ: Handler called for file 'f2'
+[2025-11-21 21:27:46] READ: Starting read for file f2
+[2025-11-21 21:27:46] READ: Full path is ss_data_0/files/f2
+[2025-11-21 21:27:46] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:27:46] READ: File is empty, sending empty final chunk
+[2025-11-21 21:27:46] READ: Read complete for f2, sent 0 chunks
+[2025-11-21 21:27:46] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:27:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:27:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:27:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:27:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:28:45] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-21 21:28:45] WRITE: Created swapfile f2 (sentence 0)
+[2025-11-21 21:28:45] WRITE: Appending sentence 0 to empty file
+[2025-11-21 21:28:48] WRITE: Acquired global file lock for commit (file f2, sentence 0)
+[2025-11-21 21:28:48] WRITE: Committed and deleted swapfile for f2 (sentence 0)
+[2025-11-21 21:28:48] Updated size for f2: 4 bytes
+[2025-11-21 21:28:48] Updated counts for f2: 1 words, 4 chars
+[2025-11-21 21:28:48] WRITE: Updated metadata for f2 (size: 4, words: 1, chars: 4)
+[2025-11-21 21:28:48] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:28:48] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:28:48] WRITE: Completed for f2 (sentence 0)
+[2025-11-21 21:28:48] REPL: Scheduling update for f2
+[2025-11-21 21:28:48] REPL: Connected to backup. Replicating update for f2...
+[2025-11-21 21:28:48] REPL: Replicating f2 (owner: user, size: 4)
+[2025-11-21 21:28:48] REPL: Successfully replicated f2 (4 bytes)
+[2025-11-21 21:28:48] REPL: ACK received for file f2
+[2025-11-21 21:28:49] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:28:49] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:28:49] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:28:49] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:28:49] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:28:49] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:28:49] READ: Handler called for file 'f2'
+[2025-11-21 21:28:49] READ: Starting read for file f2
+[2025-11-21 21:28:49] READ: Full path is ss_data_0/files/f2
+[2025-11-21 21:28:49] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:28:49] READ: Chunk 1 - read 4 bytes, is_final=1
+[2025-11-21 21:28:49] READ: Chunk 1 sent
+[2025-11-21 21:28:49] READ: Read complete for f2, sent 1 chunks
+[2025-11-21 21:28:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:28:51] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 21:28:51] INFO: NS requesting metadata for f2 (for VIEW -l)
+[2025-11-21 21:28:51] INFO: Returning cached metadata for f2 (size: 4, words: 1, chars: 4)
+[2025-11-21 21:28:51] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:30:21] --- LOGGING STARTED ---
+[2025-11-21 21:30:21] MAIN: Persistent log file initialized for SS ID 0
+[2025-11-21 21:30:21] MAIN: Using persistent data directory: ss_data_0
+[2025-11-21 21:30:21] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 21:30:21] Loading 4 metadata entries from ss_data_0/metadata.db...
+[2025-11-21 21:30:21] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 21:30:21] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 21:30:21] Inserted metadata for: f (owner: po, size: 26, is_backup: 0)
+[2025-11-21 21:30:21] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 21:30:21] Inserted metadata for: file (owner: user, size: 38, is_backup: 1)
+[2025-11-21 21:30:21] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 21:30:21] Inserted metadata for: f1 (owner: user, size: 5363, is_backup: 1)
+[2025-11-21 21:30:21] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 21:30:21] Inserted metadata for: f2 (owner: user, size: 4, is_backup: 0)
+[2025-11-21 21:30:21] Loaded 4/4 metadata entries from ss_data_0/metadata.db
+[2025-11-21 21:30:21] MAIN: Loaded metadata for 4 files from disk
+[2025-11-21 21:30:21] MAIN: Listening for Clients and NS on 127.0.0.1:9001
+[2025-11-21 21:30:21] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 21:30:21] NS_CONTROL: Received message type 59 from NS
+[2025-11-21 21:30:21] RECOVERY: NS requests sync TO primary (us) FROM backup SS 1 (127.0.0.1:9004)
+[2025-11-21 21:30:21] RECOVERY: Waiting for backup SS 1 to initiate recovery connection
+[2025-11-21 21:30:21] MAIN: Listening for Replication on 127.0.0.1:9002
+[2025-11-21 21:30:21] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 21:30:21] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 21:30:21] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 21:30:21] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 21:30:21] MAIN: Will send replications to: 127.0.0.1:9004
+[2025-11-21 21:30:21] MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...
+[2025-11-21 21:30:21] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 21:30:21] REPL_IN: New incoming replication connection
+[2025-11-21 21:30:21] REPL_IN: Receiving replica for f1 (5357 bytes)
+[2025-11-21 21:30:21] REPL_IN: Acquired write lock for f1
+[2025-11-21 21:30:21] REPL_IN: Finished receiving f1
+[2025-11-21 21:30:21] Updated metadata for: f1
+[2025-11-21 21:30:21] REPL_IN: Updated metadata for f1 (owner: user, size: 5357, is_backup=true)
+[2025-11-21 21:30:21] REPL_IN: Released write lock for f1
+[2025-11-21 21:30:23] REPL_IN: New incoming replication connection
+[2025-11-21 21:30:26] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 21:30:26] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 21:30:26] READ: Handler called for file 'f2'
+[2025-11-21 21:30:26] READ: Starting read for file f2
+[2025-11-21 21:30:26] READ: Full path is ss_data_0/files/f2
+[2025-11-21 21:30:26] READ: File opened successfully, starting to read chunks
+[2025-11-21 21:30:26] READ: Chunk 1 - read 4 bytes, is_final=1
+[2025-11-21 21:30:26] READ: Chunk 1 sent
+[2025-11-21 21:30:26] READ: Read complete for f2, sent 1 chunks
+[2025-11-21 21:30:26] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 21:31:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:31:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:31:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:31:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:32:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:32:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:32:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:32:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:33:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:33:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:33:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:33:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:34:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:34:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:34:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:34:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:35:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:35:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:35:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:35:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:36:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:36:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:36:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:36:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:37:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:37:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:37:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:37:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:38:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:38:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:38:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:38:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:39:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:39:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:39:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:39:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:40:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:40:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:40:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:40:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:41:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:41:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:41:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:41:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:42:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:42:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:42:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:42:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:43:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:43:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:43:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:43:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:44:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:44:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:44:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:44:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:45:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:45:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:45:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:45:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:46:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:46:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:46:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:46:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:47:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:47:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:47:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:47:22] CHECKPOINT: Metadata saved successfully (4 entries)
+[2025-11-21 21:48:22] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 21:48:22] Saving metadata to ss_data_0/metadata.db (atomic snapshot)...
+[2025-11-21 21:48:22] Successfully saved 4 metadata entries (atomic snapshot)
+[2025-11-21 21:48:22] CHECKPOINT: Metadata saved successfully (4 entries)

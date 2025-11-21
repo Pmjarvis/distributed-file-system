@@ -291,6 +291,14 @@ void* ss_handler_thread(void* arg) {
                 file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, owner_to_use);
                 printf("NS: SS %d (primary) re-registered file %s (owner: %s)\n", 
                        ss_node->ss_id, meta.filename, owner_to_use);
+                
+                // FIX: Ensure owner has access in Access Table (in case NS restarted)
+                pthread_mutex_lock(&g_access_table_mutex);
+                if (!user_ht_get_permission(g_access_table, owner_to_use, meta.filename)) {
+                    user_ht_add_permission(g_access_table, owner_to_use, meta.filename, "rwo");
+                    printf("NS: Restored access permissions for owner %s on file %s\n", owner_to_use, meta.filename);
+                }
+                pthread_mutex_unlock(&g_access_table_mutex);
             } else {
                 // This SS is NOT the primary - it's a backup copy
                 printf("NS: SS %d has backup copy of %s (primary is SS %d)\n",
@@ -311,9 +319,24 @@ void* ss_handler_thread(void* arg) {
             
             file_map_table_insert(g_file_map_table, meta.filename, ss_node->ss_id, backup_ss_id, meta.owner);
             printf("NS: SS %d registered new file %s (owner: %s)\n", ss_node->ss_id, meta.filename, meta.owner);
+            
+            // FIX: Ensure owner has access in Access Table (in case NS restarted)
+            pthread_mutex_lock(&g_access_table_mutex);
+            if (!user_ht_get_permission(g_access_table, meta.owner, meta.filename)) {
+                user_ht_add_permission(g_access_table, meta.owner, meta.filename, "rwo");
+                printf("NS: Restored access permissions for owner %s on file %s\n", meta.owner, meta.filename);
+            }
+            pthread_mutex_unlock(&g_access_table_mutex);
         }
     }
     
+    // FIX: Persist the updated access table to disk immediately
+    // This ensures that if NS crashes, we don't lose the restored permissions
+    pthread_mutex_lock(&g_access_table_mutex);
+    user_ht_save(g_access_table, DB_PATH);
+    pthread_mutex_unlock(&g_access_table_mutex);
+    printf("NS: Persisted access table to disk after SS registration\n");
+
     // FIX: NOW add new SS to linked list (file list successfully received)
     pthread_mutex_lock(&g_ss_list_mutex);
     if (is_new_ss) {
@@ -738,17 +761,49 @@ int get_file_metadata_from_ss(const char* owner, const char* filename, FileMetad
     if (!file_node) {
         return -1; // File not found
     }
-    int ss_id = file_node->primary_ss_id;
+    int primary_ss_id = file_node->primary_ss_id;
+    int backup_ss_id = file_node->backup_ss_id;
     
-    // 2. Find the SS node
+    StorageServer* target_ss = NULL;
+    
+    // 2. Find the SS node (Primary or Backup)
     pthread_mutex_lock(&g_ss_list_mutex);
+    
+    // Try Primary SS first
     StorageServer* ss = g_ss_list_head;
-    while (ss && ss->ss_id != ss_id) {
-        ss = ss->next;
+    if (ss) {
+        do {
+            if (ss->ss_id == primary_ss_id) {
+                if (ss->is_online) {
+                    target_ss = ss;
+                }
+                break;
+            }
+            ss = ss->next;
+        } while (ss != g_ss_list_head);
     }
-    if (!ss || !ss->is_online) {
+    
+    // If Primary is down/not found, try Backup SS
+    if (!target_ss && backup_ss_id != -1) {
+        ss = g_ss_list_head;
+        if (ss) {
+            do {
+                if (ss->ss_id == backup_ss_id) {
+                    if (ss->is_online) {
+                        target_ss = ss;
+                        printf("NS: Primary SS %d down, fetching metadata from Backup SS %d\n", 
+                               primary_ss_id, backup_ss_id);
+                    }
+                    break;
+                }
+                ss = ss->next;
+            } while (ss != g_ss_list_head);
+        }
+    }
+    
+    if (!target_ss) {
         pthread_mutex_unlock(&g_ss_list_mutex);
-        return -1; // SS offline
+        return -1; // Both SSs offline
     }
     
     // 3. Connect to SS
@@ -760,8 +815,8 @@ int get_file_metadata_from_ss(const char* owner, const char* filename, FileMetad
     
     struct sockaddr_in ss_addr;
     ss_addr.sin_family = AF_INET;
-    ss_addr.sin_port = htons(ss->client_port);
-    inet_pton(AF_INET, ss->ip, &ss_addr.sin_addr);
+    ss_addr.sin_port = htons(target_ss->client_port);
+    inet_pton(AF_INET, target_ss->ip, &ss_addr.sin_addr);
     pthread_mutex_unlock(&g_ss_list_mutex);
     
     if (connect(ss_sock, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) < 0) {

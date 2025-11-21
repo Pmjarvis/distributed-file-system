@@ -3,6 +3,7 @@
 
 #include "ss_data_structs.h"
 #include "ss_metadata.h"
+#include <stdbool.h>
 
 // Connection to Name Server
 extern int g_ns_sock;
@@ -30,6 +31,9 @@ extern MetadataHashTable* g_metadata_table;
 
 // Graceful shutdown flag
 extern volatile int g_shutdown;
+
+// Server ready flag (true when metadata is loaded and ready to serve)
+extern volatile bool g_ss_ready;
 
 // Recovery sync flag (blocks operations during recovery)
 extern volatile int g_is_syncing;

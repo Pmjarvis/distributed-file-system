@@ -34,6 +34,7 @@ int g_repl_listen_port = -1; // Local replication listener port (argv[5])
 ReplicationQueue g_repl_queue;
 MetadataHashTable* g_metadata_table = NULL;
 volatile int g_shutdown = 0;  // Graceful shutdown flag
+volatile bool g_ss_ready = false; // Server ready flag
 volatile int g_is_syncing = 0; // Recovery sync flag
 pthread_mutex_t g_sync_mutex = PTHREAD_MUTEX_INITIALIZER;  // Protects g_is_syncing
 
@@ -188,6 +189,10 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
     } else {
         ss_log("MAIN: File scan complete (no existing files found)");
     }
+
+    // Mark server as ready to serve clients
+    g_ss_ready = true;
+    ss_log("MAIN: Server marked READY (metadata loaded). Accepting client requests.");
 
     // Threads will be joined in main() during shutdown. (No detach here.)
     

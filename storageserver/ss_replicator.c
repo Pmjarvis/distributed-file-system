@@ -1,6 +1,7 @@
 #include "ss_replicator.h"
 #include "ss_globals.h"
 #include "ss_logger.h"
+#include "ss_handler.h" // <--- FIX: Needed for ss_handle_recovery_connection
 #include "../common/net_utils.h" // <--- FIX 1: ADDED THIS
 #include <stdio.h>
 #include <stdlib.h>
@@ -313,10 +314,25 @@ void handle_replication_receive(int sock) {
         // Release file lock after deletion
         pthread_rwlock_unlock(&lock->file_lock);
         ss_log("REPL_IN: Released write lock for %s", req.filename);
+        
+        send_response(sock, MSG_S2S_ACK, NULL, 0); // Send ACK
+        close(sock);
+
+    } else if (header.type == MSG_S2S_START_RECOVERY) {
+        // FIX: Handle recovery connection from Backup SS
+        Req_StartRecovery req;
+        if (recv_payload(sock, &req, sizeof(req)) <= 0) {
+            close(sock);
+            return;
+        }
+        // Pass control to recovery handler (it will close the socket)
+        ss_handle_recovery_connection(sock, &req);
+        return;
+        
+    } else {
+        ss_log("REPL_IN: Unknown message type %d", header.type);
+        close(sock);
     }
-    
-    send_response(sock, MSG_S2S_ACK, NULL, 0); // Send ACK
-    close(sock);
 }
 
 void handle_recovery_sync() {

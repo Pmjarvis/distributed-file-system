@@ -33,6 +33,21 @@ void* handle_connection(void* arg) {
     if (header.type >= MSG_C2S_READ && header.type <= MSG_C2S_CHECKPOINT_OP) {
         ss_log("HANDLER: New CLIENT connection from %s (Req: %d)", ip, header.type);
         
+        // FIX: Check if server is ready (metadata loaded)
+        // If not ready, wait a bit (up to 5 seconds)
+        int retries = 50;
+        while (!g_ss_ready && retries > 0) {
+            usleep(100000); // 100ms
+            retries--;
+        }
+        
+        if (!g_ss_ready) {
+            ss_log("HANDLER: Server not ready (metadata loading). Rejecting client request.");
+            send_error_response_to_client(sock, "Server initializing. Please try again.");
+            close(sock);
+            return NULL;
+        }
+        
         // This is a single-request connection. Process it.
         if (header.type == MSG_C2S_READ) {
             ss_log("HANDLER: Routing to ss_handle_read() for message type %d", header.type);
