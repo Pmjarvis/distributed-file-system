@@ -106,6 +106,40 @@ int ss_get_file_metadata(const char* filename, FileMetadata* meta) {
     return 0;
 }
 
+void ss_clean_swap_dir() {
+    DIR* d = opendir(SS_SWAP_DIR);
+    if (!d) {
+        // Directory might not exist yet if this is a fresh install, which is fine
+        return; 
+    }
+    
+    struct dirent* dir;
+    char filepath[MAX_PATH];
+    int count = 0;
+
+    while ((dir = readdir(d)) != NULL) {
+        // Skip . and .. entries
+        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) {
+            continue;
+        }
+
+        // Construct full path
+        snprintf(filepath, sizeof(filepath), "%s/%s", SS_SWAP_DIR, dir->d_name);
+        
+        // Unlink (delete) the file. 
+        // We don't strictly check d_type because some filesystems return DT_UNKNOWN.
+        // unlink() will fail safely if it's a directory (which shouldn't be there anyway).
+        if (unlink(filepath) == 0) {
+            count++;
+        }
+    }
+    closedir(d);
+    
+    if (count > 0) {
+        ss_log("STARTUP: Cleaned up %d orphaned swapfiles from previous session", count);
+    }
+}
+
 int ss_scan_files(FileMetadata** file_list) {
     DIR* d = opendir(SS_FILES_DIR);
     if (!d) {
@@ -904,12 +938,19 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req) {
     snprintf(swappath, sizeof(swappath), "%s/%s_swap_%d", SS_SWAP_DIR, req->filename, req->sentence_num);
     ss_get_path(SS_UNDO_DIR, req->filename, undopath);
     
+    // FIX: Acquire Read Lock before copying to ensure consistent state
+    // This prevents reading a file that is being rewritten by another thread's commit phase
+    pthread_rwlock_rdlock(&lock->file_lock);
+    
     if (_copy_file(filepath, swappath) != 0) {
         ss_log("WRITE: Failed to create swapfile for %s", req->filename);
+        pthread_rwlock_unlock(&lock->file_lock); // Unlock on fail
         pthread_mutex_unlock(sentence_lock);
         send_error_response_to_client(client_sock, "Write failed (could not create swapfile)");
         return;
     }
+    
+    pthread_rwlock_unlock(&lock->file_lock); // Unlock after copy
     ss_log("WRITE: Created swapfile %s (sentence %d)", req->filename, req->sentence_num);
 
     // 3. Make undo backup from swapfile

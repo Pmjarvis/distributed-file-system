@@ -48,4 +48,7 @@ void ss_handle_write_transaction(int client_sock, Req_Write_Transaction* req);
 // --- Directory Scanner ---
 int ss_scan_files(FileMetadata** file_list); // Returns count
 
+// --- Cleanup ---
+void ss_clean_swap_dir();
+
 #endif // SS_FILE_MANAGER_H

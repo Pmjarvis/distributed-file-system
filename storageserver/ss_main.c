@@ -145,6 +145,10 @@ static void _connect_and_register(const char* ns_ip, int ns_port) {
 
     ss_create_dirs(); // Creates if missing; idempotent on restart
 
+    // FIX: Clean up orphaned swapfiles from potential previous crashes
+    // This prevents the "Orphaned Swapfile" Deadlock where old swapfiles block DELETES
+    ss_clean_swap_dir(); 
+
     // Initialize / load metadata AFTER directory selection
     ss_log("MAIN: Loading metadata hash table (post-registration)...");
     g_metadata_table = metadata_table_load(METADATA_DB_PATH);
