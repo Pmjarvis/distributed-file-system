@@ -39,6 +39,22 @@ static bool is_owner(const char* username, const char* filename) {
     // FIX: Check for 'o' character in permission string (format: "rwo")
     bool owner = (perms && strchr(perms, 'o') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
+    
+    // Fallback: Check file map if access table check fails
+    if (!owner) {
+        FileMapNode* node = file_map_table_search(g_file_map_table, username, filename);
+        if (node) {
+            // User is the owner in the file map
+            owner = true;
+            
+            // Self-healing: Restore access table entry
+            pthread_mutex_lock(&g_access_table_mutex);
+            user_ht_add_permission(g_access_table, username, filename, "rwo");
+            user_ht_save(g_access_table, DB_PATH);
+            pthread_mutex_unlock(&g_access_table_mutex);
+        }
+    }
+    
     return owner;
 }
 
@@ -392,6 +408,20 @@ static void handle_info(UserSession* session, MsgHeader* header) {
     bool has_access = (perms && strchr(perms, 'w') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
     
+    // Fallback: Check ownership in file map
+    if (!has_access) {
+        FileMapNode* node = file_map_table_search(g_file_map_table, session->username, payload.filename);
+        if (node) {
+            has_access = true; // Owner has all access
+            
+            // Self-healing
+            pthread_mutex_lock(&g_access_table_mutex);
+            user_ht_add_permission(g_access_table, session->username, payload.filename, "rwo");
+            user_ht_save(g_access_table, DB_PATH);
+            pthread_mutex_unlock(&g_access_table_mutex);
+        }
+    }
+    
     if (!has_access) {
         send_error_response_to_client(session->client_sock, "Access Denied: Write access required for INFO.");
         return;
@@ -546,6 +576,20 @@ static void handle_exec(UserSession* session, MsgHeader* header) {
     // FIX: Check for 'r' character in permission string (format: "rwo", "rw", "r")
     bool has_access = (perms && strchr(perms, 'r') != NULL);
     pthread_mutex_unlock(&g_access_table_mutex);
+
+    // Fallback: Check ownership in file map
+    if (!has_access) {
+        FileMapNode* node = file_map_table_search(g_file_map_table, session->username, payload.filename);
+        if (node) {
+            has_access = true; // Owner has all access
+            
+            // Self-healing
+            pthread_mutex_lock(&g_access_table_mutex);
+            user_ht_add_permission(g_access_table, session->username, payload.filename, "rwo");
+            user_ht_save(g_access_table, DB_PATH);
+            pthread_mutex_unlock(&g_access_table_mutex);
+        }
+    }
 
     if (!has_access) {
         send_error_response_to_client(session->client_sock, "Access Denied: Read access required to execute.");
@@ -806,7 +850,37 @@ static void handle_ss_redirect(UserSession* session, MsgHeader* header) {
         printf("DEBUG: Found 'o' in perms, granting access\n");
         has_access = true; // Owner has all access
     }
+    
+    // FIX: If perms is NULL, check if user is the owner in the file map
+    // This handles the case where access table might be out of sync or file was just created
+    if (!has_access) {
+        // We need to release the access mutex before checking file map to avoid potential deadlock
+        // (though file_map_table_search uses its own internal locks, so it should be safe)
+        // But let's be safe and check file map after unlocking
+    } else {
+        // Access granted via table
+    }
+    
     pthread_mutex_unlock(&g_access_table_mutex);
+    
+    // Fallback: Check ownership in file map if access table check failed
+    if (!has_access) {
+        printf("DEBUG: Access table check failed, checking file map ownership\n");
+        FileMapNode* file_node = file_map_table_search(g_file_map_table, session->username, payload.filename);
+        if (file_node) {
+            printf("DEBUG: User '%s' is owner in file map, granting access\n", session->username);
+            has_access = true;
+            
+            // Self-healing: Restore access table entry
+            printf("DEBUG: Restoring missing access table entry for owner\n");
+            pthread_mutex_lock(&g_access_table_mutex);
+            user_ht_add_permission(g_access_table, session->username, payload.filename, "rwo");
+            user_ht_save(g_access_table, DB_PATH);
+            pthread_mutex_unlock(&g_access_table_mutex);
+        } else {
+            printf("DEBUG: User '%s' is NOT owner in file map\n", session->username);
+        }
+    }
     
     printf("DEBUG: has_access=%d\n", has_access);
     if (!has_access) {

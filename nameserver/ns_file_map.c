@@ -602,3 +602,33 @@ char* file_map_table_find_owner(FileMapHashTable* table, const char* filename) {
     return owner_copy; // Caller must free this
 }
 
+int file_map_table_update_backups_for_ss(FileMapHashTable* table, int primary_ss_id, int new_backup_ss_id) {
+    if (!table) return 0;
+    
+    int updated_count = 0;
+    
+    // Lock all buckets for this operation
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_lock(&table->bucket_locks[i]);
+    }
+    
+    // Iterate through all entries
+    for (size_t i = 0; i < table->size; i++) {
+        FileMapNode* node = table->nodes[i];
+        if (node != NULL && node != &g_file_map_tombstone) {
+            if (node->primary_ss_id == primary_ss_id) {
+                // Update backup SS ID
+                node->backup_ss_id = new_backup_ss_id;
+                updated_count++;
+            }
+        }
+    }
+    
+    // Unlock all buckets
+    for (size_t i = 0; i < table->num_locks; i++) {
+        pthread_mutex_unlock(&table->bucket_locks[i]);
+    }
+    
+    return updated_count;
+}
+

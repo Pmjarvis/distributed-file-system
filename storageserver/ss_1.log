@@ -1,0 +1,775 @@
+[2025-11-21 23:50:09] --- LOGGING STARTED ---
+[2025-11-21 23:50:09] MAIN: Persistent log file initialized for SS ID 1
+[2025-11-21 23:50:09] MAIN: Using persistent data directory: ss_data_1
+[2025-11-21 23:50:09] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 23:50:09] Loading 8 metadata entries from ss_data_1/metadata.db...
+[2025-11-21 23:50:09] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 23:50:09] Inserted metadata for: f (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 524
+[2025-11-21 23:50:09] Inserted metadata for: g (owner: user, size: 0, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 725
+[2025-11-21 23:50:09] Inserted metadata for: gha (owner: user, size: 0, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 23:50:09] Inserted metadata for: file (owner: user, size: 38, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 923
+[2025-11-21 23:50:09] Inserted metadata for: f0 (owner: user, size: 2, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 23:50:09] Inserted metadata for: f1 (owner: user, size: 7, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 23:50:09] Inserted metadata for: f2 (owner: user, size: 12, is_backup: 1)
+[2025-11-21 23:50:09] DEBUG: Lazily created inner table for outer bucket 977
+[2025-11-21 23:50:09] Inserted metadata for: ff (owner: user, size: 3, is_backup: 1)
+[2025-11-21 23:50:09] Loaded 8/8 metadata entries from ss_data_1/metadata.db
+[2025-11-21 23:50:09] MAIN: Loaded metadata for 8 files from disk
+[2025-11-21 23:50:09] MAIN: Listening for Clients and NS on 127.0.0.1:9003
+[2025-11-21 23:50:09] MAIN: Listening for Replication on 127.0.0.1:9004
+[2025-11-21 23:50:09] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 23:50:09] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 23:50:09] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 23:50:09] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 23:50:09] MAIN: Will send replications to: 127.0.0.1:9002
+[2025-11-21 23:50:09] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 23:50:09] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for g (3 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for g
+[2025-11-21 23:50:09] REPL_IN: Finished receiving g
+[2025-11-21 23:50:09] Updated metadata for: g
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for g (owner: kai, size: 3, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for g
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f0 (2 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f0
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f0
+[2025-11-21 23:50:09] Updated metadata for: f0
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f0 (owner: user, size: 2, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f0
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for file (38 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for file
+[2025-11-21 23:50:09] REPL_IN: Finished receiving file
+[2025-11-21 23:50:09] Updated metadata for: file
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for file (owner: user, size: 38, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for file
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f1 (7 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f1
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f1
+[2025-11-21 23:50:09] Updated metadata for: f1
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f1 (owner: user, size: 7, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f1
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for ff (3 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for ff
+[2025-11-21 23:50:09] REPL_IN: Finished receiving ff
+[2025-11-21 23:50:09] Updated metadata for: ff
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for ff (owner: user, size: 3, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for ff
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for gha (0 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for gha
+[2025-11-21 23:50:09] REPL_IN: Finished receiving gha
+[2025-11-21 23:50:09] Updated metadata for: gha
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for gha (owner: user, size: 0, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for gha
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f2 (12 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f2
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f2
+[2025-11-21 23:50:09] Updated metadata for: f2
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f2 (owner: user, size: 12, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f2
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for g (3 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for g
+[2025-11-21 23:50:09] REPL_IN: Finished receiving g
+[2025-11-21 23:50:09] Updated metadata for: g
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for g (owner: kai, size: 3, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for g
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f0 (2 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f0
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f0
+[2025-11-21 23:50:09] Updated metadata for: f0
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f0 (owner: user, size: 2, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f0
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for file (38 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for file
+[2025-11-21 23:50:09] REPL_IN: Finished receiving file
+[2025-11-21 23:50:09] Updated metadata for: file
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for file (owner: user, size: 38, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for file
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f1 (7 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f1
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f1
+[2025-11-21 23:50:09] Updated metadata for: f1
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f1 (owner: user, size: 7, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f1
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for ff (3 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for ff
+[2025-11-21 23:50:09] REPL_IN: Finished receiving ff
+[2025-11-21 23:50:09] Updated metadata for: ff
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for ff (owner: user, size: 3, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for ff
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for gha (0 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for gha
+[2025-11-21 23:50:09] REPL_IN: Finished receiving gha
+[2025-11-21 23:50:09] Updated metadata for: gha
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for gha (owner: user, size: 0, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for gha
+[2025-11-21 23:50:09] REPL_IN: New incoming replication connection
+[2025-11-21 23:50:09] REPL_IN: Receiving replica for f2 (12 bytes)
+[2025-11-21 23:50:09] REPL_IN: Acquired write lock for f2
+[2025-11-21 23:50:09] REPL_IN: Finished receiving f2
+[2025-11-21 23:50:09] Updated metadata for: f2
+[2025-11-21 23:50:09] REPL_IN: Updated metadata for f2 (owner: user, size: 12, is_backup=true)
+[2025-11-21 23:50:09] REPL_IN: Released write lock for f2
+[2025-11-21 23:50:20] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:50:20] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:50:20] READ: Handler called for file 'g'
+[2025-11-21 23:50:20] READ: Starting read for file g
+[2025-11-21 23:50:20] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:50:20] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:50:20] READ: Chunk 1 - read 3 bytes, is_final=1
+[2025-11-21 23:50:20] READ: Chunk 1 sent
+[2025-11-21 23:50:20] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:50:20] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:51:09] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 23:51:09] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:51:09] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:51:09] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-21 23:51:24] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:51:24] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:51:24] READ: Handler called for file 'g'
+[2025-11-21 23:51:24] READ: Starting read for file g
+[2025-11-21 23:51:24] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:51:24] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:51:24] READ: Chunk 1 - read 3 bytes, is_final=1
+[2025-11-21 23:51:24] READ: Chunk 1 sent
+[2025-11-21 23:51:24] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:51:24] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:51:28] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:51:28] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:51:28] STREAM: Handler called for file 'g'
+[2025-11-21 23:51:28] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:51:56] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:51:56] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:51:56] INFO: Returning cached metadata for g (size: 3, words: 0, chars: 0)
+[2025-11-21 23:51:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:00] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:52:00] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:52:00] READ: Handler called for file 'g'
+[2025-11-21 23:52:00] READ: Starting read for file g
+[2025-11-21 23:52:00] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:52:00] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:52:00] READ: Chunk 1 - read 3 bytes, is_final=1
+[2025-11-21 23:52:00] READ: Chunk 1 sent
+[2025-11-21 23:52:00] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:52:00] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:01] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-21 23:52:01] WRITE: Created swapfile g (sentence 0)
+[2025-11-21 23:52:09] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 23:52:09] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:52:09] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:52:09] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-21 23:52:25] WRITE: Acquired global file lock for commit (file g, sentence 0)
+[2025-11-21 23:52:25] WRITE: Committed and deleted swapfile for g (sentence 0)
+[2025-11-21 23:52:25] Updated size for g: 9 bytes
+[2025-11-21 23:52:25] Updated counts for g: 2 words, 9 chars
+[2025-11-21 23:52:25] WRITE: Updated metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:25] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:52:25] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:52:25] WRITE: Completed for g (sentence 0)
+[2025-11-21 23:52:25] REPL: Scheduling update for g
+[2025-11-21 23:52:25] REPL: Skipping backup file g (not replicating backups to prevent cascading)
+[2025-11-21 23:52:26] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:26] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:26] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:26] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:29] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:29] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:29] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:29] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:30] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:30] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:30] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:30] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:35] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:35] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:35] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:35] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:36] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:36] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:36] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:36] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:39] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-21 23:52:39] WRITE: Created swapfile g (sentence 0)
+[2025-11-21 23:52:41] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:41] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:41] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:41] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:52:42] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:52:42] READ: Handler called for file 'g'
+[2025-11-21 23:52:42] READ: Starting read for file g
+[2025-11-21 23:52:42] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:52:42] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:52:42] READ: Chunk 1 - read 9 bytes, is_final=1
+[2025-11-21 23:52:42] READ: Chunk 1 sent
+[2025-11-21 23:52:42] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:52:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:44] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:52:44] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:52:44] STREAM: Handler called for file 'g'
+[2025-11-21 23:52:44] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:46] WRITE: Acquired global file lock for commit (file g, sentence 0)
+[2025-11-21 23:52:46] WRITE: Committed and deleted swapfile for g (sentence 0)
+[2025-11-21 23:52:46] Updated size for g: 9 bytes
+[2025-11-21 23:52:46] Updated counts for g: 2 words, 9 chars
+[2025-11-21 23:52:46] WRITE: Updated metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:46] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:52:46] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:52:46] WRITE: Completed for g (sentence 0)
+[2025-11-21 23:52:46] REPL: Scheduling update for g
+[2025-11-21 23:52:46] REPL: Skipping backup file g (not replicating backups to prevent cascading)
+[2025-11-21 23:52:49] HANDLER: New NAME SERVER connection from 127.0.0.1 (Req: 34)
+[2025-11-21 23:52:49] INFO: NS requesting metadata for g (for VIEW -l)
+[2025-11-21 23:52:49] INFO: Returning cached metadata for g (size: 9, words: 2, chars: 9)
+[2025-11-21 23:52:49] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:56] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:52:56] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:52:56] STREAM: Handler called for file 'g'
+[2025-11-21 23:52:56] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:58] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:52:58] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:52:58] STREAM: Handler called for file 'g'
+[2025-11-21 23:52:58] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:52:59] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:52:59] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:52:59] STREAM: Handler called for file 'g'
+[2025-11-21 23:52:59] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:00] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:53:00] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:53:00] READ: Handler called for file 'g'
+[2025-11-21 23:53:00] READ: Starting read for file g
+[2025-11-21 23:53:00] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:53:00] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:53:00] READ: Chunk 1 - read 9 bytes, is_final=1
+[2025-11-21 23:53:00] READ: Chunk 1 sent
+[2025-11-21 23:53:00] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:53:00] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:01] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:53:01] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:53:01] READ: Handler called for file 'g'
+[2025-11-21 23:53:01] READ: Starting read for file g
+[2025-11-21 23:53:01] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:53:01] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:53:01] READ: Chunk 1 - read 9 bytes, is_final=1
+[2025-11-21 23:53:01] READ: Chunk 1 sent
+[2025-11-21 23:53:01] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:53:01] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:03] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:53:03] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:53:03] READ: Handler called for file 'g'
+[2025-11-21 23:53:03] READ: Starting read for file g
+[2025-11-21 23:53:03] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:53:03] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:53:03] READ: Chunk 1 - read 9 bytes, is_final=1
+[2025-11-21 23:53:03] READ: Chunk 1 sent
+[2025-11-21 23:53:03] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:53:03] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:04] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 40)
+[2025-11-21 23:53:04] HANDLER: Routing to ss_handle_read() for message type 40
+[2025-11-21 23:53:04] READ: Handler called for file 'g'
+[2025-11-21 23:53:04] READ: Starting read for file g
+[2025-11-21 23:53:04] READ: Full path is ss_data_1/files/g
+[2025-11-21 23:53:04] READ: File opened successfully, starting to read chunks
+[2025-11-21 23:53:04] READ: Chunk 1 - read 9 bytes, is_final=1
+[2025-11-21 23:53:04] READ: Chunk 1 sent
+[2025-11-21 23:53:04] READ: Read complete for g, sent 1 chunks
+[2025-11-21 23:53:04] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:05] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:53:05] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:53:05] STREAM: Handler called for file 'g'
+[2025-11-21 23:53:06] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:08] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:53:08] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:53:08] STREAM: Handler called for file 'g'
+[2025-11-21 23:53:08] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:09] CHECKPOINT: Saving metadata to disk...
+[2025-11-21 23:53:09] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:53:09] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:53:09] CHECKPOINT: Metadata saved successfully (8 entries)
+[2025-11-21 23:53:13] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:53:13] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:53:13] STREAM: Handler called for file 'g'
+[2025-11-21 23:53:14] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:16] NS_CONTROL: Received message type 61 from NS
+[2025-11-21 23:53:16] HANDLER: Received backup assignment update from NS
+[2025-11-21 23:53:16] HANDLER: Backup assignment updated - will replicate to 127.0.0.1:9002 (SS ID 0)
+[2025-11-21 23:53:16] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-21 23:53:16] REPL: Scheduling update for f
+[2025-11-21 23:53:16] HANDLER: Catch-up replication scheduling complete (1 primary files queued)
+[2025-11-21 23:53:16] NS_CONTROL: Received message type 60 from NS
+[2025-11-21 23:53:16] RECOVERY: NS requests re-replication of all files to backup SS 0 (127.0.0.1:9002)
+[2025-11-21 23:53:16] RECOVERY: Initiating immediate re-replication for existing primary files
+[2025-11-21 23:53:16] REPL: Scheduling update for f
+[2025-11-21 23:53:16] REPL: Scheduling update for f
+[2025-11-21 23:53:16] RECOVERY: Re-replication scheduling complete (1 primary files queued)
+[2025-11-21 23:53:16] NS_CONTROL: Received message type 58 from NS
+[2025-11-21 23:53:16] RECOVERY: NS requests sync FROM backup TO primary SS 0 (127.0.0.1:9002)
+[2025-11-21 23:53:16] REPL: Acquired read lock for f
+[2025-11-21 23:53:16] RECOVERY: Connection to primary SS 0 failed, retrying in 1s... (10 attempts left)
+[2025-11-21 23:53:16] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:53:16] REPL: Re-queueing f for retry attempt 1
+[2025-11-21 23:53:16] REPL: Acquired read lock for f
+[2025-11-21 23:53:16] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 23:53:16] REPL: Replicating f (owner: user, size: 0)
+[2025-11-21 23:53:16] REPL: Successfully replicated f (0 bytes)
+[2025-11-21 23:53:16] REPL: Released read lock for f
+[2025-11-21 23:53:16] REPL: ACK received for file f
+[2025-11-21 23:53:16] REPL: Acquired read lock for f
+[2025-11-21 23:53:16] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 23:53:16] REPL: Replicating f (owner: user, size: 0)
+[2025-11-21 23:53:16] REPL: Successfully replicated f (0 bytes)
+[2025-11-21 23:53:16] REPL: Released read lock for f
+[2025-11-21 23:53:16] REPL: ACK received for file f
+[2025-11-21 23:53:17] RECOVERY: Connected to primary SS 0
+[2025-11-21 23:53:17] RECOVERY: Sending 8 files to primary SS
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for gha
+[2025-11-21 23:53:17] RECOVERY: Released read lock for gha
+[2025-11-21 23:53:17] RECOVERY: Sent file 1/8: gha (0 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for f2
+[2025-11-21 23:53:17] RECOVERY: Released read lock for f2
+[2025-11-21 23:53:17] RECOVERY: Sent file 2/8: f2 (12 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for f
+[2025-11-21 23:53:17] RECOVERY: Released read lock for f
+[2025-11-21 23:53:17] RECOVERY: Sent file 3/8: f (0 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for g
+[2025-11-21 23:53:17] RECOVERY: Released read lock for g
+[2025-11-21 23:53:17] RECOVERY: Sent file 4/8: g (9 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for f0
+[2025-11-21 23:53:17] RECOVERY: Released read lock for f0
+[2025-11-21 23:53:17] RECOVERY: Sent file 5/8: f0 (2 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for file
+[2025-11-21 23:53:17] RECOVERY: Released read lock for file
+[2025-11-21 23:53:17] RECOVERY: Sent file 6/8: file (38 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for f1
+[2025-11-21 23:53:17] RECOVERY: Released read lock for f1
+[2025-11-21 23:53:17] RECOVERY: Sent file 7/8: f1 (7 bytes)
+[2025-11-21 23:53:17] RECOVERY: Acquired read lock for ff
+[2025-11-21 23:53:17] RECOVERY: Released read lock for ff
+[2025-11-21 23:53:17] RECOVERY: Sent file 8/8: ff (3 bytes)
+[2025-11-21 23:53:17] RECOVERY: Sync to primary SS 0 complete (8 files sent)
+[2025-11-21 23:53:23] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-21 23:53:23] CHECKPOINT: Thread exiting
+[2025-11-21 23:53:23] NS_CONTROL: Listener thread exiting
+[2025-11-21 23:53:23] REPL_LISTENER: Thread exiting
+[2025-11-21 23:53:24] CLIENT_LISTENER: Thread exiting
+[2025-11-21 23:53:24] HEARTBEAT: Thread exiting
+[2025-11-21 23:53:24] MAIN: Performing final metadata save (8 entries)...
+[2025-11-21 23:53:24] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:53:24] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:53:24] MAIN: Final metadata save successful
+[2025-11-21 23:53:24] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-21 23:53:24] REPL: Worker thread shutting down.
+[2025-11-21 23:53:24] --- LOGGING STOPPED ---
+[2025-11-21 23:53:33] --- LOGGING STARTED ---
+[2025-11-21 23:53:33] MAIN: Persistent log file initialized for SS ID 1
+[2025-11-21 23:53:33] MAIN: Using persistent data directory: ss_data_1
+[2025-11-21 23:53:33] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 23:53:33] Loading 8 metadata entries from ss_data_1/metadata.db...
+[2025-11-21 23:53:33] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 23:53:33] Inserted metadata for: f (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 524
+[2025-11-21 23:53:33] Inserted metadata for: g (owner: kai, size: 9, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 725
+[2025-11-21 23:53:33] Inserted metadata for: gha (owner: user, size: 0, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 23:53:33] Inserted metadata for: file (owner: user, size: 38, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 923
+[2025-11-21 23:53:33] Inserted metadata for: f0 (owner: user, size: 2, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 23:53:33] Inserted metadata for: f1 (owner: user, size: 7, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 23:53:33] Inserted metadata for: f2 (owner: user, size: 12, is_backup: 1)
+[2025-11-21 23:53:33] DEBUG: Lazily created inner table for outer bucket 977
+[2025-11-21 23:53:33] Inserted metadata for: ff (owner: user, size: 3, is_backup: 1)
+[2025-11-21 23:53:33] Loaded 8/8 metadata entries from ss_data_1/metadata.db
+[2025-11-21 23:53:33] MAIN: Loaded metadata for 8 files from disk
+[2025-11-21 23:53:33] MAIN: Listening for Clients and NS on 127.0.0.1:9003
+[2025-11-21 23:53:33] MAIN: Listening for Replication on 127.0.0.1:9004
+[2025-11-21 23:53:33] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 23:53:33] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 23:53:33] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 23:53:33] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 23:53:33] MAIN: Will send replications to: 127.0.0.1:9002
+[2025-11-21 23:53:33] MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...
+[2025-11-21 23:53:33] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 23:53:33] NS_CONTROL: Received message type 59 from NS
+[2025-11-21 23:53:33] RECOVERY: NS requests sync TO primary (us) FROM backup SS 0 (127.0.0.1:9002)
+[2025-11-21 23:53:33] RECOVERY: Waiting for backup SS 0 to initiate recovery connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for file (38 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for file
+[2025-11-21 23:53:33] REPL_IN: Finished receiving file
+[2025-11-21 23:53:33] Updated metadata for: file
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for file (owner: user, size: 38, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for file
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for f1 (7 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for f1
+[2025-11-21 23:53:33] REPL_IN: Finished receiving f1
+[2025-11-21 23:53:33] Updated metadata for: f1
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for f1 (owner: user, size: 7, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for f1
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for ff (3 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for ff
+[2025-11-21 23:53:33] REPL_IN: Finished receiving ff
+[2025-11-21 23:53:33] Updated metadata for: ff
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for ff (owner: user, size: 3, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for ff
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for gha (0 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for gha
+[2025-11-21 23:53:33] REPL_IN: Finished receiving gha
+[2025-11-21 23:53:33] Updated metadata for: gha
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for gha (owner: user, size: 0, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for gha
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for f2 (12 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for f2
+[2025-11-21 23:53:33] REPL_IN: Finished receiving f2
+[2025-11-21 23:53:33] Updated metadata for: f2
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for f2 (owner: user, size: 12, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for f2
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for f (0 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for f
+[2025-11-21 23:53:33] REPL_IN: Finished receiving f
+[2025-11-21 23:53:33] Updated metadata for: f
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for f (owner: user, size: 0, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for f
+[2025-11-21 23:53:33] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:33] REPL_IN: Receiving replica for f0 (2 bytes)
+[2025-11-21 23:53:33] REPL_IN: Acquired write lock for f0
+[2025-11-21 23:53:33] REPL_IN: Finished receiving f0
+[2025-11-21 23:53:33] Updated metadata for: f0
+[2025-11-21 23:53:33] REPL_IN: Updated metadata for f0 (owner: user, size: 2, is_backup=true)
+[2025-11-21 23:53:33] REPL_IN: Released write lock for f0
+[2025-11-21 23:53:34] REPL_IN: New incoming replication connection
+[2025-11-21 23:53:34] RECOVERY: Incoming recovery connection from SS 0 (primary_recovery=1)
+[2025-11-21 23:53:34] RECOVERY: We are PRIMARY recovering from backup SS 0
+[2025-11-21 23:53:34] Removed metadata for: gha
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: gha
+[2025-11-21 23:53:34] Removed metadata for: f2
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: f2
+[2025-11-21 23:53:34] Removed metadata for: f
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: f
+[2025-11-21 23:53:34] Removed metadata for: g
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: g
+[2025-11-21 23:53:34] Removed metadata for: f0
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: f0
+[2025-11-21 23:53:34] Removed metadata for: file
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: file
+[2025-11-21 23:53:34] Removed metadata for: f1
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: f1
+[2025-11-21 23:53:34] Removed metadata for: ff
+[2025-11-21 23:53:34] RECOVERY: Removed old file and metadata: ff
+[2025-11-21 23:53:34] RECOVERY: Will receive 8 files
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for gha
+[2025-11-21 23:53:34] Inserted metadata for: gha (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for gha
+[2025-11-21 23:53:34] RECOVERY: Received file 1/8: gha (0 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for f2
+[2025-11-21 23:53:34] Inserted metadata for: f2 (owner: user, size: 12, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for f2
+[2025-11-21 23:53:34] RECOVERY: Received file 2/8: f2 (12 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for f
+[2025-11-21 23:53:34] Inserted metadata for: f (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for f
+[2025-11-21 23:53:34] RECOVERY: Received file 3/8: f (0 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for g
+[2025-11-21 23:53:34] Inserted metadata for: g (owner: kai, size: 18, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for g
+[2025-11-21 23:53:34] RECOVERY: Received file 4/8: g (18 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for f0
+[2025-11-21 23:53:34] Inserted metadata for: f0 (owner: user, size: 2, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for f0
+[2025-11-21 23:53:34] RECOVERY: Received file 5/8: f0 (2 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for file
+[2025-11-21 23:53:34] Inserted metadata for: file (owner: user, size: 38, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for file
+[2025-11-21 23:53:34] RECOVERY: Received file 6/8: file (38 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for f1
+[2025-11-21 23:53:34] Inserted metadata for: f1 (owner: user, size: 7, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for f1
+[2025-11-21 23:53:34] RECOVERY: Received file 7/8: f1 (7 bytes)
+[2025-11-21 23:53:34] RECOVERY: Acquired write lock for ff
+[2025-11-21 23:53:34] Inserted metadata for: ff (owner: user, size: 3, is_backup: 0)
+[2025-11-21 23:53:34] RECOVERY: Released write lock for ff
+[2025-11-21 23:53:34] RECOVERY: Received file 8/8: ff (3 bytes)
+[2025-11-21 23:53:34] RECOVERY: Recovery complete! Received 8 files from SS 0
+[2025-11-21 23:53:43] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:53:43] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:53:43] STREAM: Handler called for file 'g'
+[2025-11-21 23:53:43] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:53:46] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-21 23:53:46] NS_CONTROL: Listener thread exiting
+[2025-11-21 23:53:47] REPL_LISTENER: Thread exiting
+[2025-11-21 23:53:47] CLIENT_LISTENER: Thread exiting
+[2025-11-21 23:53:47] CHECKPOINT: Thread exiting
+[2025-11-21 23:53:48] HEARTBEAT: Thread exiting
+[2025-11-21 23:53:48] MAIN: Performing final metadata save (8 entries)...
+[2025-11-21 23:53:48] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:53:48] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:53:48] MAIN: Final metadata save successful
+[2025-11-21 23:53:48] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-21 23:53:48] REPL: Worker thread shutting down.
+[2025-11-21 23:53:48] --- LOGGING STOPPED ---
+[2025-11-21 23:54:02] --- LOGGING STARTED ---
+[2025-11-21 23:54:02] MAIN: Persistent log file initialized for SS ID 1
+[2025-11-21 23:54:02] MAIN: Using persistent data directory: ss_data_1
+[2025-11-21 23:54:02] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 23:54:02] Loading 8 metadata entries from ss_data_1/metadata.db...
+[2025-11-21 23:54:02] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 23:54:02] Inserted metadata for: f (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 524
+[2025-11-21 23:54:02] Inserted metadata for: g (owner: kai, size: 18, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 725
+[2025-11-21 23:54:02] Inserted metadata for: gha (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 23:54:02] Inserted metadata for: file (owner: user, size: 38, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 923
+[2025-11-21 23:54:02] Inserted metadata for: f0 (owner: user, size: 2, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 23:54:02] Inserted metadata for: f1 (owner: user, size: 7, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 23:54:02] Inserted metadata for: f2 (owner: user, size: 12, is_backup: 0)
+[2025-11-21 23:54:02] DEBUG: Lazily created inner table for outer bucket 977
+[2025-11-21 23:54:02] Inserted metadata for: ff (owner: user, size: 3, is_backup: 0)
+[2025-11-21 23:54:02] Loaded 8/8 metadata entries from ss_data_1/metadata.db
+[2025-11-21 23:54:02] MAIN: Loaded metadata for 8 files from disk
+[2025-11-21 23:54:02] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 23:54:02] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 23:54:02] MAIN: Listening for Clients and NS on 127.0.0.1:9003
+[2025-11-21 23:54:02] MAIN: Listening for Replication on 127.0.0.1:9004
+[2025-11-21 23:54:02] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 23:54:02] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 23:54:02] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 23:54:02] MAIN: Will send replications to: 127.0.0.1:9002
+[2025-11-21 23:54:02] MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...
+[2025-11-21 23:54:02] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 23:54:06] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:54:06] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:54:06] STREAM: Handler called for file 'g'
+[2025-11-21 23:54:07] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:54:08] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-21 23:54:08] CLIENT_LISTENER: Thread exiting
+[2025-11-21 23:54:09] CHECKPOINT: Thread exiting
+[2025-11-21 23:54:09] REPL_LISTENER: Thread exiting
+[2025-11-21 23:54:09] NS_CONTROL: Listener thread exiting
+[2025-11-21 23:54:12] HEARTBEAT: Thread exiting
+[2025-11-21 23:54:12] MAIN: Performing final metadata save (8 entries)...
+[2025-11-21 23:54:12] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:54:12] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:54:12] MAIN: Final metadata save successful
+[2025-11-21 23:54:12] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-21 23:54:12] REPL: Worker thread shutting down.
+[2025-11-21 23:54:12] --- LOGGING STOPPED ---
+[2025-11-21 23:54:27] --- LOGGING STARTED ---
+[2025-11-21 23:54:27] MAIN: Persistent log file initialized for SS ID 1
+[2025-11-21 23:54:27] MAIN: Using persistent data directory: ss_data_1
+[2025-11-21 23:54:27] MAIN: Loading metadata hash table (post-registration)...
+[2025-11-21 23:54:27] Loading 8 metadata entries from ss_data_1/metadata.db...
+[2025-11-21 23:54:27] Nested metadata hash table initialized: 1024 outer buckets × 64 inner buckets (1024 locks)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 523
+[2025-11-21 23:54:27] Inserted metadata for: f (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 524
+[2025-11-21 23:54:27] Inserted metadata for: g (owner: kai, size: 18, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 725
+[2025-11-21 23:54:27] Inserted metadata for: gha (owner: user, size: 0, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 805
+[2025-11-21 23:54:27] Inserted metadata for: file (owner: user, size: 38, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 923
+[2025-11-21 23:54:27] Inserted metadata for: f0 (owner: user, size: 2, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 924
+[2025-11-21 23:54:27] Inserted metadata for: f1 (owner: user, size: 7, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 925
+[2025-11-21 23:54:27] Inserted metadata for: f2 (owner: user, size: 12, is_backup: 0)
+[2025-11-21 23:54:27] DEBUG: Lazily created inner table for outer bucket 977
+[2025-11-21 23:54:27] Inserted metadata for: ff (owner: user, size: 3, is_backup: 0)
+[2025-11-21 23:54:27] Loaded 8/8 metadata entries from ss_data_1/metadata.db
+[2025-11-21 23:54:27] MAIN: Loaded metadata for 8 files from disk
+[2025-11-21 23:54:27] MAIN: Listening for Clients and NS on 127.0.0.1:9003
+[2025-11-21 23:54:27] NS_CONTROL: Listener thread started for NS control messages
+[2025-11-21 23:54:27] NS_CONTROL: Received message type 59 from NS
+[2025-11-21 23:54:27] RECOVERY: NS requests sync TO primary (us) FROM backup SS 0 (127.0.0.1:9002)
+[2025-11-21 23:54:27] RECOVERY: Waiting for backup SS 0 to initiate recovery connection
+[2025-11-21 23:54:27] MAIN: Listening for Replication on 127.0.0.1:9004
+[2025-11-21 23:54:27] MAIN: Core listener & worker threads started (pre-file-scan). Ready for NS control messages.
+[2025-11-21 23:54:27] MAIN: File scan complete (0 existing files added post-startup)
+[2025-11-21 23:54:27] MAIN: Server marked READY (metadata loaded). Accepting client requests.
+[2025-11-21 23:54:27] MAIN: Will send replications to: 127.0.0.1:9002
+[2025-11-21 23:54:27] MAIN: This is a recovery. Waiting for NS to coordinate recovery sync...
+[2025-11-21 23:54:27] MAIN: Server initialization complete (threads already running). Press Ctrl+C for graceful shutdown.
+[2025-11-21 23:54:27] CHECKPOINT: Thread started (interval: 60 seconds)
+[2025-11-21 23:54:33] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:54:33] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:54:33] STREAM: Handler called for file 'g'
+[2025-11-21 23:54:34] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:54:36] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 42)
+[2025-11-21 23:54:36] WRITE: Created swapfile g (sentence 0)
+[2025-11-21 23:54:40] WRITE: Acquired global file lock for commit (file g, sentence 0)
+[2025-11-21 23:54:40] WRITE: Committed and deleted swapfile for g (sentence 0)
+[2025-11-21 23:54:40] Updated size for g: 36 bytes
+[2025-11-21 23:54:40] Updated counts for g: 4 words, 36 chars
+[2025-11-21 23:54:40] WRITE: Updated metadata for g (size: 36, words: 4, chars: 36)
+[2025-11-21 23:54:40] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:54:40] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:54:40] WRITE: Completed for g (sentence 0)
+[2025-11-21 23:54:40] REPL: Scheduling update for g
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Re-queueing g for retry attempt 1
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Re-queueing g for retry attempt 2
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Re-queueing g for retry attempt 3
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Re-queueing g for retry attempt 4
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Re-queueing g for retry attempt 5
+[2025-11-21 23:54:40] REPL: Acquired read lock for g
+[2025-11-21 23:54:40] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:40] REPL: Giving up on g after 5 failed attempts
+[2025-11-21 23:54:42] HANDLER: New CLIENT connection from 127.0.0.1 (Req: 41)
+[2025-11-21 23:54:42] HANDLER: Routing to ss_handle_stream() for message type 41
+[2025-11-21 23:54:42] STREAM: Handler called for file 'g'
+[2025-11-21 23:54:42] HANDLER: Closing connection from 127.0.0.1
+[2025-11-21 23:54:44] NS_CONTROL: Received message type 61 from NS
+[2025-11-21 23:54:44] HANDLER: Received backup assignment update from NS
+[2025-11-21 23:54:44] HANDLER: Backup assignment updated - will replicate to 127.0.0.1:9002 (SS ID 0)
+[2025-11-21 23:54:44] HANDLER: Initiating immediate catch-up replication for existing primary files
+[2025-11-21 23:54:44] REPL: Scheduling update for gha
+[2025-11-21 23:54:44] REPL: Scheduling update for f2
+[2025-11-21 23:54:44] REPL: Scheduling update for f
+[2025-11-21 23:54:44] REPL: Scheduling update for g
+[2025-11-21 23:54:44] REPL: Scheduling update for f0
+[2025-11-21 23:54:44] REPL: Scheduling update for file
+[2025-11-21 23:54:44] REPL: Scheduling update for f1
+[2025-11-21 23:54:44] REPL: Scheduling update for ff
+[2025-11-21 23:54:44] REPL: Acquired read lock for gha
+[2025-11-21 23:54:44] HANDLER: Catch-up replication scheduling complete (8 primary files queued)
+[2025-11-21 23:54:44] NS_CONTROL: Received message type 58 from NS
+[2025-11-21 23:54:44] RECOVERY: NS requests sync FROM backup TO primary SS 0 (127.0.0.1:9002)
+[2025-11-21 23:54:44] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:44] RECOVERY: Connection to primary SS 0 failed, retrying in 1s... (10 attempts left)
+[2025-11-21 23:54:44] REPL: Re-queueing gha for retry attempt 1
+[2025-11-21 23:54:44] REPL: Acquired read lock for f2
+[2025-11-21 23:54:44] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:44] REPL: Re-queueing f2 for retry attempt 1
+[2025-11-21 23:54:44] REPL: Acquired read lock for f
+[2025-11-21 23:54:44] REPL: Could not connect to backup server at 127.0.0.1:9002
+[2025-11-21 23:54:44] REPL: Re-queueing f for retry attempt 1
+[2025-11-21 23:54:44] REPL: Acquired read lock for g
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for g...
+[2025-11-21 23:54:44] REPL: Replicating g (owner: kai, size: 36)
+[2025-11-21 23:54:44] REPL: Successfully replicated g (36 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for g
+[2025-11-21 23:54:44] REPL: ACK received for file g
+[2025-11-21 23:54:44] REPL: Acquired read lock for f0
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for f0...
+[2025-11-21 23:54:44] REPL: Replicating f0 (owner: user, size: 2)
+[2025-11-21 23:54:44] REPL: Successfully replicated f0 (2 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for f0
+[2025-11-21 23:54:44] REPL: ACK received for file f0
+[2025-11-21 23:54:44] REPL: Acquired read lock for file
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for file...
+[2025-11-21 23:54:44] REPL: Replicating file (owner: user, size: 38)
+[2025-11-21 23:54:44] REPL: Successfully replicated file (38 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for file
+[2025-11-21 23:54:44] REPL: ACK received for file file
+[2025-11-21 23:54:44] REPL: Acquired read lock for f1
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for f1...
+[2025-11-21 23:54:44] REPL: Replicating f1 (owner: user, size: 7)
+[2025-11-21 23:54:44] REPL: Successfully replicated f1 (7 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for f1
+[2025-11-21 23:54:44] REPL: ACK received for file f1
+[2025-11-21 23:54:44] REPL: Acquired read lock for ff
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for ff...
+[2025-11-21 23:54:44] REPL: Replicating ff (owner: user, size: 3)
+[2025-11-21 23:54:44] REPL: Successfully replicated ff (3 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for ff
+[2025-11-21 23:54:44] REPL: ACK received for file ff
+[2025-11-21 23:54:44] REPL: Acquired read lock for gha
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for gha...
+[2025-11-21 23:54:44] REPL: Replicating gha (owner: user, size: 0)
+[2025-11-21 23:54:44] REPL: Successfully replicated gha (0 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for gha
+[2025-11-21 23:54:44] REPL: ACK received for file gha
+[2025-11-21 23:54:44] REPL: Acquired read lock for f2
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for f2...
+[2025-11-21 23:54:44] REPL: Replicating f2 (owner: user, size: 12)
+[2025-11-21 23:54:44] REPL: Successfully replicated f2 (12 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for f2
+[2025-11-21 23:54:44] REPL: ACK received for file f2
+[2025-11-21 23:54:44] REPL: Acquired read lock for f
+[2025-11-21 23:54:44] REPL: Connected to backup. Replicating update for f...
+[2025-11-21 23:54:44] REPL: Replicating f (owner: user, size: 0)
+[2025-11-21 23:54:44] REPL: Successfully replicated f (0 bytes)
+[2025-11-21 23:54:44] REPL: Released read lock for f
+[2025-11-21 23:54:44] REPL: ACK received for file f
+[2025-11-21 23:54:45] RECOVERY: Connected to primary SS 0
+[2025-11-21 23:54:45] RECOVERY: Sending 8 files to primary SS
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for gha
+[2025-11-21 23:54:45] RECOVERY: Released read lock for gha
+[2025-11-21 23:54:45] RECOVERY: Sent file 1/8: gha (0 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for f2
+[2025-11-21 23:54:45] RECOVERY: Released read lock for f2
+[2025-11-21 23:54:45] RECOVERY: Sent file 2/8: f2 (12 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for f
+[2025-11-21 23:54:45] RECOVERY: Released read lock for f
+[2025-11-21 23:54:45] RECOVERY: Sent file 3/8: f (0 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for g
+[2025-11-21 23:54:45] RECOVERY: Released read lock for g
+[2025-11-21 23:54:45] RECOVERY: Sent file 4/8: g (36 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for f0
+[2025-11-21 23:54:45] RECOVERY: Released read lock for f0
+[2025-11-21 23:54:45] RECOVERY: Sent file 5/8: f0 (2 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for file
+[2025-11-21 23:54:45] RECOVERY: Released read lock for file
+[2025-11-21 23:54:45] RECOVERY: Sent file 6/8: file (38 bytes)
+[2025-11-21 23:54:45] RECOVERY: Acquired read lock for f1
+[2025-11-21 23:54:46] RECOVERY: Released read lock for f1
+[2025-11-21 23:54:46] RECOVERY: Sent file 7/8: f1 (7 bytes)
+[2025-11-21 23:54:46] RECOVERY: Acquired read lock for ff
+[2025-11-21 23:54:46] RECOVERY: Released read lock for ff
+[2025-11-21 23:54:46] RECOVERY: Sent file 8/8: ff (3 bytes)
+[2025-11-21 23:54:46] RECOVERY: Sync to primary SS 0 complete (8 files sent)
+[2025-11-21 23:54:51] MAIN: Shutdown detected. Joining threads and performing final cleanup...
+[2025-11-21 23:54:51] CHECKPOINT: Thread exiting
+[2025-11-21 23:54:51] NS_CONTROL: Listener thread exiting
+[2025-11-21 23:54:51] CLIENT_LISTENER: Thread exiting
+[2025-11-21 23:54:51] REPL_LISTENER: Thread exiting
+[2025-11-21 23:54:52] HEARTBEAT: Thread exiting
+[2025-11-21 23:54:52] MAIN: Performing final metadata save (8 entries)...
+[2025-11-21 23:54:52] Saving metadata to ss_data_1/metadata.db (atomic snapshot)...
+[2025-11-21 23:54:52] Successfully saved 8 metadata entries (atomic snapshot)
+[2025-11-21 23:54:52] MAIN: Final metadata save successful
+[2025-11-21 23:54:52] Nested metadata hash table freed (1024 locks destroyed)
+[2025-11-21 23:54:52] REPL: Worker thread shutting down.
+[2025-11-21 23:54:52] --- LOGGING STOPPED ---

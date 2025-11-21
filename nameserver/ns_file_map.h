@@ -161,4 +161,13 @@ int file_map_table_update_backup(FileMapHashTable* table, const char* owner, con
  */
 int file_map_table_delete_all_for_ss(FileMapHashTable* table, int ss_id);
 
+/**
+ * @brief Updates the backup SS ID for all files belonging to a specific primary SS
+ * @param table The hash table
+ * @param primary_ss_id The primary SS ID to match
+ * @param new_backup_ss_id The new backup SS ID to set
+ * @return Number of entries updated
+ */
+int file_map_table_update_backups_for_ss(FileMapHashTable* table, int primary_ss_id, int new_backup_ss_id);
+
 #endif // NS_FILE_MAP_H

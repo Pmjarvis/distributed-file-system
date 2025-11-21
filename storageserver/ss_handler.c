@@ -192,9 +192,16 @@ void ss_handle_update_backup(int ns_sock, Req_UpdateBackup* req) {
             struct dirent* entry;
             int scheduled = 0;
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type != DT_REG) continue;
+                // FIX: Handle DT_UNKNOWN for filesystems that don't support d_type
+                // Also skip . and .. explicitly
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+                
+                // We check metadata table for validity, so we can be lenient with d_type
+                // (Some filesystems return DT_UNKNOWN)
+                
                 FileMetadataNode* node = metadata_table_get(g_metadata_table, entry->d_name);
                 if (node) {
+                    // Only replicate files where we are the PRIMARY (not backups we hold for others)
                     if (!node->is_backup) {
                         repl_schedule_update(entry->d_name);
                         scheduled++;

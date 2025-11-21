@@ -124,12 +124,32 @@ static void _do_replication_update(const char* filename) {
     
     // 2. Send file data using sendfile (efficient)
     off_t offset = 0;
-    ssize_t sent_bytes = sendfile(sock, fd, &offset, file_stat.st_size);
+    ssize_t total_sent = 0;
+    while (total_sent < file_stat.st_size) {
+        ssize_t sent = sendfile(sock, fd, &offset, file_stat.st_size - total_sent);
+        if (sent <= 0) {
+            if (sent < 0 && errno == EAGAIN) continue;
+            ss_log("REPL: Error sending file data for %s: %s", filename, strerror(errno));
+            break;
+        }
+        total_sent += sent;
+    }
     
-    if (sent_bytes != file_stat.st_size) {
-        ss_log("REPL: Error replicating file %s. Sent %ld, expected %ld", filename, sent_bytes, file_stat.st_size);
+    if (total_sent != file_stat.st_size) {
+        ss_log("REPL: Failed to send complete file %s. Sent %ld, expected %ld", filename, total_sent, file_stat.st_size);
+        // Retry logic
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        if (retry_counts[idx] < 5) {
+            retry_counts[idx]++;
+            ss_log("REPL: Re-queueing %s for retry attempt %d (send failure)", filename, retry_counts[idx]);
+            repl_queue_push(&g_repl_queue, filename, MSG_S2S_REPLICATE_FILE);
+        }
+        close(fd);
+        close(sock);
+        pthread_rwlock_unlock(&lock->file_lock);
+        return;
     } else {
-        ss_log("REPL: Successfully replicated %s (%ld bytes)", filename, sent_bytes);
+        ss_log("REPL: Successfully replicated %s (%ld bytes)", filename, total_sent);
     }
     
     // Release lock after reading is done
@@ -138,12 +158,20 @@ static void _do_replication_update(const char* filename) {
     
     // 3. Wait for ACK
     MsgHeader ack_header;
-    if (recv_header(sock, &ack_header) <= 0) {
+    if (recv_header(sock, &ack_header) <= 0 || ack_header.type != MSG_S2S_ACK) {
         ss_log("REPL: Failed to receive ACK for file %s", filename);
-    } else if (ack_header.type != MSG_S2S_ACK) {
-        ss_log("REPL: Unexpected response type %d for file %s", ack_header.type, filename);
+        // Retry logic
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        if (retry_counts[idx] < 5) {
+            retry_counts[idx]++;
+            ss_log("REPL: Re-queueing %s for retry attempt %d (ACK failure)", filename, retry_counts[idx]);
+            repl_queue_push(&g_repl_queue, filename, MSG_S2S_REPLICATE_FILE);
+        }
     } else {
         ss_log("REPL: ACK received for file %s", filename);
+        // Reset retry count on success
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        retry_counts[idx] = 0;
     }
     
     close(fd);
@@ -186,12 +214,21 @@ static void _do_replication_delete(const char* filename) {
 
     // Wait for ACK
     MsgHeader ack_header;
-    if (recv_header(sock, &ack_header) <= 0) {
+    if (recv_header(sock, &ack_header) <= 0 || ack_header.type != MSG_S2S_ACK) {
         ss_log("REPL: Failed to receive ACK for delete %s", filename);
-    } else if (ack_header.type != MSG_S2S_ACK) {
-        ss_log("REPL: Unexpected response type %d for delete %s", ack_header.type, filename);
+        
+        // Retry logic (Consistency Fix)
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        if (retry_counts[idx] < 5) {
+            retry_counts[idx]++;
+            ss_log("REPL: Re-queueing delete %s for retry attempt %d (ACK failure)", filename, retry_counts[idx]);
+            repl_queue_push(&g_repl_queue, filename, MSG_S2S_DELETE_FILE);
+        }
     } else {
         ss_log("REPL: Replicated delete for %s", filename);
+        // Reset retry count
+        unsigned idx = _hash_filename(filename) % (sizeof(retry_counts)/sizeof(int));
+        retry_counts[idx] = 0;
     }
 
     close(sock);
@@ -288,6 +325,17 @@ void handle_replication_receive(int sock) {
             bytes_received += n;
         }
         fclose(f);
+
+        // FIX: Verify we received the full file. If not, abort to prevent corruption.
+        if (bytes_received != req.file_size) {
+            ss_log("REPL_IN: Error - Received incomplete file %s (got %llu, expected %llu)", 
+                   req.filename, (unsigned long long)bytes_received, (unsigned long long)req.file_size);
+            unlink(filepath); // Delete partial file
+            pthread_rwlock_unlock(&lock->file_lock); // Release lock
+            close(sock);
+            return; // Abort (do not update metadata, do not ACK)
+        }
+
         ss_log("REPL_IN: Finished receiving %s", req.filename);
         
         // FIX: Update metadata table with owner info from request
@@ -311,6 +359,11 @@ void handle_replication_receive(int sock) {
         // Release file lock after metadata update
         pthread_rwlock_unlock(&lock->file_lock);
         ss_log("REPL_IN: Released write lock for %s", req.filename);
+        
+        // FIX: Send ACK to confirm replication success
+        // This prevents the sender from blocking indefinitely waiting for confirmation
+        send_response(sock, MSG_S2S_ACK, NULL, 0);
+        close(sock);
         
     } else if (header.type == MSG_S2S_DELETE_FILE) {
         Req_FileOp req;

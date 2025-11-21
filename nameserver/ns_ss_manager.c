@@ -74,6 +74,10 @@ static void recompute_backup_assignments_locked() {
             g_ss_list_head->pending_full_sync = false;
         }
         g_ss_list_head->backup_ss_id = -1;
+        
+        // FIX: Update file map to reflect no backup
+        file_map_table_update_backups_for_ss(g_file_map_table, g_ss_list_head->ss_id, -1);
+        
         printf("NS: Single SS - no backup assignment\n");
         return;
     }
@@ -82,11 +86,17 @@ static void recompute_backup_assignments_locked() {
     do {
         StorageServer* prev = get_prev_ss(curr);
         if (prev) {
-            int new_backup = prev->ss_id;
-            if (curr->backup_ss_id != new_backup) {
+            int new_backup_target = prev->ss_id; // 'curr' will back up 'prev'
+            
+            if (curr->backup_ss_id != new_backup_target) {
                 curr->pending_full_sync = true;
             }
-            curr->backup_ss_id = new_backup;
+            curr->backup_ss_id = new_backup_target;
+            
+            // FIX: Update file map so files on 'curr' (primary) point to 'prev' (backup)
+            // 'curr' sends replicas to 'prev', so 'prev' is the backup for 'curr'
+            file_map_table_update_backups_for_ss(g_file_map_table, curr->ss_id, prev->ss_id);
+            
             printf("NS: SS %d backs up SS %d\n", curr->ss_id, prev->ss_id);
         }
         curr = curr->next;
